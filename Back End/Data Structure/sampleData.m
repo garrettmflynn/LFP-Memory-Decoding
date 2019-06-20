@@ -11,8 +11,8 @@ sampledData = zeros(channels,intervalSize,numIntervals);
 
 
 for q = 1:numIntervals
-    start = round(intervals(1,q)*parameters.Derived.samplingFreq);
-    stop = round(intervals(2,q)*parameters.Derived.samplingFreq);
+    start = round((intervals(1,q)*parameters.Derived.samplingFreq)+1);
+    stop = round((intervals(2,q)*parameters.Derived.samplingFreq)+1);
 
 if ~(start == stop)
     sampledData(:,:,q) = rawData(:,start:(stop-1));

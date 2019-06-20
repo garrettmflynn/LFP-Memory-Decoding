@@ -1,4 +1,4 @@
-function [HHData] = singlePipeline(neuralData,nexFileData,parameters,sessionLoop)
+function vizLoop(neuralData,nexFileData,parameters,sessionLoop)
 
 lowPass = parameters.Filters.lowPass;
 notchFilter = parameters.Filters.notchFilter;
@@ -106,10 +106,10 @@ HHData.LFP.Alpha.Signal = LFP_Bands.Alpha.Signal;
 HHData.LFP.Alpha.Spectrum = LFP_Bands.Alpha.Spectrum; 
 HHData.LFP.Beta.Signal = LFP_Bands.Beta.Signal; 
 HHData.LFP.Beta.Spectrum = LFP_Bands.Beta.Spectrum; 
-HHData.LFP.Gamma_Low.Signal = LFP_Bands.LowGamma.Signal; 
-HHData.LFP.Gamma_Low.Spectrum = LFP_Bands.LowGamma.Spectrum; 
-HHData.LFP.Gamma_High.Signal = LFP_Bands.HighGamma.Signal; 
-HHData.LFP.Gamma_High.Spectrum = LFP_Bands.HighGamma.Spectrum; 
+HHData.LFP.Gamma_L.Signal = LFP_Bands.LowGamma.Signal; 
+HHData.LFP.Gamma_L.Spectrum = LFP_Bands.LowGamma.Spectrum; 
+HHData.LFP.Gamma_H.Signal = LFP_Bands.HighGamma.Signal; 
+HHData.LFP.Gamma_H.Spectrum = LFP_Bands.HighGamma.Spectrum; 
 
 % Zscore Inclusion
 if parameters.Optional.ZScore
@@ -134,10 +134,10 @@ parametersTrans.Name = parameters.Directories.dataName;
 HHData.Parameters = parametersTrans;
 
 
-fprintf('Now Saving ProcessedData.mat (this might take a while...)\n');
-if nargin == 4
-save([parameters.Directories.filePath, '/', parameters.Directories.dataName, '_processedData_Session',num2str(sessionLoop),'.mat'], 'HHData','-v7.3');
-else
-save([parameters.Directories.filePath, '/', parameters.Directories.dataName, '_processedData.mat'], 'HHData','-v7.3');
-end
+fprintf(['Now Looping through Visualization', num2str(parameters.Optional.iteration),'\n']);
+
+   visualizationSuite(HHData,[parameters.Directories.filePath, '\', num2str(parameters.Choices.freqBin),'_',num2str(parameters.Choices.timeBin),'_',num2str(parameters.Derived.overlap),'_',parameters.Optional.methods{parameters.Optional.iteration}]);
+
+   close all;
+
 end

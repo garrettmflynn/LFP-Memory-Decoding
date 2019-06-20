@@ -5,7 +5,7 @@ filterNotch = parameters.Filters.notchFilter;
 
 %% Extract LFP
 % IF INE SESSION IN THE FILE
-if (size(rawData,1) > 1)
+if (size(rawData,2) > 5)
     % Fill Arrays with Data
     toProcess = (double(rawData))';
     
@@ -14,11 +14,10 @@ if (size(rawData,1) > 1)
     LFP = filtfilt(filterNotch,processedData);
     
 % IF MANY SESSIONS IN THE FILE
-elseif (size(rawData,1) == 1)
+elseif ~(size(rawData,2) > 5)
     % Process initial session
     toProcess = (double(rawData))';
     processedData = lowpass(toProcess,filterLP,30000);
-    clear rawData
     LFP = filtfilt(filterNotch, processedData);
     
     % Process subsequent sessions & append to initial array
