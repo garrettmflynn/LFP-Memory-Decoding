@@ -21,9 +21,6 @@ if size(neuralData.Data,1) == 1
     for session = 1:size(neuralData.Data,2)
         [HHData] = singlePipeline(neuralData,nexFileData,parameters,session);
         fprintf(['Session' , num2str(session), 'Created\n']);
-        fprintf(['\tNow Visualizing Session at ' ,parameters.Directories.filePath, '\Visualizations\Session',num2str(session)]);
-        visualizationSuite(HHData,[parameters.Directories.filePath, '\Visualizations\Session',num2str(session)]);
-        
         HHDataMultiple.([session,num2str(session)]) = HHData;
         clear HHData
     end
@@ -39,10 +36,8 @@ else
         
         fprintf('Now Visualizing All Specified Channels\n');
         
-        visualizationSuite(HHData,[parameters.Directories.filePath, '\VisualizationsShanechiHamming']); % Actually Taylor
         
-        
-        %% Only For Visualization Loop Where Windowing is Experimented With
+%% Only For Visualization Loop Where Windowing is Experimented With
     else
         parameters = loadParameters(parameters,neuralData.MetaTags.SamplingFreq,size(neuralData.Data,2));
         for ii = 2
@@ -61,7 +56,7 @@ else
                     for jj = 1:length(parameters.Optional.methods)
                         parameters.Optional.iteration = jj;
                         
-                        vizLoop(neuralData,nexFileData,parameters);
+                        singlePipeline(neuralData,nexFileData,parameters);
                     end
                     
                 end
