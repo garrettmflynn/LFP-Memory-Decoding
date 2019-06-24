@@ -15,8 +15,8 @@ end
 end
 
 title('Events Log');
-xticks([]);
 yticks([]);
+xticks([]);
 
 cols = cell2mat(get(l, 'color'));
 [~, uidx] = unique(cols, 'rows', 'stable');

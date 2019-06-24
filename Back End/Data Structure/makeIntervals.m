@@ -19,10 +19,23 @@ parameters.Intervals.Trials = intervals(:,intervalsToKeep);
 % NonTrial Intervals
 FOCUS_ON = parameters.Times.FOCUS_ON;
 MATCH_RESPONSE = parameters.Times.MATCH_RESPONSE;
-intervalEnd = FOCUS_ON(:,1);
+%intervalEnd = FOCUS_ON(:,1);
 intervalBegin = MATCH_RESPONSE(:,1);
 intervals = [intervalBegin(1:end-1)';intervalBegin(1:end-1)'+2]; % Standardized to Two Seconds Because There is Enough Time in ClipArt_2
 NTOnePadding = [0;0];
 fullInt = [NTOnePadding, intervals];
 parameters.Intervals.NonTrials = fullInt(:,intervalsToKeep);
+
+
+% 1 Second of ITI
+ITI_ON = parameters.Times.ITI_ON;
+intervalEnd = FOCUS_ON(:,1);
+intervalBegin = ITI_ON(:,1);
+intervalCenter = ((intervalBegin(1:end-1) + ((intervalBegin(1:end-1)-intervalEnd(2:end))/2)));
+intervals = [intervalCenter'-.5;intervalCenter'+.5];
+parameters.Intervals.ITIOneSecond = intervals;
+
+
+
+
 end

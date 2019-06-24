@@ -17,11 +17,11 @@ LFP_Bands.Beta.Signal = (bandpass(fullSignal',beta,parameters.Derived.samplingFr
 LFP_Bands.Beta.Spectrum = spectrumMatrix(find(freq == beta(1)):find(freq == beta(2)),:,:);
 
 
-LFP_Bands.LowGamma.Signal = (bandpass(fullSignal',lowGamma,parameters.Derived.samplingFreq))';
-LFP_Bands.LowGamma.Spectrum = spectrumMatrix(find(freq == lowGamma(1)):find(freq == lowGamma(2)),:,:);
+LFP_Bands.Gamma_L.Signal = (bandpass(fullSignal',lowGamma,parameters.Derived.samplingFreq))';
+LFP_Bands.Gamma_L.Spectrum = spectrumMatrix(find(freq == lowGamma(1)):find(freq == lowGamma(2)),:,:);
 
-LFP_Bands.HighGamma.Signal = (bandpass(fullSignal',highGamma,parameters.Derived.samplingFreq))';
-LFP_Bands.HighGamma.Spectrum = spectrumMatrix(find(freq == highGamma(1)):find(freq == highGamma(2)),:,:);
+LFP_Bands.Gamma_H.Signal = (bandpass(fullSignal',highGamma,parameters.Derived.samplingFreq))';
+LFP_Bands.Gamma_H.Spectrum = spectrumMatrix(find(freq == highGamma(1)):find(freq == highGamma(2)),:,:);
 
 end
 

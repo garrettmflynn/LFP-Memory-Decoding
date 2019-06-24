@@ -45,16 +45,18 @@ else
         %% Only For Visualization Loop Where Windowing is Experimented With
     else
         parameters = loadParameters(parameters,neuralData.MetaTags.SamplingFreq,size(neuralData.Data,2));
-        for ii = [1.5 2:4:18]
-            for kk = 1/16:3/16:1
-                for qq = 1:5
+        for ii = 2
+            for kk = .1
+                for qq = .5
                     
-                    
+                    % Update Parameters with New Bin Choices
                     parameters.Choices.freqBin = qq;
                     parameters.Choices.timeBin = kk;
                     parameters.Derived.overlap = round((parameters.Choices.timeBin * parameters.Derived.samplingFreq)/ii);
                     parameters.Optional.iteration = [];
-                    vizLoop(neuralData,nexFileData,parameters);
+                    parameters.Derived.durationSeconds = size(neuralData.Data,2)/parameters.Derived.samplingFreq;
+                    parameters.Derived.time = linspace(0,parameters.Derived.durationSeconds,((1/parameters.Choices.timeBin)*4)-1);
+                    parameters.Derived.freq = linspace(parameters.Choices.freqMin, parameters.Choices.freqMax, ((parameters.Choices.freqMax-parameters.Choices.freqMin)+1)/parameters.Choices.freqBin);
                     close all;
                     for jj = 1:length(parameters.Optional.methods)
                         parameters.Optional.iteration = jj;

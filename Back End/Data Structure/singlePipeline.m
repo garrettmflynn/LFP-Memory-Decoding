@@ -30,7 +30,7 @@ LFP_Sampled = sampleData(LFP_Data,parameters.Intervals.Trials,parameters);
 
 % 3. Create spectrograms for full session
 fprintf('Now Creating Spectrograms\n');
-LFP_Spectrum = makeSpectrum(LFP_Data,parameters);
+[LFP_Spectrum time] = makeSpectrum(LFP_Data,parameters);
 
 fprintf('Now Creating Band Data\n');
 LFP_Bands = bandLFP(LFP_Spectrum,parameters,LFP_Data);
@@ -100,6 +100,7 @@ HHData.LFP = struct; % LFP data with different frequency bands
 HHData.LFP.LFPData = LFP_Data;
 HHData.LFP.Sampled = LFP_Sampled; % Orignal LFP data filtered with [1 100] Hz | Range is tunable in loadParameters.m
 HHData.LFP.Spectrum = LFP_Spectrum;
+HHData.LFP.TimeforSpectra = time;
 HHData.LFP.Theta.Signal = LFP_Bands.Theta.Signal; 
 HHData.LFP.Theta.Spectrum = LFP_Bands.Theta.Spectrum; 
 HHData.LFP.Alpha.Signal = LFP_Bands.Alpha.Signal;

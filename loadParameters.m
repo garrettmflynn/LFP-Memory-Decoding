@@ -5,7 +5,7 @@ function [parameters] = loadParameters(parameters, samplingFreq,sessionPointLeng
 
 addpath(genpath('D:\NPMK'));
 addpath(genpath('D:\Standardized_LFP_Code\Back End\nexManipulation'));
-addpath(genpath(pwd));
+addpath(genpath('C:\SuperUser\Documents\GitHub\LFP-Memory-Decoding'));
 
 %% User-Defined Processing Parameters
 % Define data path here for extracting LFP data
@@ -16,16 +16,20 @@ dataName = 'ClipArt_2';
 
 % Data to Process (1 = "yes"; 0 = "no")
 vizLoop = 1;
-    Hamming = 1;
+    Hamming = 0;
     Hanning = 1;
-    Kaiser = 1;
-    Taylor = 1;
+    Kaiser = 0;
+    Taylor = 0;
+    
+    doBands = 1;
+    doSignals = 0;
+    doSpectrum = 1;
     
 NonTrials = 0;
-ZScore = 0;
+ZScore = 1;
 
 
-intervalVec = [32,52,77];
+intervalVec = [];
 
 % Hardware | Channel Mapping + Sampling Rate
 sChannels = 38; %[1:10, 17:26, 33:42];
@@ -43,9 +47,11 @@ CA3_Channels = 38; %[1:6, 17:22, 33:38];
 % Processing | Binning & Windows
 freqMin = 1;
 freqMax= 150;
-freqBin = 2; % Frequency Bin Width (Hz)
-timeBin = 1/16;  % Time Bin Width (s)
-trialSegmentationWindow = [-5 5];
+freqBin = .5; % Frequency Bin Width (Hz)
+timeBin = .1;  % Time Bin Width (s)
+trialSegmentationWindow = [-1 1];
+
+downSample = 500; % Samples/s
 
 theta = [4 8];
 alpha = [8 12];
@@ -91,6 +97,7 @@ parameters.Filters.lowPass = lowPass;
 parameters.Directories.filePath = filePath;
 parameters.Directories.dataName = dataName;
 parameters.Choices.trialWindow = trialSegmentationWindow;
+parameters.Choices.downSample = downSample;
 parameters.Optional.NonTrials = NonTrials;
 parameters.Optional.ZScore = ZScore;
 parameters.Optional.VizLoop = vizLoop;
@@ -123,6 +130,8 @@ parameters.Choices.freqMax = freqMax;
 parameters.Choices.timeBin = timeBin;
 parameters.Choices.freqBin = freqBin;
 parameters.Choices.intervalVec = intervalVec;
+parameters.Choices.doBands = doBands;
+parameters.Choices.doTypes = [doSignals 2*(doSpectrum)];
 
 
 

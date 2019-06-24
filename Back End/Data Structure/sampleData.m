@@ -2,8 +2,8 @@ function [sampledData] = sampleData(rawData, intervals,parameters)
 
 % This file is used to sample raw data given specified intervals.
 channels = size(rawData,1);
-intervalSize = (intervals(2,2)*parameters.Derived.samplingFreq-intervals(1,2)*parameters.Derived.samplingFreq);
-numIntervals = length(intervals);
+intervalSize = (intervals(2,1)*parameters.Derived.samplingFreq-intervals(1,1)*parameters.Derived.samplingFreq);
+numIntervals = size(intervals,2);
 
 
 
