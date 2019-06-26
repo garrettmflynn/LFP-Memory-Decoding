@@ -1,4 +1,4 @@
-function singlePipeline(neuralData,nexFileData,parameters,sessionLoop)
+function [HHData] = singlePipeline(neuralData,nexFileData,parameters,sessionLoop)
 
 lowPass = parameters.Filters.lowPass;
 notchFilter = parameters.Filters.notchFilter;
@@ -30,7 +30,8 @@ LFP_Trials = sampleData(LFP_Data,parameters.Intervals.Trials,parameters);
 
 % 3. Create spectrograms for full session
 fprintf('Now Creating Spectrograms\n');
-[LFP_Spectrum time] = makeSpectrum(LFP_Data,parameters);
+[LFP_Spectrum time freq] = makeSpectrum(LFP_Data,parameters);
+parameters.Derived.freq = freq;
 
 
 if parameters.Choices.doBands 
@@ -46,7 +47,7 @@ LFP_SampledNT = sampleData(LFP_Data,parameters.Intervals.NonTrials,parameters);
 end
 
 if parameters.Optional.ZScore
-Zstruct = zscore([LFP_Data,LFP_Spectrum],parameters]);
+Zstruct = zscore({LFP_Data,LFP_Spectrum},parameters);
 end
 
 %% Save data structure
@@ -98,6 +99,7 @@ HHData.LFP.Trials = LFP_Trials;
 HHData.LFP.Sampled = LFP_Data(:,1:parameters.Derived.samplingFreq/parameters.Choices.downSample:end); % Downsampled to 500 S/s
 HHData.LFP.Spectrum = LFP_Spectrum;
 HHData.LFP.TimeforSpectra = time;
+HHData.LFP.FreqforSpectra = freq;
 if parameters.Choices.doBands 
 HHData.LFP.Theta.Signal = LFP_Bands.Theta.Signal; 
 HHData.LFP.Theta.Spectrum = LFP_Bands.Theta.Spectrum; 
@@ -131,19 +133,20 @@ parametersTrans.Name = parameters.Directories.dataName;
 
 HHData.Parameters = parametersTrans;
 
-
-fprintf(['Now Looping through Visualization', num2str(parameters.Optional.iteration),'\n']);
-
-   visualizationSuite(HHData,[parameters.Directories.filePath, '\',parameters.Optional.methods{parameters.Optional.iteration},'_',num2str(parameters.Choices.freqBin),'_',num2str(parameters.Choices.timeBin),'_',num2str(round((parameters.Choices.timeBin * parameters.Derived.samplingFreq)/parameters.Derived.overlap))]);
-
-   close all;
+if parameters.Optional.VizLoop
+ fprintf(['Now Looping through Visualization', num2str(parameters.Optional.iteration),'\n']);
+ 
+    visualizationSuite(HHData,fullfile(parameters.Directories.filePath,[parameters.Optional.methods{parameters.Optional.iteration},'_',num2str(parameters.Choices.freqBin),'_',num2str(parameters.Choices.timeBin),'_',num2str(round((parameters.Choices.timeBin * parameters.Derived.samplingFreq)/parameters.Derived.overlap))]));
+ 
+    close all;
+end
    
 if ~parameters.Optional.VizLoop
 fprintf('Now Saving ProcessedData.mat (this might take a while...)\n');
 if nargin == 4
-save([parameters.Directories.filePath, '/', parameters.Directories.dataName, '_processedData_Session',num2str(sessionLoop),'.mat'], 'HHData','-v7.3');
+save(fullfile(parameters.Directories.filePath, [parameters.Directories.dataName, '_processedData_Session',num2str(sessionLoop),'.mat']), 'HHData','-v7.3');
 else
-save([parameters.Directories.filePath, '/', parameters.Directories.dataName, '_processedData.mat'], 'HHData','-v7.3');
+save(fullfile(parameters.Directories.filePath,[parameters.Directories.dataName, '_processedData.mat']), 'HHData','-v7.3');
 end
 end
 

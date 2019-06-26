@@ -1,4 +1,9 @@
 function [] = visualizationSuite(HHData,saveDir)
+
+% Use Contour Plots (!!!)
+%contourf(linspace(HHData.IntervalInformation.Times(1,26),HHData.IntervalInformation.Times(2,26),size(dbconverted,2)),dbconverted,40,'linecolor','none')
+%set(gca,'ytick',round(logspace(log10(frequencies(1)),log10(frequencies(end)),10)*100)/100,'yscale','log','xlim',[-500 1500],'clim',[-12 12])
+
 %% This script is written for building visualizations for recorded Human Hippocampal neural signals.
 % Parameters to Change
 channelsToVisualize = [38]; %HHData.Channels.CA1_Channels;
@@ -24,7 +29,7 @@ for  ii = 1:length(channelsToVisualize)
     indicesToVisualize(ii) = find(HHData.Channels.sChannels == channelsToVisualize(ii));
 end
 
-mkdir([saveDir,'/Intervals']);
+mkdir(fullfile(saveDir,'Intervals'));
 
 
 if ~isfield(HHData.LFP,'Zscore')
@@ -114,7 +119,7 @@ for interval = intervalsToVisualize
                         saveName = ['SignalRaw',num2str(channelsToVisualize(choice)),'Partition',num2str(partition),'.png'];
                     case 2
                         originalSize1 = get(gca, 'Position');
-                        surf(HHData.LFP.TimeforSpectra(indicesToVisualize(choice),:),parameters.Derived.freq,spectralData(:,:,indicesToVisualize(choice)),'EdgeColor','none');axis xy; axis tight; colormap(jet); view(0,90);
+                        surf(HHData.LFP.TimeforSpectra(indicesToVisualize(choice),:),HHData.LFP.FreqforSpectra,spectralData(:,:,indicesToVisualize(choice)),'EdgeColor','none');axis xy; axis tight; colormap(jet); view(0,90);
                         hcb2=colorbar;
                         ylabel(hcb2, 'Power (dB)');
                         caxis(cLims);
@@ -127,7 +132,7 @@ for interval = intervalsToVisualize
                 end
                 
                 
-                saveas(figRaw,[saveDir,'/',saveName]);
+                saveas(figRaw,fullfile(saveDir,saveName));
                 
                 
                 %% Visualization - trial segments without bands
@@ -140,7 +145,7 @@ for interval = intervalsToVisualize
                             xlim(dataAx,int);
                             delete(sText);
                             sText = text( -.25,.6,['Interval ' num2str(interval)],'Units','Normalized','FontSize',30,'FontWeight','bold');
-                            saveas(figRaw,[saveDir,'/Intervals/Spectrum',num2str(interval),'FullRange.png']);
+                            saveas(figRaw,fullfile(saveDir,'Intervals',['Spectrum',num2str(interval),'FullRange.png']));
                         end
                         
                         if type == 1
@@ -171,7 +176,7 @@ for interval = intervalsToVisualize
                             xticklabels(cellstr(num2str((newTicks/parameters.Derived.samplingFreq)')));
                             delete(sText);
                             sText = text( -.25,.6,['Interval ' num2str(interval)],'Units','Normalized','FontSize',30,'FontWeight','bold');
-                            saveas(figRaw,[saveDir,'/Intervals/Signal',num2str(interval),'FullRange.png']);
+                            saveas(figRaw,fullfile(saveDir,'Intervals',['Signal',num2str(interval),'FullRange.png']));
                             
                         end
                     end
@@ -213,7 +218,7 @@ for interval = intervalsToVisualize
                             saveName = ['Signal',nameBands{band},num2str(channelsToVisualize(choice)),'Partition',num2str(partition),'.png'];
                         case 2
                             originalSize1 = get(gca, 'Position');
-                            surf(HHData.LFP.TimeforSpectra(indicesToVisualize(choice),:),parameters.Derived.freq,spectralData(:,:,indicesToVisualize(choice)),'EdgeColor','none');axis xy; axis tight; colormap(jet); view(0,90);
+                            surf(HHData.LFP.TimeforSpectra(indicesToVisualize(choice),:),HHData.LFP.FreqforSpectra,spectralData(:,:,indicesToVisualize(choice)),'EdgeColor','none');axis xy; axis tight; colormap(jet); view(0,90);
                         hcb2=colorbar;
                         ylabel(hcb2, 'Power (dB)');
                             ylim(Bands(band,:));
@@ -227,7 +232,7 @@ for interval = intervalsToVisualize
                             saveName = ['Spectrum',nameBands{band},num2str(channelsToVisualize(choice)),'Partition',num2str(partition),'.png'];
                     end
                     
-                    saveas(figBands,[saveDir,'/',saveName]);
+                    saveas(figBands,fullfile(saveDir,saveName));
                     
                     
                     
@@ -266,7 +271,7 @@ for interval = intervalsToVisualize
                                 xticklabels(cellstr(num2str((newTicks/parameters.Derived.samplingFreq)')));
                                 delete(btext);
                                 btext = text( -.25,.6,[nameBands{band},' ',num2str(interval)],'Units','Normalized','FontSize',30,'FontWeight','bold');
-                                saveas(figBands,[saveDir,'/Intervals/Signal',num2str(interval),erase(saveName,'Partition1')]);
+                                saveas(figBands,fullfile(saveDir,'Intervals',['Signal',num2str(interval),erase(saveName,'Partition1')]));
                             end
                     end
                  end

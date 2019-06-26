@@ -12,7 +12,7 @@ parameters = loadParameters();
 neuralData = extractNSx(parameters.Directories.filePath,parameters.Directories.dataName); % Fixed for all .nsX files
 
 % Spike and Experimental Behavioral Data collectred from DMS memory task
-nexFileData = readNexFile([parameters.Directories.filePath, '\', parameters.Directories.dataName, '.nex']);
+nexFileData = readNexFile(fullfile(parameters.Directories.filePath,[parameters.Directories.dataName, '.nex']));
 
 %% Choose Appropriate Pipeline
 if size(neuralData.Data,1) == 1
@@ -34,7 +34,7 @@ else
         
         [HHData] = singlePipeline(neuralData,nexFileData,parameters);
         
-        fprintf('Now Visualizing All Specified Channels\n');
+        fprintf('Done\n');
         
         
 %% Only For Visualization Loop Where Windowing is Experimented With

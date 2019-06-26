@@ -3,13 +3,13 @@ function [parameters] = loadParameters(parameters, samplingFreq,sessionPointLeng
 % readNexFile.m: BlackRock toolbox NMPK 
 % nexManipulation.m: Supplied by Xiwei
 
-addpath(genpath('D:\NPMK'));
-addpath(genpath('D:\Standardized_LFP_Code\Back End\nexManipulation'));
-addpath(genpath('C:\SuperUser\Documents\GitHub\LFP-Memory-Decoding'));
+addpath(genpath('/Volumes/Samsung USB/NPMK'));
+addpath(genpath('/Users/GarrettFlynn/Documents/Github/LFP-Memory-Decoding/Back End/nexManipulation'));
+addpath(genpath('/Users/GarrettFlynn/Documents/Github/LFP-Memory-Decoding'));
 
 %% User-Defined Processing Parameters
 % Define data path here for extracting LFP data
-filePath = strcat('D:\ClipArt_2');
+filePath = strcat('/Volumes/Samsung USB/ClipArt_2');
 
 % Choose the testing data 
 dataName = 'ClipArt_2';
@@ -21,12 +21,12 @@ vizLoop = 1;
     Kaiser = 0;
     Taylor = 0;
     
-    doBands = 1;
+    doBands = 0;
     doSignals = 0;
     doSpectrum = 1;
     
 NonTrials = 0;
-ZScore = 1;
+ZScore = 0;
 
 
 intervalVec = [];
@@ -45,11 +45,12 @@ CA3_Channels = 38; %[1:6, 17:22, 33:38];
 % Channel #39-42  was implanted in RIGHT CA1 Posterior, in which channel #39-40 were in the same depth and #41-42 in another depth.
 
 % Processing | Binning & Windows
+spectrumMethod = 'Morlet'; % Either Morlet or STFT
 freqMin = 1;
 freqMax= 150;
 freqBin = .5; % Frequency Bin Width (Hz)
 timeBin = .1;  % Time Bin Width (s)
-trialSegmentationWindow = [-1 1];
+trialSegmentationWindow = [-5 5];
 
 downSample = 500; % Samples/s
 
@@ -103,6 +104,7 @@ parameters.Optional.ZScore = ZScore;
 parameters.Optional.VizLoop = vizLoop;
 
 methodsCount = 1;
+if strncmp(spectrumMethod,'STFT',4)
     if Hamming
         methodsToTest(1) = 1;
         parameters.Optional.methods{methodsCount} = 'Hamming';
@@ -123,6 +125,10 @@ methodsCount = 1;
         parameters.Optional.methods{methodsCount} = 'Taylor';
         methodsCount = methodsCount + 1;
     end
+else
+    parameters.Optional.methods{1} = spectrumMethod;
+    methodsToTest(1) = 1;
+end
     
 parameters.Optional.methodsToTest = methodsToTest;
 parameters.Choices.freqMin = freqMin;
