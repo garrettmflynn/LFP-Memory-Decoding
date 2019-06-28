@@ -1,4 +1,4 @@
-function [dataIntervals,intervalMatrix] = makeIntervals(data,centerEventVector,trialSegmentationWindow,samplingFreq)
+function [dataIntervals,intervalMatrix] = makeIntervals(data,centerEventVector,trialSegmentationWindow,sampling)
 % This file is used to generate interval windows for data processing
 
 
@@ -11,7 +11,7 @@ intervals(:,2) = tempIntervals(:,1) + trialSegmentationWindow(2);
 intervalMatrix = (intervals');
 
 %% Extract Intervals from Supplied Data
-dataIntervals = sampleData(data,intervalMatrix,samplingFreq);
+dataIntervals = sampleData(data,intervalMatrix,sampling);
 
 
 end

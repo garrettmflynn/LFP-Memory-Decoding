@@ -85,6 +85,7 @@ parametersTrans.Choices = parameters.Choices;
 HHData.Session = parameters.Directories.dataName;
 parametersTrans.SamplingFrequency = parameters.Derived.samplingFreq;
 parametersTrans.SpectrumFrequencies = freq;
+parametersTrans.SpectrumTime = time;
 HHData.Data.Parameters = parametersTrans;
 
 

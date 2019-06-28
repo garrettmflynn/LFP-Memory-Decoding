@@ -4,13 +4,12 @@
 % Date: 2019 June 14
 
 %% Agreed-Upon Parameters
-parameters.Channels.sChannels = [7,38]; %[1:10, 17:26, 33:42];
-parameters.Channels.CA1_Channels = [7]; %[7:10, 23:26, 39:42];
-parameters.Channels.CA3_Channels = [38]; %[1:6, 17:22, 33:38];
+parameters.Channels.sChannels = [1:10, 17:26, 33:42];
+parameters.Channels.CA1_Channels = [7:10, 23:26, 39:42];
+parameters.Channels.CA3_Channels = [1:6, 17:22, 33:38];
 
 % Processing | Binning & Windows
-parameters.Optional.methods = 'Morlet'; % Either Morlet or STFT Window (such as Hanning)
-parameters.Optional.normMethod = 'dB'; % Either dB, Percent, or ZScore
+parameters.Optional.methods = 'Hanning'; % Either Morlet or STFT Window (such as Hanning)
 parameters.Choices.freqMin = 1; % Minimum Frequency of Interest (Hz)
 parameters.Choices.freqMax = 150; % Maximum Frequency of Interest (Hz)
 parameters.Choices.freqBin = .5; % Frequency Bin Width (Hz)

@@ -15,24 +15,24 @@ switch method
     case 'Hamming'
             [s,f,t, PSDs, fc, tc] = spectrogram(inputData(channels,:),hamming(winSize),overlap,freq, parameters.Derived.samplingFreq,'yaxis');
             spectrum(:,:,channels) = (10*log10(PSDs)).*freq';
-            time(channels,:) = t;
+            time = t;
         
         %spectrogram(HHData.LFP.Sampled(:,:,1),hamming(winSize),overlap,freq,parameters.Derived.samplingFreq,'yaxis');
         
     case 'Hanning'
             [s,f,t, PSDs, fc, tc] = spectrogram(inputData(channels,:),hann(winSize),overlap,freq, parameters.Derived.samplingFreq,'yaxis');
             spectrum(:,:,channels) = PSDs;
-            time(channels,:) = t;
+            time = t;
         
     case 'Kaiser'
             [s,f,t, PSDs, fc, tc] = spectrogram(inputData(channels,:),kaiser(winSize),overlap,freq, parameters.Derived.samplingFreq,'yaxis');
             spectrum(:,:,channels) = (10*log10(PSDs)).*freq';
-            time(channels,:) = t;
+            time = t;
         
     case 'Taylor'
             [s,f,t, PSDs, fc, tc] = spectrogram(inputData(channels,:),taylorwin(winSize),overlap,freq, parameters.Derived.samplingFreq,'yaxis');
             spectrum(:,:,channels) = (10*log10(PSDs)).*freq';
-            time(channels,:) = t;
+            time = t;
 end
 end
 
@@ -54,7 +54,7 @@ n_wavelet     = length(time);
 n_data        = size(inputData,2);
 n_convolution = n_wavelet+n_data-1;
 n_conv_pow2   = pow2(nextpow2(n_convolution));
-wavelet_cycles= 8;
+wavelet_cycles= 12;
 
 
 % initialize output time-frequency data

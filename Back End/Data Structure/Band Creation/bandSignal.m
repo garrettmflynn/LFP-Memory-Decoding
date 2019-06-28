@@ -1,6 +1,12 @@
 function [Signal_Bands] = bandSignal(fullSignal,SpectrumFrequencies,samplingFreq)
 
-bandParams(SpectrumFrequencies);
+spectralParameters = bandParams(SpectrumFrequencies);
+
+theta = spectralParameters.Theta;
+alpha = spectralParameters.Alpha;
+beta = spectralParameters.Beta;
+lowGamma = spectralParameters.Gamma_L;
+highGamma = spectralParameters.Gamma_H;
 
 
 Signal_Bands.Theta.Signal =  (bandpass(fullSignal',theta,samplingFreq))';
