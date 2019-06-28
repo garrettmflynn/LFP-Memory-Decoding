@@ -1,21 +1,33 @@
-function [sampledData] = sampleData(rawData, intervals,parameters)
+function [sampledData] = sampleData(data, intervals,samplingFreq)
 
-% This file is used to sample raw data given specified intervals.
-channels = size(rawData,1);
-intervalSize = (intervals(2,1)*parameters.Derived.samplingFreq-intervals(1,1)*parameters.Derived.samplingFreq);
+freqs = size(data,1);
+
+if ndims(data) == 3
+channels = size(data,3);
+else
+    channels = 1
+end
+
+intervalSize = (intervals(2,1)*samplingFreq-intervals(1,1)*samplingFreq);
 numIntervals = size(intervals,2);
 
-
-
-sampledData = zeros(channels,intervalSize,numIntervals);
-
+sampledData = NaN(freqs,intervalSize,channels,numIntervals);
 
 for q = 1:numIntervals
-    start = round((intervals(1,q)*parameters.Derived.samplingFreq)+1);
-    stop = round((intervals(2,q)*parameters.Derived.samplingFreq)+1);
-
+    start = round((intervals(1,q)*samplingFreq)+1);
+    stop = round((intervals(2,q)*samplingFreq)+1);
+    
+%% If Data is Time-Frequency
+if ndims(data) == 3
 if ~(start == stop)
-    sampledData(:,:,q) = rawData(:,start:(stop-1));
+    sampledData(:,:,:,q) = data(:,start:(stop-1),:);
+end
+
+%% If Data is Time-Series
+else
+if ~(start == stop)
+    sampledData(:,:,q) = data(:,start:(stop-1));
+end
 end
 end
 end

@@ -3,38 +3,23 @@ function [parameters] = loadParameters(parameters, samplingFreq,sessionPointLeng
 % readNexFile.m: BlackRock toolbox NMPK 
 % nexManipulation.m: Supplied by Xiwei
 
-addpath(genpath('/Volumes/Samsung USB/NPMK'));
-addpath(genpath('/Users/GarrettFlynn/Documents/Github/LFP-Memory-Decoding/Back End/nexManipulation'));
-addpath(genpath('/Users/GarrettFlynn/Documents/Github/LFP-Memory-Decoding'));
+addpath(genpath('E:\NPMK'));
+addpath(genpath('E:\Standardized_LFP_Code\Back End\nexManipulation'));
+addpath(genpath('C:\SuperUser\Documents\GitHub\LFP-Memory-Decoding'));
 
 %% User-Defined Processing Parameters
 % Define data path here for extracting LFP data
-filePath = strcat('/Volumes/Samsung USB/ClipArt_2');
+filePath = strcat('E:\ClipArt_2');
 
 % Choose the testing data 
 dataName = 'ClipArt_2';
 
-% Data to Process (1 = "yes"; 0 = "no")
-vizLoop = 1;
-    Hamming = 0;
-    Hanning = 1;
-    Kaiser = 0;
-    Taylor = 0;
-    
-    doBands = 0;
-    doSignals = 0;
-    doSpectrum = 1;
-    
-NonTrials = 0;
-ZScore = 0;
-
-
 intervalVec = [];
 
 % Hardware | Channel Mapping + Sampling Rate
-sChannels = 38; %[1:10, 17:26, 33:42];
+sChannels = [38,40]; %[1:10, 17:26, 33:42];
 CA1_Channels = [];%[7:10, 23:26, 39:42];
-CA3_Channels = 38; %[1:6, 17:22, 33:38];
+CA3_Channels = [38,40]; %[1:6, 17:22, 33:38];
 
 % For ClipArt_2:
 % Channel #1-6 was implanted in LEFT CA3 Anterior, in which channel #1-3 were in the same depth and #4-6 in another depth. 
@@ -46,11 +31,12 @@ CA3_Channels = 38; %[1:6, 17:22, 33:38];
 
 % Processing | Binning & Windows
 spectrumMethod = 'Morlet'; % Either Morlet or STFT
+normalizationMethod = 'dB'; % Either dB, Percent, or ZScore
 freqMin = 1;
 freqMax= 150;
 freqBin = .5; % Frequency Bin Width (Hz)
 timeBin = .1;  % Time Bin Width (s)
-trialSegmentationWindow = [-5 5];
+trialSegmentationWindow = [-1 1];
 
 downSample = 500; % Samples/s
 
@@ -131,6 +117,7 @@ else
 end
     
 parameters.Optional.methodsToTest = methodsToTest;
+parameters.Optional.normMethod = normalizationMethod;
 parameters.Choices.freqMin = freqMin;
 parameters.Choices.freqMax = freqMax;
 parameters.Choices.timeBin = timeBin;
@@ -155,42 +142,21 @@ parameters.Derived.overlap = round((parameters.Choices.timeBin * parameters.Deri
 
 for ii = 1:2
 [minValue,closestIndex] = min(abs(parameters.Derived.freq-theta(ii)'));
-if parameters.Derived.freq(closestIndex) > theta(ii) && ii == 1
-parameters.SpectralAnalysis.Theta(ii) = parameters.Derived.freq(closestIndex-1);
-elseif parameters.Derived.freq(closestIndex) < theta(ii) && ii == 2
-parameters.SpectralAnalysis.Theta(ii) = parameters.Derived.freq(closestIndex+1);
-else
     parameters.SpectralAnalysis.Theta(ii) = parameters.Derived.freq(closestIndex);
-end
+
 
 [minValue,closestIndex] = min(abs(parameters.Derived.freq-alpha(ii)'));
-if parameters.Derived.freq(closestIndex) > alpha(ii) && ii == 1
-parameters.SpectralAnalysis.Alpha(ii) = parameters.Derived.freq(closestIndex-1);
-elseif parameters.Derived.freq(closestIndex) < alpha(ii) && ii == 2
-parameters.SpectralAnalysis.Alpha(ii) = parameters.Derived.freq(closestIndex+1);
-else
     parameters.SpectralAnalysis.Alpha(ii) = parameters.Derived.freq(closestIndex);
-end
+
 
 [minValue,closestIndex] = min(abs(parameters.Derived.freq-beta(ii)'));
-if parameters.Derived.freq(closestIndex) > beta(ii) && ii == 1
-parameters.SpectralAnalysis.Beta(ii) = parameters.Derived.freq(closestIndex-1);
-elseif parameters.Derived.freq(closestIndex) < beta(ii) && ii == 2
-parameters.SpectralAnalysis.Beta(ii) = parameters.Derived.freq(closestIndex+1);
-else
-    parameters.SpectralAnalysis.Beta(ii) = parameters.Derived.freq(closestIndex);
-end
+ parameters.SpectralAnalysis.Beta(ii) = parameters.Derived.freq(closestIndex);
+
 
 
 
 [minValue,closestIndex] = min(abs(parameters.Derived.freq-lowGamma(ii)'));
-if parameters.Derived.freq(closestIndex) > lowGamma(ii) && ii == 1
-parameters.SpectralAnalysis.Gamma_L(ii) = parameters.Derived.freq(closestIndex-1);
-elseif parameters.Derived.freq(closestIndex) < lowGamma(ii) && ii == 2
-parameters.SpectralAnalysis.Gamma_L(ii) = parameters.Derived.freq(closestIndex+1);
-else
     parameters.SpectralAnalysis.Gamma_L(ii) = parameters.Derived.freq(closestIndex);
-end
 
 
 
@@ -199,13 +165,7 @@ if freqMax < highGamma(2)
 end
 
 [minValue,closestIndex] = min(abs(parameters.Derived.freq-highGamma(ii)'));
-if parameters.Derived.freq(closestIndex) > highGamma(ii) && ii == 1
-parameters.SpectralAnalysis.Gamma_H(ii) = parameters.Derived.freq(closestIndex-1);
-elseif parameters.Derived.freq(closestIndex) < highGamma(ii) && ii == 2
-parameters.SpectralAnalysis.Gamma_H(ii) = parameters.Derived.freq(closestIndex+1);
-else
     parameters.SpectralAnalysis.Gamma_H(ii) = parameters.Derived.freq(closestIndex);
-end
 
 
 end
