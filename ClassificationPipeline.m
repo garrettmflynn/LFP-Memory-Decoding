@@ -20,8 +20,8 @@ norm = 1;
 add_bands = 0;
 PCA = 0;
 
-SINGLE_CHANNEL_ANALYSIS = 1;
-MULTI_CHANNEL_ANALYSIS = 0; 
+SINGLE_CHANNEL_ANALYSIS = 0;
+MULTI_CHANNEL_ANALYSIS = 1; 
 CHOICE_CHANNEL_ANALYSIS = 0;
 
 K_MEANS = 1;
@@ -42,9 +42,6 @@ if norm
     HHData.Data.Normalized = normalize({HHData.Data.LFP.LFP, HHData.Data.LFP.Spectrum},'STFT','ZScore');
     [HHData.ML.Data] = makeIntervals(HHData.Data.Normalized.Spectrum,HHData.Events.SAMPLE_RESPONSE,HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SpectrumTime);
 end
-    
-    
-    
     
 if add_bands
     % Add Bands
@@ -96,18 +93,8 @@ methodML = [SINGLE_CHANNEL_ANALYSIS MULTI_CHANNEL_ANALYSIS CHOICE_CHANNEL_ANALYS
     if K_MEANS
     % Do KMeans Clustering
     [dataML] = kMeansClustering(dataML,methodML);
+    [confidence,dominantClusters] = parseClusterAssignments(dataML, methodML);
     end
-
-
-    
-    
-    %timeForSpectra = linspace(HHData.start,HHData.end,length(HHData.LFP.Downsampled))
-    %freq = linspace(HHData.Parameters.Choices.freqMin,HHData.Parameters.Choices.freqMax,size(spectralData,1));
-    
-    
-    
-    
-    
     
     
     

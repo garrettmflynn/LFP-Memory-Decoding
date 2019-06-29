@@ -9,8 +9,8 @@ function [consistentGroups] = prevalenceDetection(prevalenceAcrossX, threshold);
 % clustered with such an interval (if such clustering occurs MORE THAN the
 % specified threshold.
 
-for q = 1:90
-consistentGroups{q}= find(prevalenceAcrossX(:,q) > threshold)
+for q = 1:size(prevalenceAcrossX,1)
+consistentGroups{q} = find(prevalenceAcrossX(:,q) > threshold);
 end
 
 end
