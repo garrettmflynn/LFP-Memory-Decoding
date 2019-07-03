@@ -16,15 +16,20 @@ parameters.Directories.filePath = strcat('E:\ClipArt_2');
 % Choose the testing data
 parameters.Directories.dataName = 'ClipArt_2';
 
-norm = 1;
-add_bands = 0;
-PCA = 0;
 
-SINGLE_CHANNEL_ANALYSIS = 0;
-MULTI_CHANNEL_ANALYSIS = 1; 
+%% Structure Parameters
+norm = 0;
+add_bands = 0;
+
+%% Classification Parameters
+SINGLE_CHANNEL_ANALYSIS = 1;
+MULTI_CHANNEL_ANALYSIS = 0; 
 CHOICE_CHANNEL_ANALYSIS = 0;
 
 K_MEANS = 1;
+normal = 1;
+    PCA = 1;
+        coeffs_to_retain = 5
 
 
 %% Create Data Structure
@@ -34,8 +39,17 @@ HHDataStructure();
     
     %% Process Data
     
-    % Extract Intervals Around SAMPLE_RESPONSE
-[HHData.ML.Data, HHData.ML.Times] = makeIntervals(HHData.Data.LFP.Spectrum,HHData.Events.SAMPLE_RESPONSE,HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SpectrumTime); 
+% Extract Intervals Around SAMPLE_RESPONSE
+[HHData.ML.Data, HHData.ML.Times] = makeIntervals(HHData.Data.LFP.Spectrum,HHData.Events.SAMPLE_RESPONSE,HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SpectrumTime);
+[HHData.Data.Intervals.Signal,~] = makeIntervals(HHData.Data.LFP.LFP,HHData.Events.SAMPLE_RESPONSE,HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SamplingFrequency); 
+
+% Visualize Quickly
+% for interval = [26] %1:size(HHData.Intervals.Data,ndims(HHData.Intervals.Data))
+%     for channel = [38] %1:size(HHData.RawData,1)
+%             standardImage(HHData.ML.Data(:,:,(HHData.Channels.sChannels == channel),interval),HHData.Events,HHData.Data.Parameters, HHData.Data.Parameters.Choices.downSample, ['Spectrum_Interval' ,num2str(interval)], channel,interval,HHData.ML.Times(:,interval),'dB', [-100 100], fullfile(parameters.Directories.filePath,'Intervals',['Channel',num2str(channel)]), 'Spectrum',1);
+%     end
+% end
+
 
 if norm
     % Do Normalization
@@ -46,9 +60,11 @@ end
 if add_bands
     % Add Bands
     fprintf('Now Creating Band Data\n');
-    HHData.Data.Bands.Signal_Bands = bandSignal(HHData.Data.LFP.LFP,HHData.Data.Parameters.SpectrumFrequencies,HHData.Data.Parameters.SamplingFrequency);
-    HHData.Data.Bands.Spectral_Bands =bandSpectrum(HHData.Data.Intervals.Normalized,HHData.Data.Parameters.SpectrumFrequencies);
+    HHData.Data.Bands.Signal_Bands = bandSignal(HHData.Data.Intervals.Signal,HHData.Data.Parameters.SpectrumFrequencies,HHData.Data.Parameters.SamplingFrequency);
+    HHData.Data.Bands.Spectral_Bands =bandSpectrum(HHData.ML.Data,HHData.Data.Parameters.SpectrumFrequencies);
 end
+
+
 
 %% Save Data
 fprintf('Now Saving ProcessedData.mat (this might take a while...)\n');
@@ -69,11 +85,13 @@ load(fullfile('C:\SuperUser\Xiwei Results',[parameters.Directories.dataName, '_p
 % But Only Keep A Small Part
 dataML.Data = HHData.ML.Data;
 dataML.Channels = HHData.Channels;
-dataML.Directory = parameters.Directories.filePath
+dataML.Directory = parameters.Directories.filePath;
 clear HHData
 end
 
 %% Process Data for Classification THEN Classify
+methodML = [SINGLE_CHANNEL_ANALYSIS MULTI_CHANNEL_ANALYSIS CHOICE_CHANNEL_ANALYSIS];
+
 % Reshape Matrices
 temp = dataML.Data;
 dataML.Data = [];
@@ -81,20 +99,30 @@ dataML.Data = [];
 for channels = 1:size(temp,3)
 dataML.Data(:,:,channels) = reshape(permute(squeeze(temp(:,:,channels,:)),[3,2,1]),size(temp,4),size(temp,2)*size(temp,1));
 end
-
-if PCA
-% Do PCA (not yet)
-
-
+%% Do KMeans Clustering
+if K_MEANS
+    
+% Do Normal KMeans
+if normal
+[dataML] = kMeansClustering(dataML,methodML);
+[F1,MCC,dominantClusters] = parseClusterAssignments(dataML, methodML);
 end
 
-methodML = [SINGLE_CHANNEL_ANALYSIS MULTI_CHANNEL_ANALYSIS CHOICE_CHANNEL_ANALYSIS];
+% Do KMeans on PCA
+if PCA
     
-    if K_MEANS
-    % Do KMeans Clustering
-    [dataML] = kMeansClustering(dataML,methodML);
-    [confidence,dominantClusters] = parseClusterAssignments(dataML, methodML);
-    end
+for channel = 1:length(dataML.Channels.sChannels)
+[coeffs(:,:,channel),score(:,:,channel),~,~,explained(:,:,channel),~] = pca(dataML.Data(:,:,channel));
+% plot(explained(:,:,channel));
+% title(['channel = ', num2str(dataML.Channels.sChannels(channel))])
+end
+dataML.PCA = score(:,1:coeffs_to_retain,:);
+
+[dataML] = kMeansClustering(dataML,methodML);
+[F1_PCA,MCC_PCA,dominantClusters_PCA] = parseClusterAssignments(dataML, methodML);
+end
+
+end
     
     
     

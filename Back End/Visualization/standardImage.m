@@ -1,13 +1,16 @@
-function [] = standardImage(data, allEvents,parameters, samplingFreq, dataName, channelNumber,intervalNumber,intervalTimes,colorUnit, lims, saveDir, whichtypes,logSignal)
+function [] = standardImage(data, allEvents,parameters, samplingFreq, dataName, channelNumber,intervalNumber,intervalTimes,colorUnit, lims, saveDir, whichtypes,logSignal,band)
 
+if nargin < 14
+    band = 'Signal';
+end
 
 %% This script is written for building visualizations of recorded Human Hippocampal neural signals.
 % Parameters to Load and/or Derive
 if strncmpi(whichtypes,'Signal',4)
     types = 1;
     vlims = lims;
-    dataSignalRaw = data{1};
-    dataSignalLFP = data{2};
+    %dataSignalRaw = data{1};
+    dataSignalLFP = data;
 elseif strncmpi(whichtypes,'Spectrum',4)
     types = 2;
     clims = lims;
@@ -22,28 +25,25 @@ end
 for type = types
     %% Initialize Figures
     figRaw = figure('Position',[50 50 1700 800],'visible','off');
-    rastAx(1) = subplot(15,8,[2:8,10:16,18:24]);
+    rastAx(1) = subplot(15,8,[98:104,106:112,114:120]);
     rasterEvents(allEvents);
     xlim(intervalTimes);
     
-    dataAx = subplot(15,8,[26:32,34:40,42:48,50:56,58:64,66:72,74:80,82:88,90:96,98:104,106:112,114:120]);
+    dataAx = subplot(15,8,[2:8,10:16,18:24,26:32,34:40,42:48,50:56,58:64,66:72,74:80,82:88]);
     
     switch type
         case 1
-            h(1) = plot(dataSignalRaw(choice,:),'k');hold on;
-            h(2) = plot(dataSignalLFP(choice,:),'c');
+            %h(1) = plot(dataSignalRaw(:,:),'k');hold on;
+            h(2) = plot(dataSignalLFP(:,:),'k');
             ylabel('Voltage'); ylim(vlims)
-            xT = xticks;
-            xticklabels(cellstr(num2str((xT/samplingFreq)')));
-            xlabel('Time (seconds)');
-            sText = text( -.25,.6,'Session Raw','Units','Normalized','FontSize',30,'FontWeight','bold');
+            xticks([]);
             text( -.25,.5,['Channel ', num2str(channelNumber)],'Units','Normalized','FontSize',15);
-            sText = text( -.25,.6,['Spectrum' num2str(intervalNumber)],'Units','Normalized','FontSize',30,'FontWeight','bold');
+            sText = text( -.25,.6,[band num2str(intervalNumber)],'Units','Normalized','FontSize',30,'FontWeight','bold');
         saveas(figRaw,fullfile(saveDir,[dataName, '.png']));
             
-            cols = cell2mat(get(h, 'color'));
-            [~, uidx] = unique(cols, 'rows', 'stable');
-            legend(h(uidx), {'Raw Signal' 'LFP Signal'});
+            %cols = cell2mat(get(h, 'color'));
+            %[~, uidx] = unique(cols, 'rows', 'stable');
+            %legend(h(uidx), {'Raw Signal' 'LFP Signal'});
         case 2
             originalSize1 = get(gca, 'Position');
             

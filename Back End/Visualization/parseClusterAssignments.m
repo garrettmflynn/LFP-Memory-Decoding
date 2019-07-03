@@ -1,4 +1,4 @@
-function[confidence , dominantClusters] = parseClusterAssignments(dataML, methodML)
+function[F1,MCC, dominantClusters] = parseClusterAssignments(dataML, methodML)
 
 channelVec = dataML.Channels.sChannels;
 sessionDir = dataML.Directory;
@@ -38,8 +38,8 @@ end
                 end
 
                 % Correctness Calculations
-                confidence(channel,kVal) = correctnessIndex(prevalenceAcrossIters,intervalRange(end),kVal);
-                dominantClusters{channel,kVal} = prevalenceDetection(prevalenceAcrossIters, 0);
+                [F1(channel,kVal),MCC(channel,kVal)] = correctnessIndex(prevalenceAcrossIters,intervalRange(end),kVal);
+                dominantClusters{channel,kVal} = prevalenceDetection(prevalenceAcrossIters, 20);
                 
                 
                 channelCo = channelCo + 1;
@@ -70,8 +70,8 @@ end
             
                 
          % Correctness Calculations
-         confidence(kVal) = correctnessIndex(prevalenceAcrossIters,intervalRange(end),kVal);
-          dominantClusters{kVal} = prevalenceDetection(prevalenceAcrossIters, 0);
+         [F1(kVal) MCC(kVal)] = correctnessIndex(prevalenceAcrossIters,intervalRange(end),kVal);
+          dominantClusters{kVal} = prevalenceDetection(prevalenceAcrossIters, 25);
                        
                 
         end

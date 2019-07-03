@@ -4,14 +4,19 @@ function [MLData] = kMeansClustering(MLData,methodML)
 
 distanceMethod = 'cosine';
 kRange = 3:6;
-sIters = 1;
+sIters = 25;
 intervalFilter = []; %[1,3,4,5,6,8,9,12,14] % Keep empty to process all
 
 maxK = kRange(end);
 
 channelVec = MLData.Channels.sChannels;
 sessionDir = MLData.Directory;
+
+if ~isfield(MLData,'PCA')
 IDCMatrix = MLData.Data;
+else
+IDCMatrix = MLData.PCA;
+end
 
 %% Begin K-Means Clustering
 if isempty(intervalFilter)
