@@ -3,7 +3,7 @@ function [clusterIndices] = kMeansClustering(MLData,methodML)
 %% Important Variable Derivation
 
 distanceMethod = 'cosine';
-kRange = 5;
+kRange = 3:6;
 sIters = 10;
 intervalFilter = []; %[1,3,4,5,6,8,9,12,14] % Keep empty to process all
 

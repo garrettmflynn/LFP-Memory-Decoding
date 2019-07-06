@@ -7,7 +7,7 @@ data = clusters;
 % Load Correct Labels and Bounds
 
         intervalRange = 1:size(data,1);
-        kRange = 5;
+        kRange = 3:6;
         iterations = size(data,3);
         label = 'Trial';    
 
