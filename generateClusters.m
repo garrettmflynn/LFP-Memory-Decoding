@@ -104,7 +104,7 @@ end
 % But Only Keep A Small Part
 dataML.Data = HHData.ML.Data;
 dataML.Channels = HHData.Channels;
-dataML.Directory = parameters.Directories.filePath
+dataML.Directory = parameters.Directories.filePath;
 clear HHData
 
 
