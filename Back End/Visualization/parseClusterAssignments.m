@@ -1,12 +1,8 @@
-function[F1,MCC, dominantClusters] = parseClusterAssignments(dataML, methodML)
+function[F1,MCC, dominantClusters,prevalence] = parseClusterAssignments(dataML, clusters,methodML)
 
 channelVec = dataML.Channels.sChannels;
 sessionDir = dataML.Directory;
-if methodML(1)
-data = dataML.KMeans.SCA;
-elseif methodML(2) 
-    data = dataML.KMeans.MCA;
-end
+data = clusters;
 
 % Load Correct Labels and Bounds
 
@@ -17,7 +13,6 @@ end
 
     if methodML(1)
         prevalenceAcrossK = zeros(intervalRange(end),intervalRange(end));
-        kCount = 1;
         for kVal = kRange
             prevalenceAcrossChannels = zeros(intervalRange(end),intervalRange(end));
             channelCo = 1;
@@ -39,16 +34,13 @@ end
 
                 % Correctness Calculations
                 [F1(channel,kVal),MCC(channel,kVal)] = correctnessIndex(prevalenceAcrossIters,intervalRange(end),kVal);
-                dominantClusters{channel,kVal} = prevalenceDetection(prevalenceAcrossIters, 20);
+                dominantClusters{channel,kVal} = prevalenceDetection(prevalenceAcrossIters, 5);
                 
+                prevalence{channel,kVal} = prevalenceAcrossIters;
                 
                 channelCo = channelCo + 1;
             end
-        
-        kCount = kCount + 1;
-        
         end
-        
     end
     
  
@@ -57,7 +49,6 @@ end
             clusterAssignments = data(:,:,:);
     
         prevalenceAcrossK = zeros(intervalRange(end),intervalRange(end));
-        kCount = 1;
         for kVal = kRange
             prevalenceAcrossIters = zeros(intervalRange(end),intervalRange(end));
             for nIters = 1:iterations
@@ -71,7 +62,9 @@ end
                 
          % Correctness Calculations
          [F1(kVal) MCC(kVal)] = correctnessIndex(prevalenceAcrossIters,intervalRange(end),kVal);
-          dominantClusters{kVal} = prevalenceDetection(prevalenceAcrossIters, 25);
+          dominantClusters{kVal} = prevalenceDetection(prevalenceAcrossIters, 5);
+          
+          prevalence{kVal} = prevalenceAcrossIters;
                        
                 
         end

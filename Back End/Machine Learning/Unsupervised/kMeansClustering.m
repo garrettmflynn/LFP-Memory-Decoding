@@ -1,10 +1,10 @@
-function [MLData] = kMeansClustering(MLData,methodML)
+function [clusterIndices] = kMeansClustering(MLData,methodML)
 
 %% Important Variable Derivation
 
 distanceMethod = 'cosine';
-kRange = 3:6;
-sIters = 25;
+kRange = 5;
+sIters = 10;
 intervalFilter = []; %[1,3,4,5,6,8,9,12,14] % Keep empty to process all
 
 maxK = kRange(end);
@@ -42,7 +42,7 @@ if methodML(1)
                     [idx,means,sumd] = kmeans(IDCMatrix(intervalFilter,:,channel),k,'Distance',distanceMethod);
                     for i = 1:max(idx)
                         clusterBuddies = find(idx==i);
-                        MLData.KMeans.SCA(:,k,nIters,channel) = idx;
+                        clusterIndices(:,k,nIters,channel) = idx;
                     end
                     
                     subplot(1,2,1);[sil,h] = silhouette(IDCMatrix(intervalFilter,:,channel),idx,distanceMethod);hold on;
@@ -88,12 +88,9 @@ if methodML(1)
 end
 
 if methodML(2)
-    IDMatrix = [];
-    for nIters = sIters
-        for channels = 1:length(channelVec)
-        IDMatrix = [IDMatrix IDCMatrix(intervalFilter,:,channels)]; % Concatenate Channels AND Remove Intervals
-        end
-        
+    IDMatrix = IDCMatrix;
+    for nIters = 1:sIters
+        fprintf(['\nKMeans Sanity Iteration ', num2str(nIters),': '])
         
         % Analyze Raw Data           
         
@@ -106,7 +103,7 @@ if methodML(2)
                 [idx,means,sumd] = kmeans(IDMatrix,k,'Distance',distanceMethod);
                 for i = 1:max(idx)
                     clusterBuddies = find(idx==i);
-                    MLData.KMeans.MCA(:,k,nIters) = idx;
+                    clusterIndices(:,k,nIters) = idx;
                 end
                 subplot(1,2,1);[sil,h] = silhouette(IDMatrix,idx,distanceMethod);hold on;
                     cluster(k,nIters) = mean(sil);
@@ -154,7 +151,17 @@ end
 
 
 if methodML(3)
-    
+    IDMatrix = IDCMatrix;
+    for nIters = 1:sIters
+         fprintf(['\nKMeans Sanity Iteration ', num2str(nIters),': '])
+        for k = kRange
+            
+                [idx,means,sumd] = kmeans(IDMatrix,k,'Distance',distanceMethod);
+                for i = 1:max(idx)
+                    clusterBuddies = find(idx==i);
+                    clusterIndices(:,k,nIters) = idx;
+                end
+        end
     
     
     

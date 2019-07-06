@@ -8,6 +8,13 @@ parameters.Channels.sChannels = [1:10, 17:26, 33:42];
 parameters.Channels.CA1_Channels = [7:10, 23:26, 39:42];
 parameters.Channels.CA3_Channels = [1:6, 17:22, 33:38];
 
+% The channel mapping is as below:
+% 1-6 was implanted in LEFT CA3 Anterior, in which channel #1-3 were in the same depth and #4-6 in another depth. 
+% 7-10 was implanted in LEFT CA1 Anterior, in which channel #7-8 were in the same depth and #9-10 in another depth.
+% 17-22 was implanted in RIGHT CA3 Anterior, in which channel #17-19 were in the same depth and #20-22 in another depth.
+% 23-26  was implanted in RIGHT CA1 Anterior, in which channel #23-24 were in the same depth and #25-26 in another depth.
+% 33-38  was implanted in RIGHT CA3 Posterior, in which channel #33-35 were in the same depth and #36-38 in another depth.
+
 % Processing | Binning & Windows
 parameters.Optional.methods = 'Hanning'; % Either Morlet or STFT Window (such as Hanning)
 parameters.Choices.freqMin = 1; % Minimum Frequency of Interest (Hz)

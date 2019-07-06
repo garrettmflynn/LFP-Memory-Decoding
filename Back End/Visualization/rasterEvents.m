@@ -17,7 +17,7 @@ end
 title('Events Log');
 yticks([]);
 %xticks([]);
-xlabel('Time (seconds)');
+xlabel('Time (seconds)','FontSize',10);
 
 cols = cell2mat(get(l, 'color'));
 [~, uidx] = unique(cols, 'rows', 'stable');

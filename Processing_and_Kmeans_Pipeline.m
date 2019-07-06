@@ -1,5 +1,6 @@
-% CLASSIFICATIONPIPELINE uses Human Hippocampal Data Structures to Classify
-% Related Trials using LFP.
+% PROCESSING_AND_KMEANS_PIPELINE uses Human Hippocampal Data Structures to Classify
+% Trials (as well as create zscore and band data)
+
 % Only works with single session currently.
 
 
@@ -16,6 +17,9 @@ parameters.Directories.filePath = strcat('E:\ClipArt_2');
 % Choose the testing data
 parameters.Directories.dataName = 'ClipArt_2';
 
+% Specify Save Name for HHDataStructure
+fullSaveName = fullfile(parameters.Directories.filePath,[parameters.Directories.dataName, '_processedData.mat']);
+
 
 %% Structure Parameters
 norm = 0;
@@ -27,28 +31,21 @@ MULTI_CHANNEL_ANALYSIS = 0;
 CHOICE_CHANNEL_ANALYSIS = 0;
 
 K_MEANS = 1;
-normal = 1;
+normal = 0;
     PCA = 1;
-        coeffs_to_retain = 5
+        coeffs_to_retain = 5;
 
 
 %% Create Data Structure
 %  Make Sure To Tune Data Structure Parameters in loadParameters.m
-if ~exist(fullfile('C:\SuperUser\Xiwei Results',[parameters.Directories.dataName, '_processedData.mat']),'file')
+if ~exist(fullSaveName,'file')
 HHDataStructure();
     
-    %% Process Data
+%% Process Data
     
 % Extract Intervals Around SAMPLE_RESPONSE
 [HHData.ML.Data, HHData.ML.Times] = makeIntervals(HHData.Data.LFP.Spectrum,HHData.Events.SAMPLE_RESPONSE,HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SpectrumTime);
 [HHData.Data.Intervals.Signal,~] = makeIntervals(HHData.Data.LFP.LFP,HHData.Events.SAMPLE_RESPONSE,HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SamplingFrequency); 
-
-% Visualize Quickly
-% for interval = [26] %1:size(HHData.Intervals.Data,ndims(HHData.Intervals.Data))
-%     for channel = [38] %1:size(HHData.RawData,1)
-%             standardImage(HHData.ML.Data(:,:,(HHData.Channels.sChannels == channel),interval),HHData.Events,HHData.Data.Parameters, HHData.Data.Parameters.Choices.downSample, ['Spectrum_Interval' ,num2str(interval)], channel,interval,HHData.ML.Times(:,interval),'dB', [-100 100], fullfile(parameters.Directories.filePath,'Intervals',['Channel',num2str(channel)]), 'Spectrum',1);
-%     end
-% end
 
 
 if norm
@@ -56,10 +53,23 @@ if norm
     HHData.Data.Normalized = normalize({HHData.Data.LFP.LFP, HHData.Data.LFP.Spectrum},'STFT','ZScore');
     [HHData.ML.Data] = makeIntervals(HHData.Data.Normalized.Spectrum,HHData.Events.SAMPLE_RESPONSE,HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SpectrumTime);
 end
+
+% % % Visualize Quickly
+%   for interval = 1:size(HHData.ML.Data,ndims(HHData.ML.Data))
+%       for channel = [7,18,38] %1:size(HHData.RawData,1)
+%               standardImage(HHData.ML.Data(:,:,(HHData.Channels.sChannels == channel),interval),HHData.Events,HHData.Data.Parameters, HHData.Data.Parameters.Choices.downSample, ['Spectrum_Interval' ,num2str(interval)], channel,interval,HHData.ML.Times(:,interval),'Zscore', [-10 10], fullfile(parameters.Directories.filePath,'All Intervals',['Channel',num2str(channel)]), 'Spectrum',0);
+%      end
+% end
     
 if add_bands
     % Add Bands
     fprintf('Now Creating Band Data\n');
+    
+    % Whole Session
+%     HHData.Data.Bands.Signal_Bands = bandSignal(HHData.Data.LFP.LFP,HHData.Data.Parameters.SpectrumFrequencies,HHData.Data.Parameters.SamplingFrequency);
+%     HHData.Data.Bands.Spectral_Bands =bandSpectrum(HHData.ML.Data,HHData.Data.Parameters.SpectrumFrequencies);
+    
+    % Intervals Only
     HHData.Data.Bands.Signal_Bands = bandSignal(HHData.Data.Intervals.Signal,HHData.Data.Parameters.SpectrumFrequencies,HHData.Data.Parameters.SamplingFrequency);
     HHData.Data.Bands.Spectral_Bands =bandSpectrum(HHData.ML.Data,HHData.Data.Parameters.SpectrumFrequencies);
 end
@@ -68,7 +78,7 @@ end
 
 %% Save Data
 fprintf('Now Saving ProcessedData.mat (this might take a while...)\n');
-save(fullfile('C:\SuperUser\Xiwei Results',[parameters.Directories.dataName, '_processedData.mat']),'HHData','-v7.3');
+save(fullSaveName,'HHData','-v7.3');
 
 % But Only Keep A Small Part
 dataML.Data = HHData.ML.Data;
@@ -80,7 +90,7 @@ else
 
 %% Load Data If Created
 fprintf('Loading Data Structure\n');
-load(fullfile('C:\SuperUser\Xiwei Results',[parameters.Directories.dataName, '_processedData.mat']));
+load(fullSaveName);
 
 % But Only Keep A Small Part
 dataML.Data = HHData.ML.Data;
@@ -99,13 +109,23 @@ dataML.Data = [];
 for channels = 1:size(temp,3)
 dataML.Data(:,:,channels) = reshape(permute(squeeze(temp(:,:,channels,:)),[3,2,1]),size(temp,4),size(temp,2)*size(temp,1));
 end
+
+% Concatenate Channels for MCA and CCA
+if methodML(2)
+    MCAMatrix = []
+        for channels = CCAChoices
+        MCAMatrix = [MCAMatrix dataML.Data(:,:,channels)];
+        end
+        dataML.Data = MCAMatrix;
+end
+
 %% Do KMeans Clustering
 if K_MEANS
     
 % Do Normal KMeans
 if normal
-[dataML] = kMeansClustering(dataML,methodML);
-[F1,MCC,dominantClusters] = parseClusterAssignments(dataML, methodML);
+[clusterIndices] = kMeansClustering(dataML,methodML);
+[~,MCC,dominantClusters] = parseClusterAssignments(dataML,clusterIndices, methodML);
 end
 
 % Do KMeans on PCA
@@ -116,10 +136,15 @@ for channel = 1:length(dataML.Channels.sChannels)
 % plot(explained(:,:,channel));
 % title(['channel = ', num2str(dataML.Channels.sChannels(channel))])
 end
-dataML.PCA = score(:,1:coeffs_to_retain,:);
 
-[dataML] = kMeansClustering(dataML,methodML);
-[F1_PCA,MCC_PCA,dominantClusters_PCA] = parseClusterAssignments(dataML, methodML);
+if ~isempty(coeffs_to_retain)
+dataML.PCA = score(:,1:coeffs_to_retain,:);
+else
+dataML.PCA = score(:,:,:);
+end
+
+[clusterIndices_PCA] = kMeansClustering(dataML,methodML);
+[~,MCC_PCA,dominantClusters_PCA] = parseClusterAssignments(dataML,clusterIndices_PCA, methodML);
 end
 
 end

@@ -9,8 +9,12 @@ end
 if strncmpi(whichtypes,'Signal',4)
     types = 1;
     vlims = lims;
-    %dataSignalRaw = data{1};
-    dataSignalLFP = data;
+    if length(data) ==2
+    dataSignalRaw = data{1};
+    dataSignalLFP = data{2};
+    else
+        dataSignalLFP = data;
+    end
 elseif strncmpi(whichtypes,'Spectrum',4)
     types = 2;
     clims = lims;
@@ -27,23 +31,31 @@ for type = types
     figRaw = figure('Position',[50 50 1700 800],'visible','off');
     rastAx(1) = subplot(15,8,[98:104,106:112,114:120]);
     rasterEvents(allEvents);
-    xlim(intervalTimes);
+    xlim([intervalTimes(1) intervalTimes(end)]);
     
     dataAx = subplot(15,8,[2:8,10:16,18:24,26:32,34:40,42:48,50:56,58:64,66:72,74:80,82:88]);
     
     switch type
         case 1
-            %h(1) = plot(dataSignalRaw(:,:),'k');hold on;
+            if length(data) ==2
+            h(1) = plot(dataSignalRaw(:,:),'k');hold on;
+            h(2) = plot(dataSignalLFP(:,:),'c');
+            else
             h(2) = plot(dataSignalLFP(:,:),'k');
+            end
             ylabel('Voltage'); ylim(vlims)
             xticks([]);
             text( -.25,.5,['Channel ', num2str(channelNumber)],'Units','Normalized','FontSize',15);
+            if length(data) ==2
+            xlim([0 length(intervalTimes)]);
+            end
             sText = text( -.25,.6,[band num2str(intervalNumber)],'Units','Normalized','FontSize',30,'FontWeight','bold');
-        saveas(figRaw,fullfile(saveDir,[dataName, '.png']));
-            
-            %cols = cell2mat(get(h, 'color'));
-            %[~, uidx] = unique(cols, 'rows', 'stable');
-            %legend(h(uidx), {'Raw Signal' 'LFP Signal'});
+         if length(data) ==2
+            cols = cell2mat(get(h, 'color'));
+            [~, uidx] = unique(cols, 'rows', 'stable');
+            legend(h(uidx), {'Raw Signal' 'LFP Signal'});
+            end
+            saveas(figRaw,fullfile(saveDir,[dataName, '.png']));
         case 2
             originalSize1 = get(gca, 'Position');
             
@@ -70,7 +82,7 @@ for type = types
             colormap jet;
             ylabel(hcb2,colorUnit);
             caxis(clims);
-            ylabel('Frequency') ;xlabel('Time (seconds)');
+            ylabel('Frequency') ;
             set(gca, 'Position', originalSize1);
             text( -.25,.5,['Channel ', num2str(channelNumber)],'Units','Normalized','FontSize',15);
             sText = text( -.25,.6,['Interval ' num2str(intervalNumber)],'Units','Normalized','FontSize',30,'FontWeight','bold');
