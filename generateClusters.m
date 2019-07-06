@@ -4,7 +4,7 @@ clear; clc; close all;
 norm = [0 1];
 
 
-for iter = 2
+for iter = 1:length(norm)
 %% Setup
 
 % Data Paths
