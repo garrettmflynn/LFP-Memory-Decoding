@@ -1,13 +1,13 @@
-function[F1,MCC, dominantClusters,prevalence] = parseClusterAssignments(dataML, clusters,methodML)
+function[F1,MCC, dominantClusters,prevalence,clusterVectors] = parseClusterAssignments(dataML, clustersProcessed,methodML)
 
 channelVec = dataML.Channels.sChannels;
 sessionDir = dataML.Directory;
-data = clusters;
+data = clustersProcessed;
 
 % Load Correct Labels and Bounds
 
         intervalRange = 1:size(data,1);
-        kRange = 3:6;
+        kRange = 5;
         iterations = size(data,3);
         label = 'Trial';    
 
@@ -15,30 +15,16 @@ data = clusters;
         prevalenceAcrossK = zeros(intervalRange(end),intervalRange(end));
         for kVal = kRange
             prevalenceAcrossChannels = zeros(intervalRange(end),intervalRange(end));
-            channelCo = 1;
-            for channel = 1:length(channelVec)
-
-                clusterAssignments = data(:,:,:,channel);
-              
-                prevalenceAcrossIters = zeros(intervalRange(end),intervalRange(end));
-                
+            for channel = 1:length(channelVec)   
                 for nIters = 1:iterations
-                    currentClusters = clusterAssignments(:,kVal,nIters);
-                    currentClusters = repmat(currentClusters,1,length(currentClusters));
-                    currentClusters = double(currentClusters == currentClusters');
-                    prevalenceAcrossIters = [prevalenceAcrossIters + currentClusters];
-                    prevalenceAcrossK = [prevalenceAcrossK + currentClusters];
-                    prevalenceAcrossChannels = [prevalenceAcrossChannels + currentClusters];
-                    
+                    currentClusters = data(:,kVal,nIters,channel);
+                    numberClusters(currentClusters)
+                    [F1(channel,kVal),MCC(channel,kVal)] = correctnessIndex(currentClusters,intervalRange(end),kVal);
                 end
 
                 % Correctness Calculations
                 [F1(channel,kVal),MCC(channel,kVal)] = correctnessIndex(prevalenceAcrossIters,intervalRange(end),kVal);
                 dominantClusters{channel,kVal} = prevalenceDetection(prevalenceAcrossIters, 5);
-                
-                prevalence{channel,kVal} = prevalenceAcrossIters;
-                
-                channelCo = channelCo + 1;
             end
         end
     end

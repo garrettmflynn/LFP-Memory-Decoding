@@ -3,8 +3,8 @@ function [clusterIndices] = kMeansClustering(MLData,methodML)
 %% Important Variable Derivation
 
 distanceMethod = 'cosine';
-kRange = 3:6;
-sIters = 10;
+kRange = 5;
+sIters = 1;
 intervalFilter = []; %[1,3,4,5,6,8,9,12,14] % Keep empty to process all
 
 maxK = kRange(end);
@@ -95,8 +95,9 @@ if methodML(2)
         % Analyze Raw Data           
         
         saveDir = [sessionDir,'/KMeans/MCA'];
-        
+        if ~exist(saveDir,'dir');
         mkdir(saveDir);
+        end
         
         for k = kRange
             

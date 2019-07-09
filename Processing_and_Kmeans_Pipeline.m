@@ -19,6 +19,7 @@ parameters.Directories.dataName = 'ClipArt_2';
 
 % Specify Save Name for HHDataStructure
 fullSaveName = fullfile(parameters.Directories.filePath,[parameters.Directories.dataName, '_processedData.mat']);
+mlSaveName = fullfile(parameters.Directories.filePath,[parameters.Directories.dataName, '_dataML.mat']);
 
 
 %% Structure Parameters
@@ -84,6 +85,7 @@ save(fullSaveName,'HHData','-v7.3');
 dataML.Data = HHData.ML.Data;
 dataML.Channels = HHData.Channels;
 dataML.Directory = parameters.Directories.filePath
+dataML.Labels = HHData.Labels;
 clear HHData
 
 else
@@ -119,37 +121,7 @@ if methodML(2)
         dataML.Data = MCAMatrix;
 end
 
-%% Do KMeans Clustering
-if K_MEANS
-    
-% Do Normal KMeans
-if normal
-[clusterIndices] = kMeansClustering(dataML,methodML);
-[~,MCC,dominantClusters] = parseClusterAssignments(dataML,clusterIndices, methodML);
-end
-
-% Do KMeans on PCA
-if PCA
-    
-for channel = 1:length(dataML.Channels.sChannels)
-[coeffs(:,:,channel),score(:,:,channel),~,~,explained(:,:,channel),~] = pca(dataML.Data(:,:,channel));
-% plot(explained(:,:,channel));
-% title(['channel = ', num2str(dataML.Channels.sChannels(channel))])
-end
-
-if ~isempty(coeffs_to_retain)
-dataML.PCA = score(:,1:coeffs_to_retain,:);
-else
-dataML.PCA = score(:,:,:);
-end
-
-[clusterIndices_PCA] = kMeansClustering(dataML,methodML);
-[~,MCC_PCA,dominantClusters_PCA] = parseClusterAssignments(dataML,clusterIndices_PCA, methodML);
-end
-
-end
-    
-    
+save(mlSaveName,'dataML','-v7.3');
     
     
     

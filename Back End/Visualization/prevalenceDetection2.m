@@ -26,13 +26,13 @@ for kk = k
    for cc = c
        if isempty(SCA{cc,kk})
            generalized{kk} = [];
-           SCA_Raw{cc,kk} = [];
        else
-   SCA_Raw{cc,kk} = double((SCA{cc,kk} >=cutoff) .* (SCA_PCA{cc,kk} >=cutoff));
    generalized{1,kk} = generalized{1,kk} .* double((SCA{cc,kk}>0) .* (SCA_PCA{cc,kk}>0))
        end
    end
 end
+
+SCA_Raw = generalized;
 
 
 %% Raw Concatenated Channels Prevalence
@@ -65,9 +65,9 @@ if ~isempty(generalized{kk})
 consistentGroups.consistentGroupsG{1,kk} = temp;
 for cc = c
 for q = 1:sizeTrials
-temp{1,q} = find(SCA_Raw{cc,kk}(q,:) == 1);
+temp{1,q} = find(SCA_Raw{1,kk}(q,:) == 1);
 end
-consistentGroups.consistentGroupsSCA{cc,kk} = temp;
+consistentGroups.consistentGroupsSCA{1,kk} = temp;
 end
 for q = 1:sizeTrials
     temp1{1,q} = find(channelConcatenated_Raw{kk}(q,:) == 1);

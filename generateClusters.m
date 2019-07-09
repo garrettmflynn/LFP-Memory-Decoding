@@ -105,6 +105,7 @@ end
 dataML.Data = HHData.ML.Data;
 dataML.Channels = HHData.Channels;
 dataML.Directory = parameters.Directories.filePath;
+dataML.Labels = HHData.Labels;
 clear HHData
 
 
@@ -119,14 +120,19 @@ end
 
 
 fprintf('Conducting Raw Clustering\n');
-% Do SCA KMeans
+%% SCA KMeans
+% 
+% fprintf('\nSCA\n');
+% CCAChoices = dataML.Channels.sChannels;
+% clusterSCA = kMeansClustering(dataML,[1 0 0]);
+% clusterSCA = numberClusters(clusterSCA);
+% 
+% [F1(channel,kVal),MCC(channel,kVal)] = correctnessIndex(currentClusters,intervalRange(end),kVal);
+% dominantClusters
+% 
+% [~,SCA.Raw.MCC,SCA.Raw.dominantClusters,prevalence.SCA,SCA.Raw.clusterIndices] = parseClusterAssignments(dataML,clusterSCA, [1 0 0]);
 
-fprintf('\nSCA\n');
-CCAChoices = dataML.Channels.sChannels;
-[SCA.Raw.clusterIndices] = kMeansClustering(dataML,[1 0 0]);
-[~,SCA.Raw.MCC,SCA.Raw.dominantClusters,prevalence.SCA] = parseClusterAssignments(dataML,SCA.Raw.clusterIndices, [1 0 0]);
-
-% Do MCA KMeans
+%% MCA KMeans
 fprintf('\nMCA\n');
 CCAChoices = dataML.Channels.sChannels;
 MCAMatrix = dataML;
@@ -135,10 +141,10 @@ for channels = 1:length(CCAChoices)
    MCAMatrix.Data = [MCAMatrix.Data dataML.Data(:,:,channels)];
 end
 
-[MCA.Raw.clusterIndices] = kMeansClustering(MCAMatrix,[0 1 0]);
-[~,MCA.Raw.MCC,MCA.Raw.dominantClusters,prevalence.MCA] = parseClusterAssignments(MCAMatrix,MCA.Raw.clusterIndices, [0 1 0]);
+[clusterMCA] = kMeansClustering(MCAMatrix,[0 1 0]);
+[clusterMCA] = numberClusters(MCAMatrix,clusterMCA);
 
-% Do CCA KMeans for CA1
+%% CCA KMeans for CA1
 fprintf('\nCCA1\n');
 CCAChoices = dataML.Channels.CA1_Channels;
 MCAMatrix = dataML;
@@ -147,10 +153,11 @@ for channels = 1:length(CCAChoices)
    MCAMatrix.Data = [MCAMatrix.Data dataML.Data(:,:,channels)];
 end
 
-[CCA.CA1.Raw.clusterIndices] = kMeansClustering(MCAMatrix,[0 1 0]);
-[~,CCA.CA1.Raw.MCC,CCA.CA1.Raw.dominantClusters,prevalence.CCA1] = parseClusterAssignments(MCAMatrix,CCA.CA1.Raw.clusterIndices, [0 1 0]);
+[clusterCCA1] = kMeansClustering(MCAMatrix,[0 1 0]);
+clusterCCA1 = numberClusters(clusterCCA1);
+[~,CCA.CA1.Raw.MCC,CCA.CA1.Raw.dominantClusters,prevalence.CCA1,CCA.CA1.Raw.clusterIndices] = parseClusterAssignments(MCAMatrix,clusterCCA1, [0 1 0]);
 
-% Do CCA KMeans for CA3
+%% CCA KMeans for CA3
 fprintf('\nCCA3\n');
 CCAChoices = dataML.Channels.CA3_Channels;
 MCAMatrix = dataML;
@@ -159,29 +166,23 @@ for channels = 1:length(CCAChoices)
     MCAMatrix.Data  = [MCAMatrix.Data dataML.Data(:,:,channels)];
 end
 
-[CCA.CA3.Raw.clusterIndices] = kMeansClustering(MCAMatrix,[0 1 0]);
-[~,CCA.CA3.Raw.MCC,CCA.CA3.Raw.dominantClusters,prevalence.CCA3] = parseClusterAssignments(MCAMatrix,CCA.CA3.Raw.clusterIndices, [0 1 0]);
+[clusterCCA3] = kMeansClustering(MCAMatrix,[0 1 0]);
+clusterCCA3 = numberClusters(clusterCCA3);
+[~,CCA.CA3.Raw.MCC,CCA.CA3.Raw.dominantClusters,prevalence.CCA3,CCA.CA3.Raw.clusterIndices] = parseClusterAssignments(MCAMatrix,clusterCCA3, [0 1 0]);
 
 
-
-for coeffs_to_retain = [1,2,3,5:5:25]
-
-%% Do PCA
-fprintf('Now Conducting PCA\n');
+%% PCA SCA
+fprintf('Now Conducting PCA on SCA\n');
+fPCA = figure
 for channel = 1:length(dataML.Channels.sChannels)
-[~,score(:,:,channel),~,~,explained(:,:,channel),~] = pca(dataML.Data(:,:,channel,:));
-%  subplot(ceil(sqrt(length(dataML.Channels.sChannels))),round(sqrt(length(dataML.Channels.sChannels))),channel);bar(explained(:,:,channel));hold on;
-%  title(num2str(dataML.Channels.sChannels(channel)))
-%  sgtitle('Channel-Specific Scree Plot','FontSize',30);
+[~,scoreSCA(:,:,channel),~,~,explained(:,:,channel),~] = pca(dataML.Data(:,:,channel,:));
+  subplot(ceil(sqrt(length(dataML.Channels.sChannels))),round(sqrt(length(dataML.Channels.sChannels))),channel);bar(explained(:,:,channel));hold on;
+  title(num2str(dataML.Channels.sChannels(channel)))
+sgtitle('Channel-Specific Scree Plot','FontSize',30);
 end
-dataML.PCA = score(:,1:coeffs_to_retain,:);
+saveas(fPCA, fullfile(parameters.Directories.filePath,'ChannelSpecificScree.png'));
 
-% Do SCA KMeans on PCA
-fprintf('\SCA\n');
-[SCA.PCA.clusterIndices] = kMeansClustering(dataML,[1 0 0]);
-[~,SCA.PCA.MCC,SCA.PCA.dominantClusters,prevalence.PCA.SCA] = parseClusterAssignments(dataML,SCA.PCA.clusterIndices,[1 0 0]);
-
-% Do MCA KMeans on PCA
+%% PCA MCA
 fprintf('\nMCA\n');
 CCAChoices = dataML.Channels.sChannels;
 MCAMatrix = [];
@@ -189,16 +190,13 @@ for channels = 1:length(CCAChoices)
    MCAMatrix = [MCAMatrix dataML.Data(:,:,channels)];
 end
 
-% figure;
-[~,score,~,~,explained,~] = pca(MCAMatrix);
-% bar(explained);
-%  sgtitle('MCA Scree Plot','FontSize',30);
-dataML.PCA = score(:,1:coeffs_to_retain,:);
+fPCA2 =  figure;
+[~,scoreMCA,~,~,explained,~] = pca(MCAMatrix);
+ bar(explained);
+  sgtitle('MCA Scree Plot','FontSize',30);
+saveas(fPCA2, fullfile(parameters.Directories.filePath,'MCAScree.png'));
 
-[MCA.PCA.clusterIndices] = kMeansClustering(dataML,[0 1 0]);
-[~,MCA.PCA.MCC,MCA.PCA.dominantClusters,prevalence.PCA.MCA] = parseClusterAssignments(dataML, MCA.PCA.clusterIndices,[0 1 0]);
-
-% Do CCA KMeans for CA1 and PCA
+%% PCA CCA1
 fprintf('\nCCA1\n');
 CCAChoices = dataML.Channels.CA1_Channels;
 MCAMatrix = [];
@@ -206,16 +204,13 @@ for channels = 1:length(CCAChoices)
    MCAMatrix = [MCAMatrix dataML.Data(:,:,channels)];
 end
 
-% figure;
-[~,score,~,~,explained,~] = pca(MCAMatrix);
-% bar(explained);hold on;
-%  sgtitle('CA1 Scree Plot','FontSize',30);
-dataML.PCA = score(:,1:coeffs_to_retain,:);
-        
-[CCA.CA1.PCA.clusterIndices] = kMeansClustering(dataML,[0 1 0]);
-[~,CCA.CA1.PCA.MCC,CCA.CA1.PCA.dominantClusters,prevalence.PCA.CCA1] = parseClusterAssignments(dataML,CCA.CA1.PCA.clusterIndices, [0 1 0]);
+ fPCA3 = figure;
+[~,scoreCCA1,~,~,explained,~] = pca(MCAMatrix);
+ bar(explained);hold on;
+  sgtitle('CA1 Scree Plot','FontSize',30);
+  saveas(fPCA3, fullfile(parameters.Directories.filePath,'CA1Scree.png'));
 
-% Do CCA KMeans for CA3 and PCA
+%% PCA CCA3
 fprintf('\nCCA3\n');
 CCAChoices = dataML.Channels.CA3_Channels;
 MCAMatrix = [];
@@ -223,21 +218,43 @@ for channels = 1:length(CCAChoices)
    MCAMatrix = [MCAMatrix dataML.Data(:,:,channels)];
 end
 
-if (norm(2)) && coeffs_to_retain == 1
- figure;
-[~,score,~,~,explained,~] = pca(MCAMatrix);
+fPCA4 =  figure;
+[~,scoreCCA3,~,~,explained,~] = pca(MCAMatrix);
  bar(explained);hold on;
   sgtitle('CA3 Scree Plot','FontSize',30);
-end
+  saveas(fPCA2, fullfile(parameters.Directories.filePath,'CA3Scree.png'));
 
-% figure;
-[~,score,~,~,explained,~] = pca(MCAMatrix);
-% bar(explained);hold on;
-%  sgtitle('CA3 Scree Plot','FontSize',30);
- dataML.PCA = score(:,1:coeffs_to_retain,:);
+%% Iterate Through PCA Components
+for coeffs_to_retain = [2,3,5,10]
 
-[CCA.CA3.PCA.clusterIndices] = kMeansClustering(dataML,[0 1 0]);
-[~,CCA.CA3.PCA.MCC,CCA.CA3.PCA.dominantClusters,prevalence.PCA.CCA3] = parseClusterAssignments(dataML,CCA.CA3.PCA.clusterIndices, [0 1 0]);
+dataML.PCA = scoreSCA(:,1:coeffs_to_retain,:);
+
+%% Do SCA KMeans on PCA
+fprintf('\Now Clustering SCA\n');
+[clusterSCA] = kMeansClustering(dataML,[1 0 0]);
+clusterSCA = numberClusters(clusterSCA);
+[~,SCA.PCA.MCC,SCA.PCA.dominantClusters,prevalence.PCA.SCA,SCA.PCA.clusterIndices] = parseClusterAssignments(dataML,clusterSCA,[1 0 0]);
+
+%% Do MCA KMeans on PCA
+fprintf('\nMCA\n');
+dataML.PCA = scoreMCA(:,1:coeffs_to_retain,:);
+[clusterMCA] = kMeansClustering(dataML,[0 1 0]);
+clusterMCA = numberClusters(clusterMCA);
+[~,MCA.PCA.MCC,MCA.PCA.dominantClusters,prevalence.PCA.MCA,MCA.PCA.clusterIndices] = parseClusterAssignments(dataML,clusterMCA,[0 1 0]);
+
+%% Do CCA KMeans for CA1 and PCA
+fprintf('\nCCA1\n');
+dataML.PCA = scoreCCA1(:,1:coeffs_to_retain,:);
+[clusterCCA1] = kMeansClustering(dataML,[0 1 0]);
+clusterCCA1 = numberClusters(clusterCCA1);
+[~,CCA.CA1.PCA.MCC,CCA.CA1.PCA.dominantClusters,prevalence.PCA.CCA1,CCA.CA1.PCA.clusterIndices] = parseClusterAssignments(dataML,clusterCCA1, [0 1 0]);
+
+%% Do CCA KMeans for CA3 and PCA
+fprintf('\nCCA3\n');
+ dataML.PCA = scoreCCA3(:,1:coeffs_to_retain,:);
+[clusterCCA3] = kMeansClustering(dataML,[0 1 0]);
+clusterCCA3 = numberClusters(clusterCCA3);
+[~,CCA.CA3.PCA.MCC,CCA.CA3.PCA.dominantClusters,prevalence.PCA.CCA3,CCA.CA3.PCA.clusterIndices] = parseClusterAssignments(dataML,clusterCCA3, [0 1 0]);
 
 
 consistency = prevalenceDetection2(prevalence);
