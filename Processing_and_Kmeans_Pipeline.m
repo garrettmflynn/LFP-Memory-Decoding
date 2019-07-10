@@ -84,6 +84,7 @@ save(fullSaveName,'HHData','-v7.3');
 dataML.Data = HHData.ML.Data;
 dataML.Channels = HHData.Channels;
 dataML.Directory = parameters.Directories.filePath
+dataML.Labels = HHData.Labels;
 clear HHData
 
 else

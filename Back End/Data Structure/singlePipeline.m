@@ -80,6 +80,10 @@ for ii = 1:length(parameters.Times.MATCH_RESPONSE)
 HHData.Data.Intervals.Outcome(ii) = ismember(round(parameters.Times.MATCH_RESPONSE(ii)),round(parameters.Times.CORRECT_RESPONSE));
 end
 
+if exist(fullfile(parameters.Directories.filePath,[parameters.Directories.dataName,'_labels.mat']),'file')
+    HHData.Labels = load(fullfile(parameters.Directories.filePath,[parameters.Directories.dataName,'_labels.mat']));
+end
+
 % Just In Case This Might Want to Be Referenced
 parametersTrans.Choices = parameters.Choices;
 HHData.Session = parameters.Directories.dataName;

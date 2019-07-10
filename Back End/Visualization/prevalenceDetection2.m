@@ -9,6 +9,8 @@ function [consistentGroups] = prevalenceDetection2(prevalenceStruct);
 % clustered with such an interval (if such clustering occurs MORE THAN the
 % specified threshold.
 
+fields = fieldnames(prevalenceStruct);
+
 k = 1:size(prevalenceStruct.SCA,2);
 c = 1:size(prevalenceStruct.SCA,1);
 sIters = prevalenceStruct.SCA{c(1),k(end)}(1,1);

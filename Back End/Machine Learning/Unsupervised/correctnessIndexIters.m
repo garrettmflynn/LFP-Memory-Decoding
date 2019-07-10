@@ -1,10 +1,10 @@
-function [F1,MCC,A] = correctnessIndex(hitMatrix,labels,nIntervals,k)
+function [MCC,MCC_Categories] = correctnessIndexIters(hitMatrix,labels,nIntervals,k)
 % Output = Correctness Beyond Chance
 
 
 fields = fieldnames(labels);
 MCC = NaN;
-F1 = NaN;
+
 %% Populate Matrices
 tpMatrix = NaN(nIntervals,nIntervals);
 fpMatrix = NaN(nIntervals,nIntervals);
@@ -28,8 +28,9 @@ totalIters = hitMatrix(1,1);
  fpMatrix(n,n) = NaN;
  end
 
-tp = hitMatrix.*tpMatrix;
-fp = hitMatrix.*fpMatrix;
+for iters = 1:size(hitMatrix,3)
+tp = hitMatrix(:,:,iters).*tpMatrix;
+fp = hitMatrix(:,:,iters).*fpMatrix;
 fn = totalIters-tp;
 tn = totalIters-fp;
 
@@ -39,7 +40,8 @@ tn = totalIters-fp;
  tnTotalCount = nansum(nansum(tn));
 
 %% Output
-MCC = ((tpTotalCount*tnTotalCount)-(fpTotalCount*fnTotalCount))/sqrt((tpTotalCount+fpTotalCount)*(tpTotalCount+fnTotalCount)*(tnTotalCount+fpTotalCount)*(tnTotalCount+fnTotalCount));
+MCC(iters) = ((tpTotalCount*tnTotalCount)-(fpTotalCount*fnTotalCount))/sqrt((tpTotalCount+fpTotalCount)*(tpTotalCount+fnTotalCount)*(tnTotalCount+fpTotalCount)*(tnTotalCount+fnTotalCount));
+
 
 %% Do MCC Individually for Each Iteration
 for fi = 1:length(fields)
@@ -50,12 +52,12 @@ for fi = 1:length(fields)
 totalIters = hitMatrix(1,1);
 
  for n = 1:nIntervals
- tpMatrix(n,n) = NaN;
- fpMatrix(n,n) = NaN;
+ tPMatrix(n,n) = NaN;
+ fPMatrix(n,n) = NaN;
  end
 
-tP = hitMatrix.*tPMatrix;
-fP= hitMatrix.*fPMatrix;
+tP = hitMatrix(:,:,iters).*tPMatrix;
+fP= hitMatrix(:,:,iters).*fPMatrix;
 fN = totalIters-tP;
 tN = totalIters-fP;
 
@@ -64,11 +66,9 @@ tN = totalIters-fP;
  fnTotalCount = nansum(nansum(fN));
  tnTotalCount = nansum(nansum(tN));
 
-MCC2(fi,ii) = ((tpTotalCount*tnTotalCount)-(fpTotalCount*fnTotalCount))/sqrt((tpTotalCount+fpTotalCount)*(tpTotalCount+fnTotalCount)*(tnTotalCount+fpTotalCount)*(tnTotalCount+fnTotalCount));
+MCC_Categories(fi,iters) = ((tpTotalCount*tnTotalCount)-(fpTotalCount*fnTotalCount))/sqrt((tpTotalCount+fpTotalCount)*(tpTotalCount+fnTotalCount)*(tnTotalCount+fpTotalCount)*(tnTotalCount+fnTotalCount));
 end
-A = table(MCC,'RowNames',fields);
-
-
+end
 end
 
 

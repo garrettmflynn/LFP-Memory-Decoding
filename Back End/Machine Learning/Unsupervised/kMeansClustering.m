@@ -3,7 +3,7 @@ function [clusterIndices] = kMeansClustering(MLData,methodML)
 %% Important Variable Derivation
 
 distanceMethod = 'cosine';
-kRange = 3:6;
+kRange = 5;
 sIters = 10;
 intervalFilter = []; %[1,3,4,5,6,8,9,12,14] % Keep empty to process all
 
@@ -26,18 +26,18 @@ end
 
 if methodML(1)
     for nIters = 1:sIters
-            fprintf(['\nKMeans Sanity Iteration ', num2str(nIters),': '])
+            displayNice(nIters, sIters, 'KMeans Sanity Iteration: ');
         for channel = 1:length(channelVec)
             
             fprintf(['\nChannel ', num2str(channelVec(channel))])
 
-            
-            saveDir = [sessionDir,'/KMeans/SCA'];
-            
-            if ~exist(saveDir,'dir');
-                mkdir(saveDir);
-            end
-            
+%             
+%             saveDir = [sessionDir,'/KMeans/SCA'];
+%             
+%             if ~exist(saveDir,'dir');
+%                 mkdir(saveDir);
+%             end
+%             
             for k = kRange
                     [idx,means,sumd] = kmeans(IDCMatrix(intervalFilter,:,channel),k,'Distance',distanceMethod);
                     for i = 1:max(idx)
@@ -90,17 +90,20 @@ end
 if methodML(2)
     IDMatrix = IDCMatrix;
     for nIters = 1:sIters
-        fprintf(['\nKMeans Sanity Iteration ', num2str(nIters),': '])
+   displayNice(nIters, sIters, 'KMeans Sanity Iteration: ');
         
         % Analyze Raw Data           
-        
-        saveDir = [sessionDir,'/KMeans/MCA'];
-        
-        mkdir(saveDir);
+%         
+%         saveDir = [sessionDir,'/KMeans/MCA'];
+%         
+%         if ~exist(saveDir,'dir');
+%         mkdir(saveDir);
+%         end
         
         for k = kRange
             
                 [idx,means,sumd] = kmeans(IDMatrix,k,'Distance',distanceMethod);
+                %[idx,means,sumd] = kmedoids(IDMatrix,k,'Distance',distanceMethod);
                 for i = 1:max(idx)
                     clusterBuddies = find(idx==i);
                     clusterIndices(:,k,nIters) = idx;
@@ -157,6 +160,7 @@ if methodML(3)
         for k = kRange
             
                 [idx,means,sumd] = kmeans(IDMatrix,k,'Distance',distanceMethod);
+                %[idx,means,sumd] = kmedoids(IDMatrix,k,'Distance',distanceMethod);
                 for i = 1:max(idx)
                     clusterBuddies = find(idx==i);
                     clusterIndices(:,k,nIters) = idx;
