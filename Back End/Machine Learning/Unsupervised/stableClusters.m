@@ -1,7 +1,7 @@
 function [orderedClusters,excluded] = stableClusters(countAcrossIters)
 % Currently hardcoded for .5 of maxPrev
 
-interest = .5 % of maxPrev
+interest = .5; % of maxPrev
 
 positions = 1:length(countAcrossIters);
 numMaxes = positions(end);
@@ -29,7 +29,7 @@ edges = cell(1,positions(end));
 [clusters,edgesLog,density,denseClusters,removed] = numClusters_Density(edges);
 numClusts = length(clusters);
 
-fprintf([num2str(numClusts),'\n']);
+%fprintf([num2str(numClusts),'\n']);
 
 %% If Gone Over, Restart & Take Advantage of Slight Randomization Due to Maximum Connections
 if ~isnan(denseClusters{1})

@@ -2,13 +2,17 @@ function [] = createPCAVisualizations(score,clusters,typeML,norm,saveDir,exclude
 
 coeff2 = squeeze(score(:,1:2,:));
 coeff3 = squeeze(score(:,1:3,:));
-clusters2 = clusters{1};
-clusters3 = clusters{2};
 
+if nargin < 7
+    excluded2 = [];
+excluded3 = [];
+else
+     excluded2 = excluded{1};
+excluded3 = excluded{2};
+end
 
 %% Initialize Figures
 pcaFig1 = figure('visible','off','units','normalized','outerposition',[0 0 1 1]);
-pcaFigM = figure('visible','off','units','normalized','outerposition',[0 0 1 1]);
 
     if ~exist(saveDir,'dir');
     mkdir(saveDir);
@@ -16,15 +20,17 @@ pcaFigM = figure('visible','off','units','normalized','outerposition',[0 0 1 1])
 
 %% Add Data
  if iscell(clusters)
+clusters2 = clusters{1};
+clusters3 = clusters{2};
 [~,kNonZero] = find(clusters2(1,:,end));
 existingClusters = 1:size(clusters2,2);
 colorScheme = max([max(max(clusters2)) max(max(clusters3))]);
-excluded2 = excluded{1};
-excluded3 = excluded{2};
  else
-existingClusters = max(clusters2);
-kNonZero = max(clusters2);
-colorScheme = max(clusters2);
+clusters2 = clusters;
+clusters3 = clusters;
+existingClusters = 1:size(clusters2,2);
+kNonZero = max(max(clusters2));
+colorScheme = max(max(clusters2));
 numIters = 1;
  end
 
@@ -42,12 +48,16 @@ for category = 1:size(colors,1)
     indices3{category} = find(choice3 == category-1);
     subplot(6,2,3:2:12);scatter(coeff2(indices2{category},1),coeff2(indices2{category},2),'MarkerFaceColor',colors(category,:)); hold on;
     title('Results using 2 Coefficients');
-    clustText = text( 0,-.1,['# of Clusters: ', num2str(max(max(clusters2)))],'Units','Normalized','FontSize',15);
-    exText = text( 0,-.2,['Excluded: ', num2str(excluded2{1,k})],'Units','Normalized','FontSize',15);
+    clustText = text( 0,-.05,['# of Clusters: ', num2str(max(max(clusters2)))],'Units','Normalized','FontSize',15);
+    if ~isempty(excluded2)
+    exText = text( 0,-.1,['Excluded: ', num2str(excluded2{1,k})],'Units','Normalized','FontSize',15);
+    end
     subplot(6,2,4:2:12);scatter3(coeff3(indices3{category},1),coeff3(indices3{category},2),coeff3(indices3{category},3),'MarkerFaceColor',colors(category,:)); hold on;
     title('Results using 3 Coefficients');
-    clustText2 = text( 0,-.1,['# of Clusters: ', num2str(max(max(clusters3)))],'Units','Normalized','FontSize',15);
-    exText2 = text( 0,-.2,['Excluded: ', num2str(excluded3{1,k})],'Units','Normalized','FontSize',15);
+    clustText2 = text( 0,-.05,['# of Clusters: ', num2str(max(max(clusters3)))],'Units','Normalized','FontSize',15);
+    if ~isempty(excluded3)
+    exText2 = text( 0,-.1,['Excluded: ', num2str(excluded3{1,k})],'Units','Normalized','FontSize',15);
+    end
 end
   if ~norm
         name = [typeML];
@@ -57,13 +67,18 @@ end
     sgtitle(['PCA Scatter Plots for ',typeML],'FontWeight','bold','FontSize',30);
     
 saveas(pcaFig1,fullfile(saveDir,[name,'.png']));
+if ~isempty(excluded2)
 delete(exText);
+end
+if ~isempty(excluded3)
 delete(exText2);
+end
 delete(clustText);
 delete(clustText2);
     end
 
 if size(clusters2,3) > 1
+    pcaFigM = figure('visible','on','units','normalized','outerposition',[0 0 1 1]);
     choice2M = mode(permute(clusters2(:,k,:),[3,1,2]));
     choice3M = mode(permute(clusters3(:,k,:),[3,1,2]));
     

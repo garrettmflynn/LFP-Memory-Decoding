@@ -121,6 +121,9 @@ for channels = 1:size(temp,3)
 dataML.Data(:,:,channels) = reshape(permute(squeeze(temp(:,:,channels,:)),[3,2,1]),size(temp,4),size(temp,2)*size(temp,1));
 end
 
+% Make Real Clusters Vector
+realCluster = realClusters(dataML.Labels);
+
 
 fprintf('Conducting Raw Clustering\n');
 saveBars = fullfile(parameters.Directories.filePath,'MCC Bar Plots');
@@ -288,10 +291,7 @@ for coeffs_to_retain = [2,3,5,10]
 fprintf('\nMCA\n');
 dataML.PCA = scoreMCA(:,1:coeffs_to_retain,:);
 [MCA.PCA.clusterIndices] = kMeansClustering(dataML,[0 1 0]);
-
-if ~exist(fullfile(savePCAViz,'MCA'),'dir')
-    mkdir(fullfile(savePCAViz,'MCA'));
-end
+nIters = size(MCA.PCA.clusterIndices,3);
 
 saveBarsMCA = fullfile(saveBars,'MCA');
 [MCA.PCA.MCC,MCA.PCA.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(dataML, MCA.PCA.clusterIndices,[0 1 0],{dataML.Labels,coeffs_to_retain,'MCA',norm(iter),saveBarsMCA});
@@ -301,7 +301,10 @@ elseif coeffs_to_retain ==  3
     for len = 1:size(collectedClusterings,1)
         orderedClustersMCA_PCA = [collectedClusterings(len,PCA2CountMCA) , collectedClusterings(len,count)];
         excludedMCA_PCA = {excluded{PCA2CountMCA} , excluded{count}};
-createPCAVisualizations(scoreMCA,orderedClustersMCA_PCA,['MCA_' ,label,'_', num2str(nIters-(len-1))],norm(iter),fullfile(savePCAViz,['MCA_' label]),excludedMCA_PCA);
+        label = 'All Above';
+createPCAVisualizations(scoreMCA,orderedClustersMCA_PCA,['MCA ' ,label,' ', num2str(nIters-(len-1))],norm(iter),fullfile(savePCAViz,['MCA_' label]),excludedMCA_PCA);
+ createPCAVisualizations_RealClusters(scoreMCA,realCluster,'MCA Correct Cluster',norm(iter),fullfile(savePCAViz,['CorrectMCA_' label]),fieldnames(dataML.Labels));
+  
     end
 end
 count = count + 1;
@@ -310,11 +313,8 @@ count = count + 1;
 fprintf('\nCCA1\n');
 dataML.PCA = scoreCA1(:,1:coeffs_to_retain,:);
 [CCA.CA1.PCA.clusterIndices] = kMeansClustering(dataML,[0 1 0]);
-nIters = CCA.CA1.PCA.clusterIndices
+nIters = size(CCA.CA1.PCA.clusterIndices,3);
 
-if ~exist(fullfile(savePCAViz,'CA1'),'dir')
-    mkdir(fullfile(savePCAViz,'CA1'));
-end
 saveBarsCA1= fullfile(saveBars,'CA1');
 [CCA.CA1.PCA.MCC,CCA.CA1.PCA.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(dataML,CCA.CA1.PCA.clusterIndices, [0 1 0],{dataML.Labels,coeffs_to_retain,'CA1',norm(iter),saveBarsCA1});
 
@@ -324,8 +324,10 @@ elseif coeffs_to_retain ==  3
 for len = 1:size(collectedClusterings,1)
         orderedClustersCA1_PCA = [collectedClusterings(len,PCA2CountCA1) , collectedClusterings(len,count)];
         excludedCA1_PCA = {excluded{PCA2CountCA1} , excluded{count}};
-                label = 'All_Above';
-createPCAVisualizations(scoreCA1,orderedClustersCA1_PCA,['CA1_' ,label,'_', num2str(nIters-(len-1))],norm(iter),fullfile(savePCAViz,['CA1_' label]),excludedCA1_PCA);
+                label = 'All Above';
+createPCAVisualizations(scoreCA1,orderedClustersCA1_PCA,['CA1 ' ,label,' ', num2str(nIters-(len-1))],norm(iter),fullfile(savePCAViz,['CA1_' label]),excludedCA1_PCA);
+createPCAVisualizations_RealClusters(scoreCA1,realCluster,'CA1 Correct Cluster',norm(iter),fullfile(savePCAViz,['CorrectCA1_' label]),fieldnames(dataML.Labels));
+
 end
 end
 count = count + 1;
@@ -334,10 +336,7 @@ count = count + 1;
 fprintf('\nCCA3\n');
  dataML.PCA = scoreCA3(:,1:coeffs_to_retain,:);
 [CCA.CA3.PCA.clusterIndices] = kMeansClustering(dataML,[0 1 0]);
-
-if ~exist(fullfile(savePCAViz,'CA3'),'dir')
-    mkdir(fullfile(savePCAViz,'CA3'));
-end
+nIters = size(CCA.CA3.PCA.clusterIndices,3);
 
 saveBarsCA3= fullfile(saveBars,'CA3');
 [CCA.CA3.PCA.MCC,CCA.CA3.PCA.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(dataML,CCA.CA3.PCA.clusterIndices, [0 1 0],{dataML.Labels,coeffs_to_retain,'CA3',norm(iter),saveBarsCA3});
@@ -348,8 +347,9 @@ elseif coeffs_to_retain ==  3
     for len = 1:size(collectedClusterings,1)
         orderedClustersCA3_PCA = [collectedClusterings(len,PCA2CountCA3) , collectedClusterings(len,count)];
         excludedCA3_PCA = {excluded{:,PCA2CountCA3} , excluded{count}};
-                label = 'All_Above';
-    createPCAVisualizations(scoreCA3,orderedClustersCA3_PCA,['CA3_' ,label,'_', num2str(nIters-(len-1))],norm(iter),fullfile(savePCAViz,['CA3_' label]),excludedCA3_PCA);
+                label = 'All Above';
+    createPCAVisualizations(scoreCA3,orderedClustersCA3_PCA,['CA3 ' ,label,' ', num2str(nIters-(len-1))],norm(iter),fullfile(savePCAViz,['CA3_' label]),excludedCA3_PCA);
+    createPCAVisualizations_RealClusters(scoreCA3,realCluster,'CA3 Correct Cluster',norm(iter),fullfile(savePCAViz,['CorrectCA3_' label]),fieldnames(dataML.Labels));
     end
 end
 count = count + 1;
