@@ -42,21 +42,25 @@ for category = 1:size(colors,1)
     indices3{category} = find(choice3 == category-1);
     subplot(6,2,3:2:12);scatter(coeff2(indices2{category},1),coeff2(indices2{category},2),'MarkerFaceColor',colors(category,:)); hold on;
     title('Results using 2 Coefficients');
-    exText = text( 0,-.1,['Excluded: ', num2str(excluded2{1,k})],'Units','Normalized','FontSize',15);
+    clustText = text( 0,-.1,['# of Clusters: ', num2str(max(max(clusters2)))],'Units','Normalized','FontSize',15);
+    exText = text( 0,-.2,['Excluded: ', num2str(excluded2{1,k})],'Units','Normalized','FontSize',15);
     subplot(6,2,4:2:12);scatter3(coeff3(indices3{category},1),coeff3(indices3{category},2),coeff3(indices3{category},3),'MarkerFaceColor',colors(category,:)); hold on;
     title('Results using 3 Coefficients');
-    exText2 = text( 0,-.1,['Excluded: ', num2str(excluded3{1,k})],'Units','Normalized','FontSize',15);
+    clustText2 = text( 0,-.1,['# of Clusters: ', num2str(max(max(clusters3)))],'Units','Normalized','FontSize',15);
+    exText2 = text( 0,-.2,['Excluded: ', num2str(excluded3{1,k})],'Units','Normalized','FontSize',15);
 end
   if ~norm
         name = [typeML];
   else
         name = ['Normalized',typeML];
   end
-    sgtitle(['PCA Scatter Plots for ',typeML,' | Iteration ', num2str(iters)],'FontWeight','bold','FontSize',30);
+    sgtitle(['PCA Scatter Plots for ',typeML],'FontWeight','bold','FontSize',30);
     
-saveas(pcaFig1,fullfile(saveDir,[name,'_K',num2str(k),'_Iter',num2str(iters),'.png']));
+saveas(pcaFig1,fullfile(saveDir,[name,'.png']));
 delete(exText);
 delete(exText2);
+delete(clustText);
+delete(clustText2);
     end
 
 if size(clusters2,3) > 1
@@ -77,10 +81,10 @@ end
   else
         name = ['Normalized',typeML];
   end
-    sgtitle(['PCA Scatter Plots for ',typeML,' | Iteration Mean'],'FontWeight','bold','FontSize',30);
+    sgtitle(['PCA Scatter Plots for ',typeML,' | Mean'],'FontWeight','bold','FontSize',30);
 
    
-saveas(pcaFigM,fullfile(saveDir,[name,'_K',num2str(k),'_Mode.png']));
+saveas(pcaFigM,fullfile(saveDir,[name,'_Mode.png']));
     
 end
 end

@@ -116,7 +116,11 @@ end
 end
 
 if isempty(unLabel)
-    removed = NaN;
+    removed = [];
+end
+
+if isempty(toLabel)
+    denseClusters{index} = NaN;
 end
 
 
