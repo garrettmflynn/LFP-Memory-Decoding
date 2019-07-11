@@ -1,4 +1,8 @@
-function[MCC, MCC_Categories,collectedClusterings] = parseClusterAssignments(dataML, clusters,methodML)
+function[MCC, MCC_Categories,collectedClusterings,removed] = parseClusterAssignments(dataML, clusters,methodML,barInfo)
+
+% WE ARE NOW OUTPUTTING THE RECONSTRUCTED CLUSTERS FROM MULTIPLE ITERATIONS
+outputReconstruct = false;
+
 
 channelVec = dataML.Channels.sChannels;
 sessionDir = dataML.Directory;
@@ -61,18 +65,41 @@ if methodML(2)
         
         % Correctness Calculations
         [MCC(kVal,:),MCC_Categories(kVal,:,:)] = correctnessIndexIters(toJudge,dataML.Labels,intervalRange(end),kVal);
-        collectedClusterings{1,1} = clusterOrder_Matrix(prevalenceAcrossIters);  
-        collectedClusterings{2,1} = clusterOrder_Matrix_WithPriority(prevalenceAcrossIters);
-        collectedClusterings{3,1} = clusterOrder_Matrix_WithPriorityNetworked(prevalenceAcrossIters);
-        collectedClusterings{4,1} = clusterOrder_Matrix_Density(prevalenceAcrossIters);
+        [collectedClusterings,removed] = stableClusters(prevalenceAcrossIters);  
+%         collectedClusterings{2,1} = clusterOrder_Matrix_WithPriority(prevalenceAcrossIters);
+%         collectedClusterings{3,1} = clusterOrder_Matrix_WithPriorityNetworked(prevalenceAcrossIters);
+%         collectedClusterings{4,1} = clusterOrder_Matrix_Density(prevalenceAcrossIters);
         
-        for iter = 1:length(collectedClusterings)
-            newCluster = collectedClusterings{iter,1};
+            for iter2 = 1:size(collectedClusterings,2)
+            newCluster = collectedClusterings(:,iter2);
+            exclude = removed{iter2};
             newCluster = repmat(newCluster,1,length(newCluster));
             newCluster = double(newCluster == newCluster');
-            [MCC_Reconstruction(kVal,:,iter),MCC_Categories_Reconstruction(kVal,:,iter)] = correctnessIndexIters(newCluster,dataML.Labels,intervalRange(end),kVal);
+            [MCC_Reconstruction(kVal,:),MCC_Categories_Reconstruction(kVal,:)] = correctnessIndexIters(newCluster,dataML.Labels,intervalRange(end),kVal,exclude);
         end
     end
 end
 
+if outputReconstruct 
+    MCC = MCC_Reconstruction;
+    MCC_Categories = MCC_Categories_Reconstruction;
+end
+
+if nargin > 3
+   labels = barInfo{1};
+  pca = barInfo{2};
+  typeML = barInfo{3};
+  normalized = barInfo{4};
+  saveBars =  barInfo{5}; 
+    
+    
+if ~exist(saveBars,'dir');
+    mkdir(saveBars);
+end
+if outputReconstruct 
+makeMCCBars(MCC,MCC_Categories,labels,[],name,normalized,saveBars);
+else
+makeMCCBars(MCC,MCC_Categories,labels,pca,typeML,normalized,saveBars,{MCC_Reconstruction,MCC_Categories_Reconstruction});
+end
+end
 end

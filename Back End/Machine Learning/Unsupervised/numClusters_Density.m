@@ -1,4 +1,4 @@
-function [cluster,edgesLog] = numClusters_Density(edges)
+function [cluster,edgesLog,density,denseClusters,removed] = numClusters_Density(edges)
 
 clustCount = 1;
 added = [];
@@ -66,7 +66,7 @@ while ~isempty(find(~isnan(positions),1))
         addBigger = true;
         if isempty(newInds)
             newInds = 1;
-            cluster{1} = biggerCluster
+            cluster{1} = biggerCluster;
             addBigger = false;
             alreadyEdges{1} = rewriteEdges(biggerCluster);
         end
@@ -87,6 +87,38 @@ while ~isempty(find(~isnan(positions),1))
 end
 
 edgesLog = alreadyEdges;
+
+if nargout >= 3
+toLabel = [];
+unLabel = [];
+for ci = 1:length(cluster)
+            if length(cluster{ci}) ~= 1
+            n = length(cluster{ci});
+            potentialEdges(ci) = (n*(n-1))/2;
+            actualEdges(ci) = size(edgesLog(ci),1);
+            density = actualEdges./potentialEdges;
+            toLabel = [toLabel ci];
+            else 
+                density(ci) = NaN;
+                unLabel = [unLabel ci];
+            end
+end  
+            index = 1;
+            
+            for sigi = toLabel
+            denseClusters{index} = cluster{sigi};
+            index = index + 1;
+            end
+            
+
+            removed = unLabel;
+
+end
+
+if isempty(unLabel)
+    removed = NaN;
+end
+
 
 end
 

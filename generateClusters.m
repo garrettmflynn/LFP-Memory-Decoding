@@ -2,6 +2,8 @@
 clear; clc; close all;
 
 norm = [0 1];
+Raw = 1;
+PCA = 1;
 
 
 for iter = 1:length(norm)
@@ -122,6 +124,8 @@ end
 
 fprintf('Conducting Raw Clustering\n');
 saveBars = fullfile(parameters.Directories.filePath,'MCC Bar Plots');
+
+if Raw
 % Do SCA KMeans
 
 % fprintf('\nSCA\n');
@@ -145,13 +149,9 @@ for channels = 1:length(CCAChoices)
 end
 
 [MCA.Raw.clusterIndices] = kMeansClustering(MCAMatrix,[0 1 0]);
-[MCA.Raw.MCC,MCA.Raw.MCC_Categories,collectedClusterings(:,count)] = parseClusterAssignments(MCAMatrix,MCA.Raw.clusterIndices, [0 1 0]);
+saveBarsMCA= fullfile(saveBars,'MCA');
+[MCA.Raw.MCC,MCA.Raw.MCC_Categories,collectedClusterings(:,count)] = parseClusterAssignments(MCAMatrix,MCA.Raw.clusterIndices, [0 1 0],{MCAMatrix.Labels,[],'MCA',norm(iter),saveBarsMCA});
 count = count + 1;
-if ~exist(fullfile(saveBars,'MCA'),'dir');
-    mkdir(fullfile(saveBars,'MCA'));
-end
-makeMCCBars(MCA.Raw.MCC,MCA.Raw.MCC_Categories,MCAMatrix.Labels,[],'MCA',norm(iter),fullfile(saveBars,'MCA'));
-
 
 % Do CCA KMeans for CA1
 fprintf('\nCCA1\n');
@@ -163,7 +163,8 @@ for channels = 1:length(CCAChoices)
 end
 
 [CCA.CA1.Raw.clusterIndices] = kMeansClustering(MCAMatrix,[0 1 0]);
-[CCA.CA1.Raw.MCC,CCA.CA1.Raw.MCC_Categories,collectedClusterings(:,count)] = parseClusterAssignments(MCAMatrix,CCA.CA1.Raw.clusterIndices, [0 1 0]);
+saveBarsCA1= fullfile(saveBars,'CA1');
+[CCA.CA1.Raw.MCC,CCA.CA1.Raw.MCC_Categories,collectedClusterings(:,count)] = parseClusterAssignments(MCAMatrix,CCA.CA1.Raw.clusterIndices, [0 1 0],{MCAMatrix.Labels,[],'CA1',norm(iter),saveBarsCA1});
 count = count + 1;
 if ~exist(fullfile(saveBars,'CA1'),'dir');
     mkdir(fullfile(saveBars,'CA1'));
@@ -180,19 +181,14 @@ for channels = 1:length(CCAChoices)
 end
 
 [CCA.CA3.Raw.clusterIndices] = kMeansClustering(MCAMatrix,[0 1 0]);
-[CCA.CA3.Raw.MCC,CCA.CA3.Raw.MCC_Categories,collectedClusterings(:,count)] = parseClusterAssignments(MCAMatrix,CCA.CA3.Raw.clusterIndices, [0 1 0]);
+saveBarsCA3= fullfile(saveBars,'CA3');
+[CCA.CA3.Raw.MCC,CCA.CA3.Raw.MCC_Categories,collectedClusterings(:,count)] = parseClusterAssignments(MCAMatrix,CCA.CA3.Raw.clusterIndices, [0 1 0],{MCAMatrix.Labels,[],'CA3',norm(iter),saveBarsCA3});
 count = count + 1;
-if ~exist(fullfile(saveBars,'CA3'),'dir');
-    mkdir(fullfile(saveBars,'CA3'));
+
 end
-makeMCCBars(CCA.CA3.Raw.MCC,CCA.CA3.Raw.MCC_Categories,MCAMatrix.Labels,[],'CA3',norm(iter),fullfile(saveBars,'CA3'));
-
-
+if PCA
 savePCA = fullfile(parameters.Directories.filePath,'Scree Plots');
 savePCAViz = fullfile(parameters.Directories.filePath,'PCA Scatter Plots');
-if ~exist(savePCA,'dir');
-    mkdir(savePCA);
-end
 %% PCA SCA
 % fprintf('Now Conducting PCA on SCA\n');
 % fPCA = figure('visible','off','units','normalized','outerposition',[0 0 1
@@ -300,33 +296,25 @@ dataML.PCA = scoreMCA(:,1:coeffs_to_retain,:);
 if ~exist(fullfile(savePCAViz,'MCA'),'dir')
     mkdir(fullfile(savePCAViz,'MCA'));
 end
-if coeffs_to_retain ==  2 
-[MCA.PCA.MCC,MCA.PCA.MCC_Categories,collectedClusterings(:,count)] = parseClusterAssignments(dataML, MCA.PCA.clusterIndices,[0 1 0]);
-PCA2CountMCA = count;
+
+saveBarsMCA = fullfile(saveBars,'MCA');
+[MCA.PCA.MCC,MCA.PCA.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(dataML, MCA.PCA.clusterIndices,[0 1 0],{MCAMatrix.Labels,coeffs_to_retain,'MCA',norm(iter),saveBarsMCA});
+if coeffs_to_retain ==  2 PCA2CountMCA = count;
 count = count + 1;
 elseif coeffs_to_retain ==  3
-[MCA.PCA.MCC,MCA.PCA.MCC_Categories,collectedClusterings(:,count)] = parseClusterAssignments(dataML, MCA.PCA.clusterIndices,[0 1 0]);
-for len = 1:size(collectedClusterings,2)
+    for len = 1:size(collectedClusterings,1)
         orderedClustersMCA_PCA = [collectedClusterings(len,PCA2CountMCA) , collectedClusterings(len,count)];
+        excludedMCA_PCA = {excluded{PCA2CountMCA} , excluded{count}};
         switch len
             case 1
-                label = 'MaxK Iter';
+                label = 'All Above';
             case 2
                 label = 'Batch Maxes';
-            case 3
-            label = 'At Least One';
-            case 4 
-                label = 'Dense (exclusions)';
         end
-createPCAVisualizations(scoreMCA,orderedClustersMCA_PCA,['MCA ' label],norm(iter),fullfile(savePCAViz,['MCA_' label]));
+createPCAVisualizations(scoreMCA,orderedClustersMCA_PCA,['MCA ' label],norm(iter),fullfile(savePCAViz,['MCA_' label]),excludedMCA_PCA);
 end
 count = count + 1;
 end
-
-if ~exist(fullfile(saveBars,'MCA'),'dir')
-    mkdir(fullfile(saveBars,'MCA'));
-end
-makeMCCBars(MCA.PCA.MCC,MCA.PCA.MCC_Categories,dataML.Labels,coeffs_to_retain,'MCA',norm(iter),fullfile(saveBars,'MCA'));
 
 %% Do CCA KMeans for CA1 and PCA
 fprintf('\nCCA1\n');
@@ -337,32 +325,26 @@ dataML.PCA = scoreCA1(:,1:coeffs_to_retain,:);
 if ~exist(fullfile(savePCAViz,'CA1'),'dir')
     mkdir(fullfile(savePCAViz,'CA1'));
 end
+saveBarsCA1= fullfile(saveBars,'CA1');
+[CCA.CA1.PCA.MCC,CCA.CA1.PCA.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(dataML,CCA.CA1.PCA.clusterIndices, [0 1 0],{MCAMatrix.Labels,coeffs_to_retain,'CA1',norm(iter),saveBarsCA1});
+
 if coeffs_to_retain ==  2 
-[CCA.CA1.PCA.MCC,CCA.CA1.PCA.MCC_Categories,collectedClusterings(:,count)] = parseClusterAssignments(dataML,CCA.CA1.PCA.clusterIndices, [0 1 0]);
 PCA2CountCA1 = count;
 count = count + 1;
 elseif coeffs_to_retain ==  3
-[CCA.CA1.PCA.MCC,CCA.CA1.PCA.MCC_Categories,collectedClusterings(:,count)] = parseClusterAssignments(dataML,CCA.CA1.PCA.clusterIndices, [0 1 0]);
-for len = 1:size(collectedClusterings,2)
-        orderedClustersCA1_PCA = [collectedClusterings(len,PCA2CountMCA) , collectedClusterings(len,count)];
+for len = 1:size(collectedClusterings,1)
+        orderedClustersCA1_PCA = [collectedClusterings(len,PCA2CountCA1) , collectedClusterings(len,count)];
+        excludedCA1_PCA = {excluded{PCA2CountCA1} , excluded{count}};
         switch len
             case 1
-                label = 'MaxK Iter';
+                label = 'All Above';
             case 2
                 label = 'Batch Maxes';
-            case 3
-            label = 'At Least One';
         end
-createPCAVisualizations(scoreCA1,orderedClustersCA1_PCA,['CA1 ' label],norm(iter),fullfile(savePCAViz,['CA1_' label]));
+createPCAVisualizations(scoreCA1,orderedClustersCA1_PCA,['CA1 ' label],norm(iter),fullfile(savePCAViz,['CA1_' label]),excludedMCA_CA1);
 end
 count = count + 1;
 end
-
-
-if ~exist(fullfile(saveBars,'CA1'),'dir')
-    mkdir(fullfile(saveBars,'CA1'));
-end
-makeMCCBars(CCA.CA1.PCA.MCC,CCA.CA1.PCA.MCC_Categories,dataML.Labels,coeffs_to_retain,'CA1',norm(iter),fullfile(saveBars,'CA1'));
 
 %% Do CCA KMeans for CA3 and PCA
 fprintf('\nCCA3\n');
@@ -372,24 +354,26 @@ fprintf('\nCCA3\n');
 if ~exist(fullfile(savePCAViz,'CA3'),'dir')
     mkdir(fullfile(savePCAViz,'CA3'));
 end
+
+saveBarsCA3= fullfile(saveBars,'CA3');
+
 if coeffs_to_retain ==  2 
-[CCA.CA3.PCA.MCC,CCA.CA3.PCA.MCC_Categories,collectedClusterings(:,count)] = parseClusterAssignments(dataML,CCA.CA3.PCA.clusterIndices, [0 1 0]);
+[CCA.CA3.PCA.MCC,CCA.CA3.PCA.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(dataML,CCA.CA3.PCA.clusterIndices, [0 1 0],{MCAMatrix.Labels,coeffs_to_retain,'CA3',norm(iter),saveBarsCA3});
 PCA2CountCA3 = count;
 count = count + 1;
 elseif coeffs_to_retain ==  3
-    [CCA.CA3.PCA.MCC,CCA.CA3.PCA.MCC_Categories,collectedClusterings(:,count)] = parseClusterAssignments(dataML,CCA.CA3.PCA.clusterIndices, [0 1 0]);
+    [CCA.CA3.PCA.MCC,CCA.CA3.PCA.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(dataML,CCA.CA3.PCA.clusterIndices, [0 1 0],{MCAMatrix.Labels,coeffs_to_retain,'CA3',norm(iter),saveBarsCA3});
     count = count + 1;
-    for len = 1:size(collectedClusterings,2)
-        orderedClustersCA3_PCA = [collectedClusterings(len,PCA2CountMCA) , collectedClusterings(len,count)];
+    for len = 1:size(collectedClusterings,1)
+        orderedClustersCA3_PCA = [collectedClusterings(len,PCA2CountCA3) , collectedClusterings(len,count)];
+        excludedCA3_PCA = {excluded{:,PCA2CountCA3} , excluded{count}};
         switch len
             case 1
-                label = 'MaxK Iter';
+                label = 'All Above';
             case 2
                 label = 'Batch Maxes';
-            case 3
-            label = 'At Least One';
         end
-    createPCAVisualizations(scoreCA3,orderedClustersCA3_PCA,['CA3 ' label],norm(iter),fullfile(savePCAViz,['CA3_' label]));
+    createPCAVisualizations(scoreCA3,orderedClustersCA3_PCA,['CA3 ' label],norm(iter),fullfile(savePCAViz,['CA3_' label]),excludedCA3_PCA);
     end
     count = count + 1;
 end
@@ -417,4 +401,5 @@ clear MCA
 clear SCA
 clear CCA
 clear dataML
+end
 end

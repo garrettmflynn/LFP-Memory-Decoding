@@ -15,16 +15,18 @@ startIters = numIters;
 howMany(numIters) = 2;
 figure;
 
-%% Initialize Links of size (numIters)
+%% Iterate Links 
 [v,i] = maxk(countAcrossIters,numMaxes);
 startExComb = 1;
-while redo
-while redo
+
+while numIters >= 6
 edges = cell(1,positions(end));
 toLabel = [];
 unLabel = [];
-trueCols = [];
-trueRows = [];
+trueCols = cell(1,1000);
+trueRows = cell(1,1000);
+variationCounts = 1;
+
 
        for iterIndex = startIters:-1:numIters
         [row{iterIndex},col{iterIndex}] = find(v == iterIndex);
@@ -46,33 +48,53 @@ trueRows = [];
             pairs = [r;pairs];
             newRows = pairs;
         else
-        exhaustiveCombinations = combnk(pairs,howMany(iterIndex)-1);
-        newRows = [r;exhaustiveCombinations(startExComb)];
+            grab = howMany(iterIndex)-1;
+            if grab > length(pairs)
+                grab = length(pairs);
+            end
+        exhaustiveCombinations = combnk(pairs,grab);
+        newRows = [repmat(r,size(exhaustiveCombinations,1),1),exhaustiveCombinations];
         end
         
-        if length(newRows) < length(pairs)   
-        len = length(newRows);
+        if size(newRows,1) < size(pairs,1);  
+        len = size(newRows,1);
         else
             if isempty(pairs)
-            len = length(newRows);
+            len = size(newRows,1);
             else   
-            len = length(pairs);
+            len = size(pairs,1);
             end
         end
         
-        newRows = newRows(1:len);
-        newCols = zz * ones(1,len);
+        newRows = newRows(1:len,:);
+        newCols = zz * ones(len,1);
         
-        trueCols = [trueCols;newCols'];
-        trueRows = [trueRows; newRows];
-        
-        end
-            for ii = 1:length(trueCols)
-            edges{trueCols(ii)} = [edges{trueCols(ii)}; i(trueRows(ii),trueCols(ii))];
-            edges{trueCols(ii)} = unique(edges{trueCols(ii)});
+        for partition = 1:size(newRows,2)
+        trueCols{variationCounts} = [trueCols{variationCounts};newCols];
+        trueRows{variationCounts} = [trueRows{variationCounts}; newRows(:,partition)];
+        variationCounts = variationCounts + 1;
         end
         end
-        
+        for v = 1:length(variationCounts)
+            for ii = 1:length(trueCols{v})
+            edges{trueCols(ii),v} = [edges{trueCols(ii),v}; i(trueRows{v}(ii,:),trueCols{v}(ii,:))];
+            edges{trueCols(ii),v} = unique(edges{trueCols(ii),v});
+            end
+        end
+       end
+            if maxMany == howMany(numIters)
+                numIters = numIters - 1;
+                howMany(numIters) = 1;
+                startExComb = 1;
+            else
+            howMany(numIters) = howMany(numIters) + 1;
+            startExComb = 1;
+            end
+end
+
+
+  for numPermutations = 1:size(edges,3)     
+       
         [clusters, edgesLog] = numClusters_Density(edges);
         
         % Check Density & Reject Clusters that are Below 
@@ -101,44 +123,7 @@ trueRows = [];
             clear density
             clear potentialEdges
             clear actualEdges
-       
-        if startExComb == size(exhaustiveCombinations,1)   
-            if maxMany == howMany(numIters)
-                numIters = numIters - 1;
-                howMany(numIters) = 1;
-                startExComb = 1;
-            else
-            howMany(numIters) = howMany(numIters) + 1;
-            startExComb = 1;
-            end
-        end
         
         startExComb = startExComb + 1;    
-        %% If Gone Over, Restart & Take Advantage of Slight Randomization Due to Maximum Connections
-        if numClusts == kOptimization
-            %redo = false;
-        end
-        if iterations > 10
-            %redo = false;
-        end
-        iterations = iterations + 1;
-    end
-    
-    if iterations > 10
-        break;
-    end
-    
-end
-if iterations < 10
-    for scale = 1:kOptimization
-        for indices = toLabel
-        orderedClusters(clusters{indices}) = scale;
-        end
-        for unlabeled = unLabel
-            orderedClusters(clusters{unlabeled}) = 0;
-        end
-    end
-else
-    orderedClusters = NaN;
-end
+  end
 end

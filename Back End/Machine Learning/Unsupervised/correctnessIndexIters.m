@@ -1,9 +1,13 @@
-function [MCC,MCC_Categories] = correctnessIndexIters(hitMatrix,labels,nIntervals,k)
+function [MCC,MCC_Categories] = correctnessIndexIters(hitMatrix,labels,nIntervals,k,excludeTrials)
 % Output = Correctness Beyond Chance
 
 
 fields = fieldnames(labels);
 MCC = NaN;
+
+if nargin < 5
+    excludeTrials = [];
+end
 
 %% Populate Matrices
 tpMatrix = NaN(nIntervals,nIntervals);
@@ -11,11 +15,15 @@ fpMatrix = NaN(nIntervals,nIntervals);
 
 for classi = 1:size(fields,1)
     for pairi = classi:size(fields,1)
-    fpMatrix(find(labels.(fields{classi})==1),find(labels.(fields{pairi})==1)) = 1;
-    fpMatrix(find(labels.(fields{pairi})==1),labels.(fields{classi})==1) = 1;
+        classLabels = (labels.(fields{classi})==1);
+        classLabels(excludeTrials) = 0;
+        pairLabels = (labels.(fields{pairi})==1);
+        pairLabels(excludeTrials) = 0;
+    fpMatrix(find(classLabels),find(pairLabels)) = 1;
+    fpMatrix(find(pairLabels),find(classLabels)) = 1;
     end
-tpMatrix(find(labels.(fields{classi})==1),find(labels.(fields{classi})==1)) = 1;
-fpMatrix(find(labels.(fields{classi})==1),find(labels.(fields{classi})==1)) = NaN;
+tpMatrix(find(classLabels),find(classLabels)) = 1;
+fpMatrix(find(classLabels),find(classLabels)) = NaN;
 categoryMCCs.(fields{classi}).tP = tpMatrix;
 categoryMCCs.(fields{classi}).fP = fpMatrix;
 end
