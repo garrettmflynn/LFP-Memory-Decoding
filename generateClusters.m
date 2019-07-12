@@ -2,7 +2,7 @@
 clear; clc; close all;
 
 norm = [0 1];
-Raw = 0;
+Raw = 1;
 PCA = 1;
 
 
