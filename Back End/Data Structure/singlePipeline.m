@@ -6,11 +6,17 @@ function [HHData] = singlePipeline(neuralData,nexFileData,parameters,sessionLoop
 fprintf('Now Processing Spikes\n');
 parameters = humanDataSpikeProcessing(nexFileData,parameters);
 
+if isstruct(neuralData.Data)
+    nData = neuralData.Data.Spikes.Waveform;
+else
+    nData = neuralData.Data;
+end
+
 % Raw data
 if nargin == 4
-RawData = neuralData.Data{1,sessionLoop}(parameters.Channels.sChannels, :);
+RawData = nData{1,sessionLoop}(parameters.Channels.sChannels, :);
 else
-RawData = neuralData.Data(parameters.Channels.sChannels, :);
+RawData = nData(parameters.Channels.sChannels, :);
 end
 
 % LFP Data

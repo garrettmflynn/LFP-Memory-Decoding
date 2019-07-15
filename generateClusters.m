@@ -15,18 +15,18 @@ addpath(genpath('E:\Standardized_LFP_Code\Back End\nexManipulation'));
 addpath(genpath('C:\SuperUser\Documents\GitHub\LFP-Memory-Decoding'));
 
 % Define data path here for extracting LFP data
-parameters.Directories.filePath = strcat('E:\ClipArt_2');
+parameters.Directories.filePath = strcat('E:\Data2_Recording');
 
 % Choose the testing data
-parameters.Directories.dataName = 'ClipArt_2';
+parameters.Directories.dataName = 'Data2_Recording003';
 
 
 
 %% HHDataStructre Section (modified for iteration)
 % Agreed-Upon Parameters
-parameters.Channels.sChannels = [1:10, 17:26, 33:42];
-parameters.Channels.CA1_Channels = [7:10, 23:26, 39:42];
-parameters.Channels.CA3_Channels = [1:6, 17:22, 33:38];
+parameters.Channels.sChannels = [1:6,7:10,17:22,23:26];%[1:10, 17:26, 33:42];
+parameters.Channels.CA1_Channels = [7:10,23:26]; %[7:10, 23:26, 39:42];
+parameters.Channels.CA3_Channels = [1:6,17:22];%[1:6, 17:22, 33:38];
 
 % Processing | Binning & Windows
 parameters.Optional.methods = 'Hanning'; % Either Morlet or STFT Window (such as Hanning)
@@ -47,21 +47,33 @@ nexFileData = readNexFile(fullfile(parameters.Directories.filePath,[parameters.D
 
 
 % Derive Certain Parameters from NSx Data
-
+if isfield(neuralData.MetaTags,'SamplingFreq')
 parameters.Derived.samplingFreq = neuralData.MetaTags.SamplingFreq;
+elseif isfield(neuralData.MetaTags,'SampleRes')
+    parameters.Derived.samplingFreq = neuralData.MetaTags.SampleRes;
+else
+    error('No Sampling Frequency Found in Neural Data Structure');
+end
+
 
 parameters.Filters.notchFilter = designfilt('bandstopiir','FilterOrder',2, ...
     'HalfPowerFrequency1',59,'HalfPowerFrequency2',61, ...
-    'DesignMethod','butter','SampleRate',neuralData.MetaTags.SamplingFreq); % Notch Filter to Remove Powerline Noise (Hz)
+    'DesignMethod','butter','SampleRate',parameters.Derived.samplingFreq); % Notch Filter to Remove Powerline Noise (Hz)
 parameters.Derived.freq = linspace(parameters.Choices.freqMin, parameters.Choices.freqMax, ((parameters.Choices.freqMax-parameters.Choices.freqMin)+1)/parameters.Choices.freqBin);
 parameters.Derived.overlap = round((parameters.Choices.timeBin * parameters.Derived.samplingFreq)/2);
 
 % (1) Multi-Session Configuration
-if size(neuralData.Data,1) == 1
+if isstruct(neuralData.Data)
+    nData = neuralData.Data.Spikes.Waveform;
+else
+    nData = neuralData.Data;
+end
+    
+if size(nData,1) == 1
     
     
-    for session = 1:size(neuralData.Data,2)
-        sessionPointLength = size(neuralData.Data{1,session},2);
+    for session = 1:size(nData,2)
+        sessionPointLength = size(nData{1,session},2);
         parameters.Derived.durationSeconds = sessionPointLength/parameters.Derived.samplingFreq;
         parameters.Derived.time = linspace(0,parameters.Derived.durationSeconds,((1/parameters.Choices.timeBin)*4)-1);
         [HHData] = singlePipeline(neuralData,nexFileData,parameters,session);
@@ -74,8 +86,8 @@ fprintf('Done\n');
 
 % (2) Single-Session Configuration
 else
-    sessionPointLength = size(neuralData.Data,2);
-    parameters.Derived.durationSeconds = sessionPointLength/parameters.Derived.samplingFreq;
+    sessionPointLength = size(nData,2);
+    parameters.Derived.durationSeconds = double(sessionPointLength/parameters.Derived.samplingFreq);
     parameters.Derived.time = linspace(0,parameters.Derived.durationSeconds,((1/parameters.Choices.timeBin)*4)-1);
     
         % Create Data Structure
@@ -84,7 +96,6 @@ else
         fprintf('Done\n');
 
 end
-
 clear neuralData
 clear nexFileData
 
