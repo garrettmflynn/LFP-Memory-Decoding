@@ -10,12 +10,11 @@ for iter = 1:length(norm)
 %% Setup
 
 % Data Paths
-addpath(genpath('E:\NPMK'));
-addpath(genpath('E:\Standardized_LFP_Code\Back End\nexManipulation'));
-addpath(genpath('C:\SuperUser\Documents\GitHub\LFP-Memory-Decoding'));
+    % If your system does not have all of these on the path, add them
+%         addpath(genpath('C:\SuperUser\Documents\GitHub\LFP-Memory-Decoding'));
 
 % Define data path here for extracting LFP data
-parameters.Directories.filePath = strcat('E:\ClipArt_2');%strcat('E:\Data2_Recording');
+parameters.Directories.filePath = strcat('/media/gflynn/Seagate Backup Plus Drive/LFP Decoding/ClipArt_2');%Data2_Recording');
 
 % Choose the testing data
 parameters.Directories.dataName ='ClipArt_2'; %'Data2_Recording003';
@@ -24,9 +23,9 @@ parameters.Directories.dataName ='ClipArt_2'; %'Data2_Recording003';
 
 %% HHDataStructre Section (modified for iteration)
 % Agreed-Upon Parameters
-parameters.Channels.sChannels = [1:10, 17:26, 33:42]; %[1:6,7:10,17:22,23:26];
-parameters.Channels.CA1_Channels = [7:10, 23:26, 39:42]; %[7:10,23:26]; 
-parameters.Channels.CA3_Channels = [1:6, 17:22, 33:38]; %[1:6,17:22]
+parameters.Channels.sChannels = [1:10, 17:26, 33:42]; %[1:6,7:10,17:22,23:26]; % [1:10, 17:26, 33:42]; 
+parameters.Channels.CA1_Channels =  [7:10, 23:26, 39:42]; %[7:10,23:26];
+parameters.Channels.CA3_Channels =  [1:6, 17:22, 33:38]; %[1:6,17:22];  %
 
 % Processing | Binning & Windows
 parameters.Optional.methods = 'Hanning'; % Either Morlet or STFT Window (such as Hanning)
