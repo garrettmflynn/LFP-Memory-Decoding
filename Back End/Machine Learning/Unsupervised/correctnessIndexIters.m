@@ -37,10 +37,10 @@ totalIters = hitMatrix(1,1);
  end
 
 for iters = 1:size(hitMatrix,3)
-tp = hitMatrix(:,:,iters).*tpMatrix;
-fp = hitMatrix(:,:,iters).*fpMatrix;
-fn = totalIters-tp;
-tn = totalIters-fp;
+tp = triu(hitMatrix(:,:,iters).*tpMatrix);
+fp = triu(hitMatrix(:,:,iters).*fpMatrix);
+fn = triu(totalIters-tp);
+tn = triu(totalIters-fp);
 
  tpTotalCount = nansum(nansum(tp));
  fpTotalCount = nansum(nansum(fp));
@@ -64,10 +64,10 @@ totalIters = hitMatrix(1,1);
  fPMatrix(n,n) = NaN;
  end
 
-tP = hitMatrix(:,:,iters).*tPMatrix;
-fP= hitMatrix(:,:,iters).*fPMatrix;
-fN = totalIters-tP;
-tN = totalIters-fP;
+tP = triu(hitMatrix(:,:,iters).*tPMatrix);
+fP= triu(hitMatrix(:,:,iters).*fPMatrix);
+fN = triu(totalIters-tP);
+tN = triu(totalIters-fP);
 
  tpTotalCount = nansum(nansum(tP));
  fpTotalCount = nansum(nansum(fP));

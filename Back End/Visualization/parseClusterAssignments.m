@@ -75,7 +75,7 @@ if methodML(2)
         
         for iter2 = 1:size(newClusters,2)
             newCluster = newClusters{iter2};
-            exclude = removed{iter2};
+            exclude = [dataML.WrongResponse removed{iter2}];
             newCluster = repmat(newCluster,1,length(newCluster));
             newCluster = double(newCluster == newCluster');
             [MCC_Reconstruction(iter2,:),MCC_Categories_Reconstruction(iter2,:)] = correctnessIndexIters(newCluster,dataML.Labels,intervalRange(end),kVal,exclude);

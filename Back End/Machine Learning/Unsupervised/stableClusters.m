@@ -38,7 +38,7 @@ orderedClusters(denseClusters{scale},iterations) = scale;
 end
 else
 for scale = 1:length(clusters)
-orderedClusters(clusters{scale},iterations)
+orderedClusters(clusters{scale},iterations);
 end
 end
 excluded{:,iterations} = removed;

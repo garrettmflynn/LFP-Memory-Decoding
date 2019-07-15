@@ -1,7 +1,7 @@
 function [realCluster] = realClusters(labels)
 
 fields = fieldnames(labels);
-realCluster = NaN(length(labels.(fields{1})),length(fields))
+realCluster = NaN(length(labels.(fields{1})),length(fields));
 useCount = ones(length(labels.(fields{1})),1);
 for ind = 1:length(fields)
      categories = find(labels.(fields{ind}));

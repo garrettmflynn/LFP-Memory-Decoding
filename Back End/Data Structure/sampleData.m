@@ -7,7 +7,7 @@ if isscalar(sampling)
 if ndims(data) == 3
 channels = size(data,3);
 else
-    channels = 1
+    channels = 1;
 end
 
 intervalSize = (intervals(2,1)*sampling-intervals(1,1)*sampling);

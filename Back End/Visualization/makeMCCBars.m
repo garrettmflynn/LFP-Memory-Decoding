@@ -77,7 +77,7 @@ else
     % Construct Bar Comparisons
  
     loc = 2:(length(mean(squeeze(MCC_Categories(index3,:,:)),2)) + 1);
-    constructBarComparisons = nan(length(loc )+ length(index2), 1)
+    constructBarComparisons = nan(length(loc )+ length(index2), 1);
     addC = mean(MCC(index2,:),2);
     constructBarComparisons(1,1:size(addC,2)) = addC;
     addM =  mean(MCC(index2,:),2);
