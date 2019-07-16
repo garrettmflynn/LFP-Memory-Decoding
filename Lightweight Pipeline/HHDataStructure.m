@@ -130,5 +130,5 @@ clear nexFileData
 %% Save If Desiresd
 if saveHHData
     fprintf('Now Saving HHData. This may take a while...');
-save(fullfile(parameters.Directories.filePath,[parameters.Directories.dataName, 'HHData',num2str(coeffs_to_retain),'.mat']),'dataML','-v7.3');
+save(fullfile(parameters.Directories.filePath,[parameters.Directories.dataName, 'HHData.mat']),'HHData','-v7.3');
 end

@@ -182,8 +182,6 @@ for coeffs_to_retain = [2,3,5,10]
 %% Do MCA KMeans on PCA
 fprintf('\nMCA\n');
 dataML.PCA = scoreMCA(:,1:coeffs_to_retain,:);
-saveDuringML;
-
 [MCA.PCA.clusterIndices] = kMeansClustering(dataML,[0 1 0]);
 nIters = size(MCA.PCA.clusterIndices,3);
 
@@ -208,8 +206,6 @@ count = count + 1;
 %% Do CCA KMeans for CA1 and PCA
 fprintf('\nCCA1\n');
 dataML.PCA = scoreCA1(:,1:coeffs_to_retain,:);
-saveDuringML;
-
 [CCA.CA1.PCA.clusterIndices] = kMeansClustering(dataML,[0 1 0]);
 nIters = size(CCA.CA1.PCA.clusterIndices,3);
 
@@ -233,8 +229,6 @@ count = count + 1;
 %% Do CCA KMeans for CA3 and PCA
 fprintf('\nCCA3\n');
  dataML.PCA = scoreCA3(:,1:coeffs_to_retain,:);
-saveDuringML;
- 
 [CCA.CA3.PCA.clusterIndices] = kMeansClustering(dataML,[0 1 0]);
 nIters = size(CCA.CA3.PCA.clusterIndices,3);
 
@@ -254,15 +248,22 @@ elseif coeffs_to_retain ==  3
 end
 count = count + 1;
 
+%% Organize Results
     results = struct();
 %     results.SCA = SCA;
     results.MCA = MCA;
     results.CCA = CCA;
     %results.consistency = consistency;
+    
+resultsDir = fullfile(parameters.Directories.filePath,'Results');  
+    if ~exist(resultsDir,'dir');
+    mkdir(resultsDir);
+    end  
+    
 if norm(iter) == 1
-save(fullfile(parameters.Directories.filePath,[parameters.Directories.dataName, 'ResultsNorm',num2str(coeffs_to_retain),'.mat']),'results');
+save(fullfile(resultsDir,[parameters.Directories.dataName, 'ResultsNorm',num2str(coeffs_to_retain),'.mat']),'results');
 else
-save(fullfile(parameters.Directories.filePath,[parameters.Directories.dataName, 'Results',num2str(coeffs_to_retain),'.mat']),'results');
+save(fullfile(resultsDir,[parameters.Directories.dataName, 'Results',num2str(coeffs_to_retain),'.mat']),'results');
 end
 end
 

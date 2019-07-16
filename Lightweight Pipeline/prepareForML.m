@@ -24,7 +24,7 @@ dataML.WrongResponse = find(HHData.Data.Intervals.Outcome == 0);
 if saveHHData
     if norm(iter) == 1
             fprintf('Now Saving Normalized HHData. This may take a while...');
-save(fullfile(parameters.Directories.filePath,[parameters.Directories.dataName, 'HHDataNorm',num2str(coeffs_to_retain),'.mat']),'dataML','-v7.3');
+save(fullfile(parameters.Directories.filePath,[parameters.Directories.dataName, 'HHDataNorm.mat']),'dataML','-v7.3');
     end
 end
 

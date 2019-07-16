@@ -1,6 +1,6 @@
 
 clear; clc; close all;
-
+%% What to Run?
 % Function Path
 addpath(genpath('C:\SuperUser\Documents\GitHub\LFP-Memory-Decoding'));
 
@@ -10,7 +10,7 @@ ClipArt2 = 1;
 other = 0;
 
 % Data Structure Choices
-norm = [0 1]; % Carries over to ML, if chosen
+norm = 1;%[0 1]; % Carries over to ML, if chosen // A vector of two values results in two iterations
 saveHHData = 1;
 
 % ML Choices
