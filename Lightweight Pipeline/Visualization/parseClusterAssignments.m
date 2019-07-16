@@ -37,7 +37,7 @@ if methodML(1)
             end
             
             % Correctness Calculations
-            [MCC(channel,kVal,:),MCC_Categories(channel,kVal,:)] = correctnessIndexIters(toJudge,dataML.Labels,intervalRange(end),kVal);
+            [MCC(channel,kVal,:),MCC_Categories(channel,kVal,:)] = MCCs(toJudge,dataML.Labels,intervalRange(end),kVal);
             orderedClusters(channel,kVal,:) = clusterOrder_Matrix(prevalenceAcrossIters);
             
         end
@@ -64,11 +64,8 @@ if methodML(2)
         
         
         % Correctness Calculations
-        [MCC(kVal,:),MCC_Categories(kVal,:,:)] = correctnessIndexIters(toJudge,dataML.Labels,intervalRange(end),kVal);
+        [MCC(kVal,:),MCC_Categories(kVal,:,:)] = MCCs(toJudge,dataML.Labels,intervalRange(end),kVal);
         [collectedClusterings,removed] = stableClusters(prevalenceAcrossIters);
-        %         collectedClusterings{2,1} = clusterOrder_Matrix_WithPriority(prevalenceAcrossIters);
-        %         collectedClusterings{3,1} = clusterOrder_Matrix_WithPriorityNetworked(prevalenceAcrossIters);
-        %         collectedClusterings{4,1} = clusterOrder_Matrix_Density(prevalenceAcrossIters);
         for iter2 = 1:size(collectedClusterings,2)
             newClusters{iter2} = collectedClusterings(:,iter2);
         end
@@ -78,7 +75,7 @@ if methodML(2)
             exclude = [dataML.WrongResponse removed{iter2}];
             newCluster = repmat(newCluster,1,length(newCluster));
             newCluster = double(newCluster == newCluster');
-            [MCC_Reconstruction(iter2,:),MCC_Categories_Reconstruction(iter2,:)] = correctnessIndexIters(newCluster,dataML.Labels,intervalRange(end),kVal,exclude);
+            [MCC_Reconstruction(iter2,:),MCC_Categories_Reconstruction(iter2,:)] = MCCs(newCluster,dataML.Labels,intervalRange(end),kVal,exclude);
         end
     end
 end

@@ -1,4 +1,4 @@
-function [MCC,MCC_Categories] = correctnessIndexIters(hitMatrix,labels,nIntervals,k,excludeTrials)
+function [MCC,MCC_Categories] = MCCs(hitMatrix,labels,nIntervals,k,excludeTrials)
 % Output = Correctness Beyond Chance
 
 
