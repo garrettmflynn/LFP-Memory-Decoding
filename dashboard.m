@@ -4,6 +4,9 @@ clear; clc; close all;
 % Function Path
 addpath(genpath('C:\SuperUser\Documents\GitHub\LFP-Memory-Decoding'));
 
+% NPMK Path
+addpath(genpath('E:\Useful MATLAB Scripts\NPMK'));
+
 % Data Choices
 data003 = 0;
 ClipArt2 = 1;
