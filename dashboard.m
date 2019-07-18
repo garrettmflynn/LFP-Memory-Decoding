@@ -41,6 +41,7 @@ CNN_SVM = 0;
 
 %% ML Pipeline
 dataChoices = [data003,ClipArt2,other];
+learnerTypes = [linear kernel knn naivebayes svm tree];
 
 for dataChoice = 1:length(dataChoices)
 

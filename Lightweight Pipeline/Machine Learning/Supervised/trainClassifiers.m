@@ -1,4 +1,4 @@
-function [outMCCs] = trainClassifiers(dataML,passedMLType)
+function [outMCCs] = trainClassifiers(dataML,learnerTypes,passedMLTypes)
 
 matrixToProcess = dataML.Data;
 
@@ -11,9 +11,10 @@ labelMaker;
 
 % BTW Linear is Lasso
 learnerNames = {'linear','kernel','knn','naivebayes','svm','tree'};
-for learner = 1:size(learnerNames)
-    fprintf(['Learner: ',learnerNames{learner},'\n']);
-for categoriesToTrain = 1:length(fields)
+for learner = 1:sum(learnerTypes)
+    learnerChoices = find(learnerTypes);
+    fprintf(['Learner: ',learnerNames{learnerChoices(learner)},'\n']);
+for categoriesToTrain = 1:length(size(fieldLabels))
     fprintf(['\t',fields{categoriesToTrain},'\n']);
     labelCache = cell(numTrials,1);
     currentCategory = dataML.Labels.(fields{categoriesToTrain});
@@ -31,13 +32,13 @@ labelCache = categorical(labelCache);
 %% Balance Test Set (not done yet)
 
 %% Start Cross Validation
-    if strcmp(learnerNames{learner},'linear')
+    if strcmp(learnerNames{learnerChoices(learner)},'linear')
         ourLinear = templateLinear('Regularization','lasso');
     classifier = fitcecoc(matrixToProcess', labelCache, ...
     'Learners', ourLinear,'ObservationsIn', 'columns','Kfold',10);
     else
           classifier = fitcecoc(matrixToProcess(train,:)', trainingLabels, ...
-    'Learners', learnerNames{learner},'ObservationsIn', 'columns','Kfold',10);
+    'Learners', learnerNames{learnerChoices(learner)},'ObservationsIn', 'columns','Kfold',10);
     end
     % Pass features to trained classifier
 %predictedLabels = predict(classifier, matrixToProcess', 'ObservationsIn', 'columns');
@@ -52,7 +53,7 @@ testLabels =  labelCache;
 saveMCC(categoriesToTrain) = ML_MCC(confMat);
     
 end
-    outMCCs.(learnerNames{learner}) = saveMCC;
+    outMCCs.(learnerNames{learnerChoices(learner)}) = saveMCC;
 end
 end
     

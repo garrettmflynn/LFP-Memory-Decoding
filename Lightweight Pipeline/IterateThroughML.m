@@ -53,7 +53,7 @@ saveBarsMCA= fullfile(saveBars,'MCA');
 count = count + 1;
 end
 if allBasicClassifiers
-gMCA.Raw.MCC = trainClassifiers(MCAMatrix,'MCA');
+gMCA.Raw.MCC = trainClassifiers(MCAMatrix,learnerTypes,'MCA');
 end
 
 % Do CCA (non-CNN) for CA1
@@ -72,7 +72,7 @@ saveBarsCA1= fullfile(saveBars,'CA1');
 count = count + 1;
 end
 if allBasicClassifiers
-    gCCA.CA1.Raw.MCC = trainClassifiers(MCAMatrix,'CA1');
+    gCCA.CA1.Raw.MCC = trainClassifiers(MCAMatrix,learnerTypes,'CA1');
 end
 
 % Do CCA (non-CNN) for CA3
@@ -91,19 +91,25 @@ saveBarsCA3= fullfile(saveBars,'CA3');
 count = count + 1;
 end
 if allBasicClassifiers
-    gCCA.CA3.Raw.MCC = trainClassifiers(MCAMatrix,'CA3');
+    gCCA.CA3.Raw.MCC = trainClassifiers(MCAMatrix,learnerTypes,'CA3');
 end
 
 %% Organize Results
     results = struct();
+if KMeans
 %     results.SCA = SCA;
     results.MCA = MCA;
     results.CCA = CCA;
     %results.consistency = consistency;
-resultsDir = fullfile(parameters.Directories.filePath,'Results');  
-    if ~exist(resultsDir,'dir');
-    mkdir(resultsDir);
-    end  
+    resultsDir = fullfile(parameters.Directories.filePath,'Results');  
+    
+end
+if allBasicClassifiers
+    %results.SCA = SCA;
+    results.MCA = gMCA;
+    results.CCA = gCCA;
+    resultsDir = fullfile(parameters.Directories.filePath,'Gaussian Results');
+end
     
 if norm(iter) == 1
 save(fullfile(resultsDir,[parameters.Directories.dataName, 'ResultsNorm.mat']),'results');
@@ -246,7 +252,7 @@ end
 count = count + 1;
 end
 if allBasicClassifiers
-    gMCA.Raw.MCC = trainClassifiers(dataML,'MCA');
+    gMCA.Raw.MCC = trainClassifiers(dataML,learnerTypes,'MCA');
 end
 
 
@@ -277,7 +283,7 @@ end
 count = count + 1;
 end
 if allBasicClassifiers
-    gCCA.CA1.Raw.MCC = trainClassifiers(dataML,'CA1');
+    gCCA.CA1.Raw.MCC = trainClassifiers(dataML,learnerTypes,'CA1');
 end
 %% Do CCA (non-CNN) for CA3 and PCA
 fprintf('\nCCA3\n');
@@ -303,7 +309,7 @@ end
 count = count + 1;
 end
 if allBasicClassifiers
-    gCCA.CA3.Raw.MCC = trainClassifiers(dataML,'CA3');
+    gCCA.CA3.Raw.MCC = trainClassifiers(dataML,learnerTypes,'CA3');
 end
 
 %% Organize Results
