@@ -1,3 +1,11 @@
+
+
+if exist('dataML', 'var') || exist('HHData','var')
+    if exist('HHData','var') && ~exist('dataML', 'var')
+        dataML = HHData.ML;
+    end
+
+if Kmeans || gaussianKernel
 %% K-MEANS SECTION
 % Reshape Matrices
 temp = dataML.Data;
@@ -29,7 +37,7 @@ if Raw
 % end
 % makeMCCBars(SCA.Raw.MCC,SCA.Raw.MCC_Categories,dataML.Labels,[],'SCA',norm(iter),fullfile(saveBars,'SCA'));
 
-% Do MCA KMeans
+% Do MCA (non-CNN)
 fprintf('\nMCA\n');
 CCAChoices = dataML.Channels.sChannels;
 MCAMatrix = dataML;
@@ -38,12 +46,17 @@ for channels = 1:length(CCAChoices)
    MCAMatrix.Data = [MCAMatrix.Data dataML.Data(:,:,channels)];
 end
 
+if Kmeans
 [MCA.Raw.clusterIndices] = kMeansClustering(MCAMatrix,[0 1 0]);
 saveBarsMCA= fullfile(saveBars,'MCA');
 [MCA.Raw.MCC,MCA.Raw.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(MCAMatrix,MCA.Raw.clusterIndices, [0 1 0],{MCAMatrix.Labels,[],'MCA',norm(iter),saveBarsMCA});
 count = count + 1;
+end
+if gaussianKernel
+    gMCA.Raw.MCC = gKernel(MCAMatrix,'MCA');
+end
 
-% Do CCA KMeans for CA1
+% Do CCA (non-CNN) for CA1
 fprintf('\nCCA1\n');
 CCAChoices = dataML.Channels.CA1_Channels;
 MCAMatrix = dataML;
@@ -52,12 +65,17 @@ for channels = 1:length(CCAChoices)
    MCAMatrix.Data = [MCAMatrix.Data dataML.Data(:,:,channels)];
 end
 
+if Kmeans
 [CCA.CA1.Raw.clusterIndices] = kMeansClustering(MCAMatrix,[0 1 0]);
 saveBarsCA1= fullfile(saveBars,'CA1');
 [CCA.CA1.Raw.MCC,CCA.CA1.Raw.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(MCAMatrix,CCA.CA1.Raw.clusterIndices, [0 1 0],{MCAMatrix.Labels,[],'CA1',norm(iter),saveBarsCA1});
 count = count + 1;
+end
+if gaussianKernel
+    gCCA.CA1.Raw.MCC = gKernel(MCAMatrix,'CA1');
+end
 
-% Do CCA KMeans for CA3
+% Do CCA (non-CNN) for CA3
 fprintf('\nCCA3\n');
 CCAChoices = dataML.Channels.CA3_Channels;
 MCAMatrix = dataML;
@@ -66,12 +84,37 @@ for channels = 1:length(CCAChoices)
     MCAMatrix.Data  = [MCAMatrix.Data dataML.Data(:,:,channels)];
 end
 
+if Kmeans
 [CCA.CA3.Raw.clusterIndices] = kMeansClustering(MCAMatrix,[0 1 0]);
 saveBarsCA3= fullfile(saveBars,'CA3');
 [CCA.CA3.Raw.MCC,CCA.CA3.Raw.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(MCAMatrix,CCA.CA3.Raw.clusterIndices, [0 1 0],{MCAMatrix.Labels,[],'CA3',norm(iter),saveBarsCA3});
 count = count + 1;
+end
+if gaussianKernel
+    gCCA.CA3.Raw.MCC = gKernel(MCAMatrix,'CA3');
+end
+
+%% Organize Results
+    results = struct();
+%     results.SCA = SCA;
+    results.MCA = MCA;
+    results.CCA = CCA;
+    %results.consistency = consistency;
+resultsDir = fullfile(parameters.Directories.filePath,'Results');  
+    if ~exist(resultsDir,'dir');
+    mkdir(resultsDir);
+    end  
+    
+if norm(iter) == 1
+save(fullfile(resultsDir,[parameters.Directories.dataName, 'ResultsNorm.mat']),'results');
+else
+save(fullfile(resultsDir,[parameters.Directories.dataName, 'Results.mat']),'results');
+end
+
 
 end
+
+%% Do Everything Again While Iterating Through PCA
 if PCA
 savePCA = fullfile(parameters.Directories.filePath,'Scree Plots');
     if ~exist(savePCA,'dir');
@@ -179,9 +222,10 @@ for coeffs_to_retain = [2,3,5,10]
 % orderedClustersSCA_PCA{2} = analyzeClusters(dataML,SCA.PCA.clusterIndices)
 % createPCAVisualizations(scoreSCA,orderedClustersSCA_PCA,'SCA',norm(iter),fullfile(savePCAViz,'SCA'));
 % end
-%% Do MCA KMeans on PCA
+%% Do MCA (non-CNN) on PCA
 fprintf('\nMCA\n');
 dataML.PCA = scoreMCA(:,1:coeffs_to_retain,:);
+if KMeans
 [MCA.PCA.clusterIndices] = kMeansClustering(dataML,[0 1 0]);
 nIters = size(MCA.PCA.clusterIndices,3);
 
@@ -200,12 +244,18 @@ createPCAVisualizations(scoreMCA,orderedClustersMCA_PCA,['MCA ' ,label,' ', num2
     end
 end
 count = count + 1;
+end
+if gaussianKernel
+    gMCA.Raw.MCC = gKernel(dataML,'MCA');
+end
 
 
 
-%% Do CCA KMeans for CA1 and PCA
+
+%% Do CCA (non-CNN) for CA1 and PCA
 fprintf('\nCCA1\n');
 dataML.PCA = scoreCA1(:,1:coeffs_to_retain,:);
+if Kmeans
 [CCA.CA1.PCA.clusterIndices] = kMeansClustering(dataML,[0 1 0]);
 nIters = size(CCA.CA1.PCA.clusterIndices,3);
 
@@ -225,10 +275,14 @@ createPCAVisualizations_RealClusters(scoreCA1,realCluster,'CA1 Correct Cluster',
 end
 end
 count = count + 1;
-
-%% Do CCA KMeans for CA3 and PCA
+end
+if gaussianKernel
+    gCCA.CA1.Raw.MCC = gKernel(dataML,'CA1');
+end
+%% Do CCA (non-CNN) for CA3 and PCA
 fprintf('\nCCA3\n');
  dataML.PCA = scoreCA3(:,1:coeffs_to_retain,:);
+ if Kmeans
 [CCA.CA3.PCA.clusterIndices] = kMeansClustering(dataML,[0 1 0]);
 nIters = size(CCA.CA3.PCA.clusterIndices,3);
 
@@ -247,16 +301,30 @@ elseif coeffs_to_retain ==  3
     end
 end
 count = count + 1;
+end
+if gaussianKernel
+    gCCA.CA3.Raw.MCC = gKernel(dataML,'CA3');
+end
 
 %% Organize Results
+
     results = struct();
+if KMeans
 %     results.SCA = SCA;
     results.MCA = MCA;
     results.CCA = CCA;
     %results.consistency = consistency;
+    resultsDir = fullfile(parameters.Directories.filePath,'Results');  
     
-resultsDir = fullfile(parameters.Directories.filePath,'Results');  
-    if ~exist(resultsDir,'dir');
+end
+if gaussianKernel
+    %results.SCA = SCA;
+    results.MCA = gMCA;
+    results.CCA = gCCA;
+    resultsDir = fullfile(parameters.Directories.filePath,'Gaussian Results');
+end
+
+if ~exist(resultsDir,'dir');
     mkdir(resultsDir);
     end  
     
@@ -270,5 +338,28 @@ end
 clear MCA
 clear SCA
 clear CCA
-clear dataML
+end
+end
+
+
+
+
+
+% CNN Methods Only
+if CNN_SVM
+    CNN_Pipeline;
+    processAllClassestoResults(results,'CNN_SVM');
+    supervisedDir = fullfile(parameters.Directories.filePath,'CNN Results');
+
+if ~exist(supervisedDir,'dir');
+    mkdir(supervisedDir);
+    end  
+if norm(iter) == 1
+save(fullfile(supervisedDir,[parameters.Directories.dataName, 'ResultsNorm.mat']),'results');
+else
+save(fullfile(supervisedDir,[parameters.Directories.dataName, 'Results.mat']),'results');
+end
+end
+
+
 end

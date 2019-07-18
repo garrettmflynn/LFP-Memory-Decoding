@@ -20,22 +20,28 @@ fprintf('Now Creating ZScore Data\n');
 %% Many Channels | STFT
 if ndims(squeeze(LFP_Spectrum)) == 3
     
-frequencyMu = squeeze(mean(permute(LFP_Spectrum,[2,1,3])));
+ frequencyMu = squeeze(mean(permute(LFP_Spectrum,[2,1,3])));
+ 
+% frequencySigma = squeeze(std(permute(LFP_Spectrum,[2,1,3])));
 
-frequencySigma = squeeze(std(permute(LFP_Spectrum,[2,1,3])));
 
-LFP_Spectrum_ZScore = permute(((permute(LFP_Spectrum,[1,3,2])-frequencyMu)./frequencySigma),[1,3,2]);    
+ for channels = 1:size(LFP_Spectrum,3)
+  %LFP_Spectrum_ZScore(:,:,channels) = (LFP_Spectrum(:,:,channels)-frequencyMu(:,channels))./frequencySigma(:,channels);    
+
+LFP_Spectrum_PctChange(:,:,channels) = 100*(LFP_Spectrum(:,:,channels) - frequencyMu(:,channels))./frequencyMu(:,channels);
+ end
+% LFP_Spectrum_ZScore = permute(((permute(LFP_Spectrum,[1,3,2])-frequencyMu)./frequencySigma),[1,3,2]);    
 
 %% One Channel | STFT
 else
 frequencyMu = squeeze(mean(LFP_Spectrum'));
 
-frequencySigma = squeeze(std(LFP_Spectrum'));
-
-LFP_Spectrum_ZScore = ((LFP_Spectrum'-frequencyMu)./frequencySigma)';
+%frequencySigma = squeeze(std(LFP_Spectrum'));
+LFP_Spectrum_PctChange = 100*(LFP_Spectrum' - frequencyMu)./frequencyMu;
+%LFP_Spectrum_ZScore = ((LFP_Spectrum'-frequencyMu)./frequencySigma)';
 end
 
-normStruct.Spectrum = LFP_Spectrum_ZScore;
+normStruct.Spectrum = LFP_Spectrum_PctChange;
 
 
 elseif strncmp(dataMethod,'Morlet',4)

@@ -1,5 +1,5 @@
 function [MCC,MCC_Categories] = MCCs(hitMatrix,labels,nIntervals,k,excludeTrials)
-% Output = Correctness Beyond Chance
+% Determine Edgewise MCCs from Clustering Output
 
 
 fields = fieldnames(labels);

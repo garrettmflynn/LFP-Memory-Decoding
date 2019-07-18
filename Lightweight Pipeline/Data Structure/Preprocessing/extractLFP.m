@@ -5,7 +5,7 @@ filterLP = parameters.Filters.lowPass;
 filterNotch = parameters.Filters.notchFilter;
 
 %% Extract LFP
-% IF INE SESSION IN THE FILE
+% IF ONE SESSION IN THE FILE
 if (size(rawData,2) > 5)
     % Fill Arrays with Data
     toProcess = (double(rawData))';
@@ -13,7 +13,9 @@ if (size(rawData,2) > 5)
     
     processedData = lowpass(toProcess,filterLP,2000);
     % Added Notch Filter to get rid of line noise
-    LFP = filtfilt(filterNotch,processedData);
+    for ii = 1:size(processedData,2)
+    LFP(:,ii) = filtfilt(filterNotch,processedData(:,ii));
+    end
     clear toProcess
     
 % IF MANY SESSIONS IN THE FILE
@@ -23,15 +25,19 @@ elseif ~(size(rawData,2) > 5)
     rawData{1,1} = [];
     processedData = lowpass(toProcess,filterLP,2000);
     clear toProcess
-    LFP = filtfilt(filterNotch, processedData);
+        for ii = 1:size(processedData,2)
+    LFP(:,ii) = filtfilt(filterNotch,processedData(:,ii));
+    end
     
     % Process subsequent sessions & append to initial array
     for i = 2:size(rawData,2)
         tempData = double(rawData{1,i})';
         rawData{1,i} = [];
         tempData = lowpass(tempData,filterLP,2000);
-        tempData = filtfilt(filterNotch,tempData);
-        LFP = [LFP; tempData];
+            for ii = 1:size(processedData,2)
+    tempDataEnd(:,ii) = filtfilt(filterNotch,tempData(:,ii));
+            end
+        LFP = [LFP; tempDataEnd];
     end    
 end
 
