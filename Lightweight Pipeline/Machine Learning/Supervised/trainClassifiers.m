@@ -1,5 +1,9 @@
 function [outMCCs] = trainClassifiers(dataML,learnerTypes,passedMLTypes)
 
+if nargin == 1 
+    learnerTypes = [1 1 1 1 1 1];
+end
+    
 matrixToProcess = dataML.Data;
 
 %% Begin Label Loop
