@@ -1,7 +1,7 @@
 function [outMCCs] = trainClassifiers(dataML,learnerTypes,passedMLTypes)
 
 if nargin == 1 
-    learnerTypes = [1 1 1 1 1 1];
+    learnerTypes = [1 0 1 1 1 1];
 end
     
 matrixToProcess = dataML.Data;
@@ -18,7 +18,7 @@ learnerNames = {'linear','kernel','knn','naivebayes','svm','tree'};
 for learner = 1:sum(learnerTypes)
     learnerChoices = find(learnerTypes);
     fprintf(['Learner: ',learnerNames{learnerChoices(learner)},'\n']);
-for categoriesToTrain = 1:length(size(fieldLabels))
+for categoriesToTrain = 1:length(fieldLabels)
     fprintf(['\t',fields{categoriesToTrain},'\n']);
     labelCache = cell(numTrials,1);
     currentCategory = dataML.Labels.(fields{categoriesToTrain});
@@ -40,6 +40,10 @@ labelCache = categorical(labelCache);
         ourLinear = templateLinear('Regularization','lasso');
     classifier = fitcecoc(matrixToProcess', labelCache, ...
     'Learners', ourLinear,'ObservationsIn', 'columns','Kfold',10);
+    elseif strcmp(learnerNames{learnerChoices(learner)},'knn')
+        ourKNN = templateKNN('NSMethod','exhaustive','Distance','cosine');
+    classifier = fitcecoc(matrixToProcess', labelCache, ...
+    'Learners', ourKNN,'ObservationsIn', 'columns','Kfold',10);
     else
           classifier = fitcecoc(matrixToProcess', labelCache, ...
     'Learners', learnerNames{learnerChoices(learner)},'ObservationsIn', 'columns','Kfold',10);
