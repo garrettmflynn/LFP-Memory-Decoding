@@ -5,7 +5,7 @@ if exist('dataML', 'var') || exist('HHData','var')
         dataML = HHData.ML;
     end
 
-if Kmeans || gaussianKernel
+if Kmeans || allBasicClassifiers
 %% K-MEANS SECTION
 % Reshape Matrices
 temp = dataML.Data;
@@ -52,8 +52,8 @@ saveBarsMCA= fullfile(saveBars,'MCA');
 [MCA.Raw.MCC,MCA.Raw.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(MCAMatrix,MCA.Raw.clusterIndices, [0 1 0],{MCAMatrix.Labels,[],'MCA',norm(iter),saveBarsMCA});
 count = count + 1;
 end
-if gaussianKernel
-    gMCA.Raw.MCC = gKernel(MCAMatrix,'MCA');
+if allBasicClassifiers
+gMCA.Raw.MCC = trainClassifiers(MCAMatrix,'MCA');
 end
 
 % Do CCA (non-CNN) for CA1
@@ -71,8 +71,8 @@ saveBarsCA1= fullfile(saveBars,'CA1');
 [CCA.CA1.Raw.MCC,CCA.CA1.Raw.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(MCAMatrix,CCA.CA1.Raw.clusterIndices, [0 1 0],{MCAMatrix.Labels,[],'CA1',norm(iter),saveBarsCA1});
 count = count + 1;
 end
-if gaussianKernel
-    gCCA.CA1.Raw.MCC = gKernel(MCAMatrix,'CA1');
+if allBasicClassifiers
+    gCCA.CA1.Raw.MCC = trainClassifiers(MCAMatrix,'CA1');
 end
 
 % Do CCA (non-CNN) for CA3
@@ -90,8 +90,8 @@ saveBarsCA3= fullfile(saveBars,'CA3');
 [CCA.CA3.Raw.MCC,CCA.CA3.Raw.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(MCAMatrix,CCA.CA3.Raw.clusterIndices, [0 1 0],{MCAMatrix.Labels,[],'CA3',norm(iter),saveBarsCA3});
 count = count + 1;
 end
-if gaussianKernel
-    gCCA.CA3.Raw.MCC = gKernel(MCAMatrix,'CA3');
+if allBasicClassifiers
+    gCCA.CA3.Raw.MCC = trainClassifiers(MCAMatrix,'CA3');
 end
 
 %% Organize Results
@@ -245,8 +245,8 @@ createPCAVisualizations(scoreMCA,orderedClustersMCA_PCA,['MCA ' ,label,' ', num2
 end
 count = count + 1;
 end
-if gaussianKernel
-    gMCA.Raw.MCC = gKernel(dataML,'MCA');
+if allBasicClassifiers
+    gMCA.Raw.MCC = trainClassifiers(dataML,'MCA');
 end
 
 
@@ -276,8 +276,8 @@ end
 end
 count = count + 1;
 end
-if gaussianKernel
-    gCCA.CA1.Raw.MCC = gKernel(dataML,'CA1');
+if allBasicClassifiers
+    gCCA.CA1.Raw.MCC = trainClassifiers(dataML,'CA1');
 end
 %% Do CCA (non-CNN) for CA3 and PCA
 fprintf('\nCCA3\n');
@@ -302,8 +302,8 @@ elseif coeffs_to_retain ==  3
 end
 count = count + 1;
 end
-if gaussianKernel
-    gCCA.CA3.Raw.MCC = gKernel(dataML,'CA3');
+if allBasicClassifiers
+    gCCA.CA3.Raw.MCC = trainClassifiers(dataML,'CA3');
 end
 
 %% Organize Results
@@ -317,7 +317,7 @@ if KMeans
     resultsDir = fullfile(parameters.Directories.filePath,'Results');  
     
 end
-if gaussianKernel
+if allBasicClassifiers
     %results.SCA = SCA;
     results.MCA = gMCA;
     results.CCA = gCCA;

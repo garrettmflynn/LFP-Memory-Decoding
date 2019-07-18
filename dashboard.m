@@ -24,7 +24,14 @@ saveHHData = 0;
 Kmeans = 0;
 
 % Supervised
-gaussianKernel = 1;
+allBasicClassifiers = 1;
+ linear = 1; % Currently set to lasso
+ kernel = 1;
+ knn = 1;
+ naivebayes = 1;
+ svm = 1;
+ tree = 1;
+
     
 CNN_SVM = 0;
     mlChoice = [1 3 4]; % 1 = MCA
