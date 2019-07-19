@@ -53,7 +53,8 @@ saveBarsMCA= fullfile(saveBars,'MCA');
 count = count + 1;
 end
 if allBasicClassifiers
-gMCA.Raw.MCC = trainClassifiers(MCAMatrix,learnerTypes,'MCA');
+    name = 'MCA';
+cMCA.Raw = trainClassifiers(MCAMatrix,learnerTypes,name);
 end
 
 % Do CCA (non-CNN) for CA1
@@ -72,7 +73,8 @@ saveBarsCA1= fullfile(saveBars,'CA1');
 count = count + 1;
 end
 if allBasicClassifiers
-    gCCA.CA1.Raw.MCC = trainClassifiers(MCAMatrix,learnerTypes,'CA1');
+    name = 'CA1';
+    cCA1.Raw = trainClassifiers(MCAMatrix,learnerTypes,name);
 end
 
 % Do CCA (non-CNN) for CA3
@@ -91,7 +93,8 @@ saveBarsCA3= fullfile(saveBars,'CA3');
 count = count + 1;
 end
 if allBasicClassifiers
-    gCCA.CA3.Raw.MCC = trainClassifiers(MCAMatrix,learnerTypes,'CA3');
+    name = 'CA3';
+    cCA3.Raw = trainClassifiers(MCAMatrix,learnerTypes,name);
 end
 
 %% Organize Results
@@ -105,18 +108,21 @@ if KMeans
     
 end
 if allBasicClassifiers
-    %results.SCA = SCA;
-    results.MCA = gMCA;
-    results.CCA = gCCA;
-    resultsDir = fullfile(parameters.Directories.filePath,'Gaussian Results');
+    %results.SCA = cSCA;
+    results.MCC.MCA = cMCA;
+    results.MCC.CC1 = cCA1;
+    results.MCC.CA3 = cCA3;
+    resultsDir = fullfile(parameters.Directories.filePath,'Classifier Results');
+   visualizeClassifierPerformance(results,norm,fullfile(resultsDir,'MCCs'));
 end
-    
+
+if ~PCA
 if norm(iter) == 1
 save(fullfile(resultsDir,[parameters.Directories.dataName, 'ResultsNorm.mat']),'results');
 else
 save(fullfile(resultsDir,[parameters.Directories.dataName, 'Results.mat']),'results');
 end
-
+end
 
 end
 
@@ -252,7 +258,9 @@ end
 count = count + 1;
 end
 if allBasicClassifiers
-    gMCA.Raw.MCC = trainClassifiers(dataML,learnerTypes,'MCA');
+       name = 'MCA';
+       pcaName = ['PCA',num2str(coeffs_to_retain)];
+    cMCA.(pcaName).MCC = trainClassifiers(dataML,learnerTypes,name);
 end
 
 
@@ -283,7 +291,9 @@ end
 count = count + 1;
 end
 if allBasicClassifiers
-    gCCA.CA1.Raw.MCC = trainClassifiers(dataML,learnerTypes,'CA1');
+       name = 'CA1';
+       pcaName = ['PCA',num2str(coeffs_to_retain)];
+    cCA1.(pcaName).MCC = trainClassifiers(dataML,learnerTypes,name);
 end
 %% Do CCA (non-CNN) for CA3 and PCA
 fprintf('\nCCA3\n');
@@ -309,7 +319,9 @@ end
 count = count + 1;
 end
 if allBasicClassifiers
-    gCCA.CA3.Raw.MCC = trainClassifiers(dataML,learnerTypes,'CA3');
+       name = 'CA3';
+       pcaName = ['PCA',num2str(coeffs_to_retain)];
+    cCA3.(pcaName) = trainClassifiers(dataML,learnerTypes,name);
 end
 
 %% Organize Results
@@ -325,9 +337,12 @@ if KMeans
 end
 if allBasicClassifiers
     %results.SCA = SCA;
-    results.MCA = gMCA;
-    results.CCA = gCCA;
-    resultsDir = fullfile(parameters.Directories.filePath,'Gaussian Results');
+    results.MCC.MCA = cMCA;
+    results.MCC.CC1 = cCA1;
+    results.MCC.CA3 = cCA3;
+    resultsDir = fullfile(parameters.Directories.filePath,'Classifier Results');
+    visualizeClassifierPerformance(results,norm,fullfile(resultsDir,'MCCs'));
+end
 end
 
 if ~exist(resultsDir,'dir');
@@ -365,7 +380,4 @@ save(fullfile(supervisedDir,[parameters.Directories.dataName, 'ResultsNorm.mat']
 else
 save(fullfile(supervisedDir,[parameters.Directories.dataName, 'Results.mat']),'results');
 end
-end
-
-
 end

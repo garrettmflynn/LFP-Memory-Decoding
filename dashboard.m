@@ -8,12 +8,12 @@ addpath(genpath('C:\SuperUser\Documents\GitHub\LFP-Memory-Decoding'));
 addpath(genpath('E:\Useful MATLAB Scripts\NPMK'));
 
 % Data Choices
-data003 = 0;
+data003 = 1;
 ClipArt2 = 1;
 other = 0;
 
 % Data Structure Choices
-norm = [1]; % Carries over to ML, if chosen // A vector of two values results in two iterations
+norm = [0 1]; % Carries over to ML, if chosen // A vector of two values results in two iterations
 saveHHData = 0;
 
 % ML Choices
@@ -21,14 +21,14 @@ saveHHData = 0;
     PCA = 1;
     
 % Unsupervised
-Kmeans = 0;
+Kmeans = 1;
 
 % Supervised
 allBasicClassifiers = 1;
  linear = 1; % Currently set to lasso
- kernel = 1;
+ kernel = 0;
  knn = 1;
- naivebayes = 1;
+ naivebayes = 0;
  svm = 1;
  tree = 1;
 

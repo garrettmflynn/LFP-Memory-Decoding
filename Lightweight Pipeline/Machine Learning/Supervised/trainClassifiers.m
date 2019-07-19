@@ -1,7 +1,7 @@
 function [outMCCs] = trainClassifiers(dataML,learnerTypes,passedMLTypes)
 
 if nargin == 1 
-    learnerTypes = [1 0 1 1 1 1];
+    learnerTypes = [1 0 1 0 1 1];
 end
     
 matrixToProcess = dataML.Data;
@@ -58,7 +58,7 @@ testLabels =  labelCache;
 % Tabulate the results using a confusion matrix.
 [confMat,categories] = confusionmat(testLabels, predictedLabels);
 %plotconfusion(testLabels, predictedLabels);
-saveMCC(categoriesToTrain) = ML_MCC(confMat);
+saveMCC.(fieldLabels{categoriesToTrain}) = ML_MCC(confMat);
     
 end
     outMCCs.(learnerNames{learnerChoices(learner)}) = saveMCC;
