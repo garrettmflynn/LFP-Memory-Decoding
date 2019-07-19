@@ -5,21 +5,23 @@ if ~exist(saveDir,'dir');
     mkdir(saveDir);
 end
     
+% The Following Fields Will All Be Filled or All Be Missing
 typeFields = fieldnames(results.MCC);
-pcavsrawField = fieldnames(results.MCC.(typeFields{1}));
-learnerFields = fieldnames(results.MCC.(typeFields{1}).(pcavsrawField{1}));
-labelFields = fieldnames(results.MCC.(typeFields{1}).(pcavsrawField{1}).(learnerFields{1}));
-numLabels = length(labelFields);
 numTypes = length(typeFields);
+
+pcavsrawField = fieldnames(results.MCC.(typeFields{1}));
 numRvsP = length(pcavsrawField);
-numLearners =  length(learnerFields);
 
 %% Create Overall MCC
 overallName = 'All Classes';
 
 for jj = 1:numTypes
 for kk = 1:numRvsP
+    learnerFields = fieldnames(results.MCC.(typeFields{jj}).(pcavsrawField{kk}));
+    numLearners =  length(learnerFields);
 for zz = 1:numLearners
+    labelFields = fieldnames(results.MCC.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}));
+    numLabels = length(labelFields);
 for ii = 1:numLabels
 if typeFields{jj} == 'SCA'
 multiClassVector(ii,:) = results.MCC.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}).(labelFields{ii});
@@ -47,7 +49,11 @@ newLabelFields = [overallName;labelFields];
 for kk = 1:numRvsP
     barFig1 = figure('visible','on','units','normalized','outerposition',[0 0 1 1]);
 for jj = 1:numTypes
+    learnerFields = fieldnames(results.MCC.(typeFields{jj}).(pcavsrawField{kk}));
+    numLearners =  length(learnerFields);
 for zz = 1:numLearners
+    labelFields = fieldnames(results.MCC.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}));
+    numLabels = length(labelFields);
 for ii = 1:(numLabels + 1)
 % Each Row is a New Group
 if strcmp(newLabelFields{ii},overallName)

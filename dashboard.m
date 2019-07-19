@@ -26,9 +26,9 @@ Kmeans = 1;
 % Supervised
 allBasicClassifiers = 1;
  linear = 1; % Currently set to lasso
- kernel = 0;
+ kernel = 1;
  knn = 1;
- naivebayes = 0;
+ naivebayes = 1;
  svm = 1;
  tree = 1;
 

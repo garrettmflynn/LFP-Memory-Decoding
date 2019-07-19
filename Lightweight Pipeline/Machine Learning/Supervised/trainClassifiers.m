@@ -1,7 +1,7 @@
 function [outMCCs] = trainClassifiers(dataML,learnerTypes,passedMLTypes)
 
 if nargin == 1 
-    learnerTypes = [1 0 1 0 1 1];
+    learnerTypes = [1 1 1 1 1 1];
 end
     
 matrixToProcess = dataML.Data;
@@ -36,6 +36,7 @@ labelCache = categorical(labelCache);
 %% Balance Test Set (not done yet)
 
 %% Start Cross Validation
+if ~strcmp(learnerNames{learnerChoices(learner)},'kernel') && strcmp(learnerNames{learnerChoices(learner)},'naivebayes')
     if strcmp(learnerNames{learnerChoices(learner)},'linear')
         ourLinear = templateLinear('Regularization','lasso');
     classifier = fitcecoc(matrixToProcess', labelCache, ...
@@ -43,7 +44,7 @@ labelCache = categorical(labelCache);
     elseif strcmp(learnerNames{learnerChoices(learner)},'knn')
         ourKNN = templateKNN('NSMethod','exhaustive','Distance','cosine');
     classifier = fitcecoc(matrixToProcess', labelCache, ...
-    'Learners', ourKNN,'ObservationsIn', 'columns','Kfold',10);
+    'Learners', ourKNN,'ObservationsIn', 'columns','Kfold',10);   
     else
           classifier = fitcecoc(matrixToProcess', labelCache, ...
     'Learners', learnerNames{learnerChoices(learner)},'ObservationsIn', 'columns','Kfold',10);
@@ -59,7 +60,19 @@ testLabels =  labelCache;
 [confMat,categories] = confusionmat(testLabels, predictedLabels);
 %plotconfusion(testLabels, predictedLabels);
 saveMCC.(fieldLabels{categoriesToTrain}) = ML_MCC(confMat);
-    
+else
+if size(matrixToProcess,2) < 50
+classifier = fitcecoc(matrixToProcess', labelCache, ...
+'Learners', learnerNames{learnerChoices(learner)},'ObservationsIn', 'columns','Kfold',10);
+predictedLabels = kfoldPredict(classifier);
+testLabels =  labelCache;
+[confMat,categories] = confusionmat(testLabels, predictedLabels);
+saveMCC.(fieldLabels{categoriesToTrain}) = ML_MCC(confMat);
+end
+end
+
+
+
 end
     outMCCs.(learnerNames{learnerChoices(learner)}) = saveMCC;
 end
