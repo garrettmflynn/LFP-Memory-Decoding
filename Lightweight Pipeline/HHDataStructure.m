@@ -55,7 +55,7 @@ parameters.Choices.freqMin = 1; % Minimum Frequency of Interest (Hz)
 parameters.Choices.freqMax = 150; % Maximum Frequency of Interest (Hz)
 parameters.Choices.freqBin = .5; % Frequency Bin Width (Hz)
 parameters.Choices.timeBin = .1;  % Time Bin Width (s)
-parameters.Choices.trialWindow = [-1 1]; % Trial Interval Window
+parameters.Choices.trialWindow = [-range range]; % Trial Interval Window
 parameters.Filters.lowPass = 250; % Low Pass Filter Frequency (Hz)
 parameters.Choices.downSample = 500; % Samples/s
 

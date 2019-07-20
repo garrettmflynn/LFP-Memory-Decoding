@@ -7,12 +7,12 @@ end
 wrong = dataML.WrongResponse;
 
 if isfield(dataML,'PCA')
-    matrixToProcess = dataML.PCA(~wrong);
+    wrongVec = 1:size(dataML.PCA,1)
+    matrixToProcess = dataML.PCA(wrongVec~=wrong,:);
 else
-    matrixToProcess = dataML.Data(~wrong);
+    wrongVec = 1:size(dataML.Data,1)
+    matrixToProcess = dataML.Data(wrongVec~=wrong,:);
 end
-
-wrong = dataML.WrongResponse;
 
 %% Begin Label Loop
 fields = fieldnames(dataML.Labels);
@@ -39,7 +39,7 @@ for learner = 1:sum(learnerTypes)
             end
         end
         
-        labelCache = categorical(labelCache(~wrong));
+        labelCache = categorical(labelCache(wrongVec~=wrong));
         
         %% Begin Model Testing
         if ~strcmp(learnerNames{learnerChoices(learner)},'kernel') && ~strcmp(learnerNames{learnerChoices(learner)},'naivebayes')
