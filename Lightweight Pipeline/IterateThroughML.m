@@ -113,7 +113,7 @@ if allBasicClassifiers && ~PCA
     results.MCC.MCA = cMCA;
     results.MCC.CA1 = cCA1;
     results.MCC.CA3 = cCA3;
-    resultsDir = fullfile(parameters.Directories.filePath,'Classifier Results');
+    resultsDir = fullfile(parameters.Directories.filePath,['Classifier Results [-',num2str(range),' ',num2str(range),']']);
    visualizeClassifierPerformance(results,norm(iter),fullfile(resultsDir,'MCCs'));
 end
 
@@ -367,7 +367,7 @@ if allBasicClassifiers
     results.MCC.MCA = cMCA;
     results.MCC.CA1 = cCA1;
     results.MCC.CA3 = cCA3;
-    resultsDir = fullfile(parameters.Directories.filePath,'Classifier Results');
+    resultsDir = fullfile(parameters.Directories.filePath,['Classifier Results [-',num2str(range),' ',num2str(range),']']);
     visualizeClassifierPerformance(results,norm(iter),fullfile(resultsDir,'MCCs'));
     
      

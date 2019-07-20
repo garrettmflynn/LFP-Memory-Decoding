@@ -8,12 +8,13 @@ addpath(genpath('C:\SuperUser\Documents\GitHub\LFP-Memory-Decoding'));
 addpath(genpath('E:\Useful MATLAB Scripts\NPMK'));
 
 % Data Choices
-data003 = 1;
+data003 = 0;
 ClipArt2 = 1;
 other = 0;
 
 % Data Structure Choices
 norm = [0 1]; % Carries over to ML, if chosen // A vector of two values results in two iterations
+windowOfInterest = 1; % Second before and after SAMPLE_RESPONSE
 saveHHData = 0;
 
 %% ML Choices
@@ -47,11 +48,13 @@ learnerTypes = [linear kernel knn naivebayes svm tree RUSBoost];
 for dataChoice = 1:length(dataChoices)
 
 for iter = 1:length(norm)
+for range = [1,3,5]
 HHDataStructure;
 iterateThroughML;
 clear HHData
 clear dataML
 clear results
+end
 end
 
 end
