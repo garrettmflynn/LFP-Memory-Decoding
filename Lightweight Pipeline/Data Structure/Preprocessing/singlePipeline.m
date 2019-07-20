@@ -5,19 +5,12 @@ function [HHData] = singlePipeline(neuralData,nexFileData,parameters,sessionLoop
 fprintf('Now Processing Spikes\n');
 parameters = humanDataSpikeProcessing(nexFileData,parameters);
 
-if isstruct(neuralData.Data)
-    nData = neuralData.Data.Spikes.Waveform;
-    % Initialization
-    HHData = struct;
-    HHData.RecordTime = neuralData.MetaTags.DateTime; % Recording Date
-    clear neuralData
-else
+
     % Initialization
     HHData = struct;
     nData = neuralData.Data;
     HHData.RecordTime = neuralData.MetaTags.DateTime; % Recording Date
     clear neuralData
-end
 
 %% Raw data
 if nargin == 4

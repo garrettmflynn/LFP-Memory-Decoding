@@ -58,7 +58,7 @@ cMCA.Raw = trainClassifiers(MCAMatrix,learnerTypes,name);
 end
 
 % Do CCA (non-CNN) for CA1
-fprintf('\nCCA1\n');
+fprintf('\nCA1\n');
 CCAChoices = dataML.Channels.CA1_Channels;
 MCAMatrix = dataML;
 MCAMatrix.Data = [];
@@ -78,7 +78,7 @@ if allBasicClassifiers
 end
 
 % Do CCA (non-CNN) for CA3
-fprintf('\nCCA3\n');
+fprintf('\nCA3\n');
 CCAChoices = dataML.Channels.CA3_Channels;
 MCAMatrix = dataML;
 MCAMatrix.Data = [];
@@ -98,29 +98,41 @@ if allBasicClassifiers
 end
 
 %% Organize Results
-    results = struct();
-if KMeans
+if Kmeans && ~PCA
+    resultsK = struct();
 %     results.SCA = SCA;
-    results.MCA = MCA;
-    results.CCA = CCA;
+    resultsK.MCA = MCA;
+    resultsK.CCA = CCA;
     %results.consistency = consistency;
     resultsDir = fullfile(parameters.Directories.filePath,'Results');  
     
 end
-if allBasicClassifiers
+if allBasicClassifiers && ~PCA
+    results = struct();
     %results.SCA = cSCA;
     results.MCC.MCA = cMCA;
-    results.MCC.CC1 = cCA1;
+    results.MCC.CA1 = cCA1;
     results.MCC.CA3 = cCA3;
     resultsDir = fullfile(parameters.Directories.filePath,'Classifier Results');
-   visualizeClassifierPerformance(results,norm,fullfile(resultsDir,'MCCs'));
+   visualizeClassifierPerformance(results,norm(iter),fullfile(resultsDir,'MCCs'));
 end
 
+% Save if PCA Will Not Occur
 if ~PCA
 if norm(iter) == 1
+    if exist('results','var')
 save(fullfile(resultsDir,[parameters.Directories.dataName, 'ResultsNorm.mat']),'results');
+    end
+if exist('resultsK','var') 
+save(fullfile(resultsDir,[parameters.Directories.dataName, 'ResultsNormK',num2str(coeffs_to_retain),'.mat']),'resultsK');
+end
 else
+    if exist('results','var')
 save(fullfile(resultsDir,[parameters.Directories.dataName, 'Results.mat']),'results');
+    end
+if exist('resultsK','var') 
+save(fullfile(resultsDir,[parameters.Directories.dataName, 'ResultsK',num2str(coeffs_to_retain),'.mat']),'resultsK');
+end
 end
 end
 
@@ -171,7 +183,7 @@ saveas(fPCA2, fullfile(savePCA,'MCAScree.png'));
 end
 
 %% PCA CCA1
-fprintf('\nCCA1\n');
+fprintf('\nCA1\n');
 CCAChoices = dataML.Channels.CA1_Channels;
 MCAMatrix = [];
 for channels = 1:length(CCAChoices)
@@ -191,7 +203,7 @@ else
 end
 
 %% PCA CCA3
-fprintf('\nCCA3\n');
+fprintf('\nCA3\n');
 CCAChoices = dataML.Channels.CA3_Channels;
 MCAMatrix = [];
 for channels = 1:length(CCAChoices)
@@ -237,7 +249,7 @@ for coeffs_to_retain = [2,3,5,10]
 %% Do MCA (non-CNN) on PCA
 fprintf('\nMCA\n');
 dataML.PCA = scoreMCA(:,1:coeffs_to_retain,:);
-if KMeans
+if Kmeans
 [MCA.PCA.clusterIndices] = kMeansClustering(dataML,[0 1 0]);
 nIters = size(MCA.PCA.clusterIndices,3);
 
@@ -260,14 +272,14 @@ end
 if allBasicClassifiers
        name = 'MCA';
        pcaName = ['PCA',num2str(coeffs_to_retain)];
-    cMCA.(pcaName).MCC = trainClassifiers(dataML,learnerTypes,name);
+    cMCA.(pcaName) = trainClassifiers(dataML,learnerTypes,name);
 end
 
 
 
 
 %% Do CCA (non-CNN) for CA1 and PCA
-fprintf('\nCCA1\n');
+fprintf('\nCA1\n');
 dataML.PCA = scoreCA1(:,1:coeffs_to_retain,:);
 if Kmeans
 [CCA.CA1.PCA.clusterIndices] = kMeansClustering(dataML,[0 1 0]);
@@ -293,10 +305,10 @@ end
 if allBasicClassifiers
        name = 'CA1';
        pcaName = ['PCA',num2str(coeffs_to_retain)];
-    cCA1.(pcaName).MCC = trainClassifiers(dataML,learnerTypes,name);
+    cCA1.(pcaName) = trainClassifiers(dataML,learnerTypes,name);
 end
 %% Do CCA (non-CNN) for CA3 and PCA
-fprintf('\nCCA3\n');
+fprintf('\nCA3\n');
  dataML.PCA = scoreCA3(:,1:coeffs_to_retain,:);
  if Kmeans
 [CCA.CA3.PCA.clusterIndices] = kMeansClustering(dataML,[0 1 0]);
@@ -324,41 +336,55 @@ if allBasicClassifiers
     cCA3.(pcaName) = trainClassifiers(dataML,learnerTypes,name);
 end
 
-%% Organize Results
-
-    results = struct();
-if KMeans
+if Kmeans
+    resultsK = struct();
 %     results.SCA = SCA;
-    results.MCA = MCA;
-    results.CCA = CCA;
+    resultsK.MCA = MCA;
+    resultsK.CCA = CCA;
     %results.consistency = consistency;
-    resultsDir = fullfile(parameters.Directories.filePath,'Results');  
+    resultsDir = fullfile(parameters.Directories.filePath,'ResultsK');  
     
-end
-if allBasicClassifiers
-    %results.SCA = SCA;
-    results.MCC.MCA = cMCA;
-    results.MCC.CC1 = cCA1;
-    results.MCC.CA3 = cCA3;
-    resultsDir = fullfile(parameters.Directories.filePath,'Classifier Results');
-    visualizeClassifierPerformance(results,norm,fullfile(resultsDir,'MCCs'));
-end
-end
-
 if ~exist(resultsDir,'dir');
     mkdir(resultsDir);
-    end  
+end  
     
-if norm(iter) == 1
+% Save for K-Means
+ if norm(iter) == 1
+    if exist('results','var')
 save(fullfile(resultsDir,[parameters.Directories.dataName, 'ResultsNorm',num2str(coeffs_to_retain),'.mat']),'results');
-else
-save(fullfile(resultsDir,[parameters.Directories.dataName, 'Results',num2str(coeffs_to_retain),'.mat']),'results');
+    end
+if exist('resultsK','var') 
+save(fullfile(resultsDir,[parameters.Directories.dataName, 'ResultsNormK',num2str(coeffs_to_retain),'.mat']),'resultsK');
+end   
 end
+
+%% Organize Results
+end
+
+if allBasicClassifiers
+    results = struct();
+    %results.SCA = SCA;
+    results.MCC.MCA = cMCA;
+    results.MCC.CA1 = cCA1;
+    results.MCC.CA3 = cCA3;
+    resultsDir = fullfile(parameters.Directories.filePath,'Classifier Results');
+    visualizeClassifierPerformance(results,norm(iter),fullfile(resultsDir,'MCCs'));
+    
+      if exist('results','var')
+save(fullfile(resultsDir,[parameters.Directories.dataName, 'Results.mat']),'results');
+      end
+    
 end
 
 clear MCA
 clear SCA
 clear CCA
+clear cMCA
+clear cSCA
+clear cCCA
+
+end
+end
 end
 end
 

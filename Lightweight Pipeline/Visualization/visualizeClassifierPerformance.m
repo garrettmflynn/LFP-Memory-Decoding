@@ -12,21 +12,23 @@ numTypes = length(typeFields);
 pcavsrawField = fieldnames(results.MCC.(typeFields{1}));
 numRvsP = length(pcavsrawField);
 
+originalResults = results;
+
 %% Create Overall MCC
 overallName = 'All Classes';
 
 for jj = 1:numTypes
 for kk = 1:numRvsP
-    learnerFields = fieldnames(results.MCC.(typeFields{jj}).(pcavsrawField{kk}));
+    learnerFields = fieldnames(originalResults.MCC.(typeFields{jj}).(pcavsrawField{kk}));
     numLearners =  length(learnerFields);
 for zz = 1:numLearners
-    labelFields = fieldnames(results.MCC.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}));
+    labelFields = fieldnames(originalResults.MCC.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}));
     numLabels = length(labelFields);
 for ii = 1:numLabels
 if typeFields{jj} == 'SCA'
-multiClassVector(ii,:) = results.MCC.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}).(labelFields{ii});
+multiClassVector(ii,:) = originalResults.MCC.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}).(labelFields{ii});
 else
-multiClassVector(ii) = results.MCC.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}).(labelFields{ii});
+multiClassVector(ii) = originalResults.MCC.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}).(labelFields{ii});
 end
 end
 meanForAll = nanmean(multiClassVector);
@@ -37,6 +39,7 @@ numNans = sum(nans);
 results.MCC.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}).(overallName){2} = ['numNans = ' num2str(numNans)];
 end
 results.MCC.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}).(overallName){1} = meanForAll;
+clear multiClassVector
 end
 end
 end
@@ -47,14 +50,14 @@ end
 newLabelFields = [overallName;labelFields];
 
 for kk = 1:numRvsP
-    barFig1 = figure('visible','on','units','normalized','outerposition',[0 0 1 1]);
+    barFig1 = figure('visible','off','units','normalized','outerposition',[0 0 1 1]);
 for jj = 1:numTypes
     learnerFields = fieldnames(results.MCC.(typeFields{jj}).(pcavsrawField{kk}));
     numLearners =  length(learnerFields);
 for zz = 1:numLearners
     labelFields = fieldnames(results.MCC.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}));
     numLabels = length(labelFields);
-for ii = 1:(numLabels + 1)
+for ii = 1:numLabels
 % Each Row is a New Group
 if strcmp(newLabelFields{ii},overallName)
 choiceOfMCC = results.MCC.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}).(newLabelFields{ii}){1};
@@ -65,26 +68,40 @@ barGroupedByClass(ii,zz) = choiceOfMCC;
 end
 end
 
-barLabels = erase(learnerFields,'Label_')
-subplot(3,1,jj); bar(categorical(strrep(newLabelFields,'_',' ')),barGroupedByClass); hold on;
-ylim([-1 1]);
-set(gca,'FontSize',10,'fontweight','bold');
-if jj == 1
-legend(barLabels,'Location','northeastoutside');
-end
-title(typeFields{jj},'FontSize',20);
-end
-
+% Add Title
 if ~norm
         name = [pcavsrawField{kk}];
 else
 name = ['Normalized_',pcavsrawField{kk}];
 end
-sgtitle(['MCCs for '  strrep(name,'_',' ')],'FontSize',30,'fontweight','bold');
+sgtitle([strrep(name,'_',' '),' Data'],'FontSize',30,'fontweight','bold');
+
+% Add Subplots
+barLabels = erase(learnerFields,'Label_');
+if jj == 2
+h = subplot(12,1,(3*(jj-1)+3):((3*jj)+2)); bar(categorical(strrep(newLabelFields,'_',' ')),barGroupedByClass); hold on;
+elseif jj == 3
+    h = subplot(12,1,(3*(jj-1)+4):((3*jj)+3)); bar(categorical(strrep(newLabelFields,'_',' ')),barGroupedByClass); hold on;
+else
+    h = subplot(12,1,(2:((3*jj)+1))); bar(categorical(strrep(newLabelFields,'_',' ')),barGroupedByClass); hold on;
+end
+ylim([-1 1]);
+ylabel('MCC');
+set(gca,'FontSize',10,'fontweight','bold');
+if jj == 1
+    originalSize1 = get(gca, 'Position');
+legend(barLabels,'Location','northeastoutside');
+set(h, 'Position', originalSize1); % Can also use gca instead of h1 if h1 is still active.
+end
+if jj ~= 3
+    %xticks([]);
+end
+title(typeFields{jj},'FontSize',20);
+end
 
 
 saveas(barFig1,fullfile(saveDir,[name,'.png']));
-clear barFig1
+close all
 end
 end
     

@@ -7,33 +7,36 @@ if ~strncmp(tf_method,'Morlet',4)
 freq = parameters.Derived.freq;
 winSize = parameters.Choices.timeBin * parameters.Derived.samplingFreq;
 overlap = (parameters.Derived.overlap);
-method = 'Hanning';
+%method = 'Hanning';
 
 for channels = 1:size(inputData,1)
 
-switch tf_method
-    case 'Hamming'
-            [s,f,t, PSDs, fc, tc] = spectrogram(inputData(channels,:),hamming(winSize),overlap,freq, parameters.Derived.samplingFreq,'yaxis');
+% switch tf_method
+%     case 'Hamming'
+%             [s,f,t, PSDs, fc, tc] = spectrogram(inputData(channels,:),hamming(winSize),overlap,freq, parameters.Derived.samplingFreq,'yaxis');
+%             spectrum(:,:,channels) = PSDs;
+%             time = t;
+%         
+        
+%     case 'Hanning'
+            [~,~,t, PSDs, ~, ~] = spectrogram(inputData(channels,:),hann(winSize),overlap,freq, parameters.Derived.samplingFreq,'yaxis');
             spectrum(:,:,channels) = PSDs;
+            clear PSDs
+            if channels == 1 
             time = t;
+            end
+            clear t
         
-        %spectrogram(HHData.LFP.Sampled(:,:,1),hamming(winSize),overlap,freq,parameters.Derived.samplingFreq,'yaxis');
-        
-    case 'Hanning'
-            [s,f,t, PSDs, fc, tc] = spectrogram(inputData(channels,:),hann(winSize),overlap,freq, parameters.Derived.samplingFreq,'yaxis');
-            spectrum(:,:,channels) = PSDs;
-            time = t;
-        
-    case 'Kaiser'
-            [s,f,t, PSDs, fc, tc] = spectrogram(inputData(channels,:),kaiser(winSize,5),overlap,freq, parameters.Derived.samplingFreq,'yaxis');
-            spectrum(:,:,channels) =PSDs;
-            time = t;
-        
-    case 'Taylor'
-            [s,f,t, PSDs, fc, tc] = spectrogram(inputData(channels,:),taylorwin(winSize,4,-75),overlap,freq, parameters.Derived.samplingFreq,'yaxis');
-            spectrum(:,:,channels) =PSDs;
-            time = t;
-end
+%     case 'Kaiser'
+%             [s,f,t, PSDs, fc, tc] = spectrogram(inputData(channels,:),kaiser(winSize,5),overlap,freq, parameters.Derived.samplingFreq,'yaxis');
+%             spectrum(:,:,channels) =PSDs;
+%             time = t;
+%         
+%     case 'Taylor'
+%             [s,f,t, PSDs, fc, tc] = spectrogram(inputData(channels,:),taylorwin(winSize,4,-75),overlap,freq, parameters.Derived.samplingFreq,'yaxis');
+%             spectrum(:,:,channels) =PSDs;
+%             time = t;
+%end
 end
 
 

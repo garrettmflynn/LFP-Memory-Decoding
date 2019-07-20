@@ -88,19 +88,14 @@ parameters.Filters.notchFilter = designfilt('bandstopiir','FilterOrder',2, ...
     'DesignMethod','butter','SampleRate',parameters.Derived.samplingFreq); % Notch Filter to Remove Powerline Noise (Hz)
 parameters.Derived.freq = linspace(parameters.Choices.freqMin, parameters.Choices.freqMax, ((parameters.Choices.freqMax-parameters.Choices.freqMin)+1)/parameters.Choices.freqBin);
 parameters.Derived.overlap = round((parameters.Choices.timeBin * parameters.Derived.samplingFreq)/2);
+nData = neuralData.Data;
 
 % (1) Multi-Session Configuration
-if isstruct(neuralData.Data)
-    nData = neuralData.Data.Spikes.Waveform;
-else
-    nData = neuralData.Data;
-end
-    
-if size(nData,1) == 1
+if size(neuralData.Data,1) == 1
     
     
-    for session = 1:size(nData,2)
-        sessionPointLength = size(nData{1,session},2);
+    for session = 1:size(neuralData.Data,2)
+        sessionPointLength = size(neuralData.Data{1,session},2);
         parameters.Derived.durationSeconds = sessionPointLength/parameters.Derived.samplingFreq;
         parameters.Derived.time = linspace(0,parameters.Derived.durationSeconds,((1/parameters.Choices.timeBin)*4)-1);
         [HHData] = singlePipeline(neuralData,nexFileData,parameters,session);
@@ -113,7 +108,7 @@ fprintf('Done\n');
 
 % (2) Single-Session Configuration
 else
-    sessionPointLength = size(nData,2);
+    sessionPointLength = size(neuralData.Data,2);
     parameters.Derived.durationSeconds = double(sessionPointLength/parameters.Derived.samplingFreq);
     parameters.Derived.time = linspace(0,parameters.Derived.durationSeconds,((1/parameters.Choices.timeBin)*4)-1);
     

@@ -12,11 +12,11 @@ if (size(rawData,2) > 5)
     clear rawData
     
     processedData = lowpass(toProcess,filterLP,2000);
-    % Added Notch Filter to get rid of line noise
+        clear toProcess
     for ii = 1:size(processedData,2)
+    % Added Notch Filter to get rid of line noise
     LFP(:,ii) = filtfilt(filterNotch,processedData(:,ii));
     end
-    clear toProcess
     
 % IF MANY SESSIONS IN THE FILE
 elseif ~(size(rawData,2) > 5)

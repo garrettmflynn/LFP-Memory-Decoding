@@ -16,6 +16,7 @@ iterations = size(data,3);
 label = 'Trial';
 
 if methodML(1)
+    warning('Code has not been updated in a while. Make sure to fix before trusting results.');
     prevalenceAcrossK = zeros(intervalRange(end),intervalRange(end));
     for kVal = kRange
         prevalenceAcrossChannels = zeros(intervalRange(end),intervalRange(end));
