@@ -11,6 +11,12 @@ true2 = bottomRight;
 false1 = bottomLeft;
 false2 = topRight;
 
-MCC = ((true1*true2)-(false1*false2))/sqrt((true1+false1)*(true1+false2)*(true2+false1)*(true2+false2));
+denominator = sqrt((true1+false1)*(true1+false2)*(true2+false1)*(true2+false2));
+
+if denominator ~= 0
+MCC = ((true1*true2)-(false1*false2))/denominator;
+else
+MCC = 0;
+end
 
 end

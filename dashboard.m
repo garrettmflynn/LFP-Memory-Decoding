@@ -14,7 +14,7 @@ other = 0;
 
 % Data Structure Choices
 norm = [0 1]; % Carries over to ML, if chosen // A vector of two values results in two iterations
-windowOfInterest = 1; % Second before and after SAMPLE_RESPONSE
+windowOfInterest = [1,2,3,4,5]; %1; % Second before and after SAMPLE_RESPONSE
 saveHHData = 0;
 
 %% ML Choices
@@ -26,13 +26,13 @@ PCA = 1;
 
     % Supervised
     allBasicClassifiers = 1;
-        linear = 0; % Currently set to lasso
-        kernel = 0;
-        knn = 0;
-        naivebayes = 0;
-        svm = 0;
-         tree = 0;
-         RUSBoost = 1; % Specializes in unbalanced classes
+        linear = 1; % Currently set to lasso
+        kernel = 1;
+        knn = 1;
+        naivebayes = 1;
+        svm = 1;
+         tree = 1;
+         RUSBoost = 0; % Specializes in unbalanced classes, but does not perform well
 
     % Image Based
     CNN_SVM = 0;
@@ -48,7 +48,7 @@ learnerTypes = [linear kernel knn naivebayes svm tree RUSBoost];
 for dataChoice = 1:length(dataChoices)
 
 for iter = 1:length(norm)
-for range = [1,3,5]
+for range = windowOfInterest
 HHDataStructure;
 iterateThroughML;
 clear HHData

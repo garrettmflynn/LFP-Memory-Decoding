@@ -88,7 +88,6 @@ parameters.Filters.notchFilter = designfilt('bandstopiir','FilterOrder',2, ...
     'DesignMethod','butter','SampleRate',parameters.Derived.samplingFreq); % Notch Filter to Remove Powerline Noise (Hz)
 parameters.Derived.freq = linspace(parameters.Choices.freqMin, parameters.Choices.freqMax, ((parameters.Choices.freqMax-parameters.Choices.freqMin)+1)/parameters.Choices.freqBin);
 parameters.Derived.overlap = round((parameters.Choices.timeBin * parameters.Derived.samplingFreq)/2);
-nData = neuralData.Data;
 
 % (1) Multi-Session Configuration
 if size(neuralData.Data,1) == 1

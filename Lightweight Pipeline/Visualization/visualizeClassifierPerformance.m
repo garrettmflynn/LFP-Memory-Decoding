@@ -1,7 +1,7 @@
 
-function [] = visualizeClassifierPerformance(results,norm,saveDir);
+function [] = visualizeClassifierPerformance(results,norm,saveDir)
 fprintf(['Now Visualizing Classifier Performance\n']);
-if ~exist(saveDir,'dir');
+if ~exist(saveDir,'dir')
     mkdir(saveDir);
 end
     
@@ -32,13 +32,8 @@ multiClassVector(ii) = originalResults.MCC.(typeFields{jj}).(pcavsrawField{kk}).
 end
 end
 meanForAll = nanmean(multiClassVector);
-nans = isnan(multiClassVector);
 overallName = 'All_Classes';
-if sum(sum(nans)) > 1
-numNans = sum(nans);
-results.MCC.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}).(overallName){2} = ['numNans = ' num2str(numNans)];
-end
-results.MCC.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}).(overallName){1} = meanForAll;
+results.MCC.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}).(overallName) = meanForAll;
 clear multiClassVector
 end
 end
@@ -60,7 +55,7 @@ for zz = 1:numLearners
 for ii = 1:numLabels
 % Each Row is a New Group
 if strcmp(newLabelFields{ii},overallName)
-choiceOfMCC = results.MCC.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}).(newLabelFields{ii}){1};
+choiceOfMCC = results.MCC.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}).(newLabelFields{ii});
 else
     choiceOfMCC = results.MCC.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}).(newLabelFields{ii});
 end

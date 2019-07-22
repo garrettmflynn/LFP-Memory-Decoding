@@ -16,6 +16,8 @@ for channels = 1:size(temp,3)
 dataML.Data(:,:,channels) = reshape(permute(squeeze(temp(:,:,channels,:)),[3,2,1]),size(temp,4),size(temp,2)*size(temp,1));
 end
 
+clear temp
+
 % Make Real Clusters Vector
 realCluster = realClusters(dataML.Labels);
 
@@ -107,14 +109,16 @@ if Kmeans && ~PCA
     resultsDir = fullfile(parameters.Directories.filePath,'Results');  
     
 end
-if allBasicClassifiers && ~PCA
+if allBasicClassifiers
     results = struct();
     %results.SCA = cSCA;
     results.MCC.MCA = cMCA;
     results.MCC.CA1 = cCA1;
     results.MCC.CA3 = cCA3;
+    if ~PCA
     resultsDir = fullfile(parameters.Directories.filePath,['Classifier Results [-',num2str(range),' ',num2str(range),']']);
    visualizeClassifierPerformance(results,norm(iter),fullfile(resultsDir,'MCCs'));
+    end
 end
 
 % Save if PCA Will Not Occur
@@ -141,7 +145,7 @@ end
 %% Do Everything Again While Iterating Through PCA
 if PCA
 savePCA = fullfile(parameters.Directories.filePath,'Scree Plots');
-    if ~exist(savePCA,'dir');
+    if ~exist(savePCA,'dir')
     mkdir(savePCA);
     end
     
@@ -181,6 +185,7 @@ else
     sgtitle('MCA Scree Plot','FontSize',30);
 saveas(fPCA2, fullfile(savePCA,'MCAScree.png'));
 end
+clear fPCA2
 
 %% PCA CCA1
 fprintf('\nCA1\n');
@@ -202,6 +207,8 @@ else
   saveas(fPCA3, fullfile(savePCA,'CA1Scree.png'));
 end
 
+clear fPCA3
+
 %% PCA CCA3
 fprintf('\nCA3\n');
 CCAChoices = dataML.Channels.CA3_Channels;
@@ -220,6 +227,8 @@ fPCA4 =  figure('visible','off','units','normalized','outerposition',[0 0 1 1]);
       sgtitle('CA3 Scree Plot','FontSize',30);
       saveas(fPCA4, fullfile(savePCA,'CA3Scree.png'));
   end
+  
+clear fPCA4
 
 %% Iterate Through PCA Components
 for coeffs_to_retain = [2,3,5,10]
@@ -272,7 +281,7 @@ end
 if allBasicClassifiers
        name = 'MCA';
        pcaName = ['PCA',num2str(coeffs_to_retain)];
-    cMCA.(pcaName) = trainClassifiers(dataML,learnerTypes,name);
+    cMCA = trainClassifiers(dataML,learnerTypes);
 end
 
 
@@ -305,7 +314,7 @@ end
 if allBasicClassifiers
        name = 'CA1';
        pcaName = ['PCA',num2str(coeffs_to_retain)];
-    cCA1.(pcaName) = trainClassifiers(dataML,learnerTypes,name);
+    cCA1 = trainClassifiers(dataML,learnerTypes);
 end
 %% Do CCA (non-CNN) for CA3 and PCA
 fprintf('\nCA3\n');
@@ -333,7 +342,7 @@ end
 if allBasicClassifiers
        name = 'CA3';
        pcaName = ['PCA',num2str(coeffs_to_retain)];
-    cCA3.(pcaName) = trainClassifiers(dataML,learnerTypes,name);
+    cCA3 = trainClassifiers(dataML,learnerTypes);
 end
 
 if Kmeans
@@ -360,27 +369,14 @@ end
 
 %% Organize Results
 end
-
 if allBasicClassifiers
+   if ~exist('results','var')
     results = struct();
+   end
     %results.SCA = SCA;
-    results.MCC.MCA = cMCA;
-    results.MCC.CA1 = cCA1;
-    results.MCC.CA3 = cCA3;
-    resultsDir = fullfile(parameters.Directories.filePath,['Classifier Results [-',num2str(range),' ',num2str(range),']']);
-    visualizeClassifierPerformance(results,norm(iter),fullfile(resultsDir,'MCCs'));
-    
-     
-      if norm(iter) == 1
-          if exist('results','var')
-save(fullfile(resultsDir,[parameters.Directories.dataName, 'ResultsNorm[-',num2str(range),' ',num2str(range),'].mat']),'results');
-          end
-      else
-           if exist('results','var')
-save(fullfile(resultsDir,[parameters.Directories.dataName, 'Results[-',num2str(range),' ',num2str(range),'].mat']),'results');
-           end
-      end
-    
+    results.MCC.MCA.(pcaName) = cMCA;
+    results.MCC.CA1.(pcaName) = cCA1;
+    results.MCC.CA3.(pcaName) = cCA3;
 end
 
 clear MCA
@@ -391,7 +387,20 @@ clear cSCA
 clear cCCA
 
 end
-end
+if allBasicClassifiers
+    resultsDir = fullfile(parameters.Directories.filePath,['Classifier Results [-',num2str(range),' ',num2str(range),']']);
+    visualizeClassifierPerformance(results,norm(iter),fullfile(resultsDir,'MCCs'));
+     
+      if norm(iter) == 1
+          if exist('results','var')
+save(fullfile(resultsDir,[parameters.Directories.dataName, 'ResultsNorm[-',num2str(range),' ',num2str(range),'].mat']),'results');
+          end
+      else
+           if exist('results','var')
+save(fullfile(resultsDir,[parameters.Directories.dataName, 'Results[-',num2str(range),' ',num2str(range),'].mat']),'results');
+           end
+      end
+end  
 end
 end
 
@@ -405,12 +414,13 @@ if CNN_SVM
     processAllClassestoResults(results,'CNN_SVM');
     supervisedDir = fullfile(parameters.Directories.filePath,'CNN Results');
 
-if ~exist(supervisedDir,'dir');
+if ~exist(supervisedDir,'dir')
     mkdir(supervisedDir);
     end  
 if norm(iter) == 1
 save(fullfile(supervisedDir,[parameters.Directories.dataName, 'ResultsNorm.mat']),'results');
 else
 save(fullfile(supervisedDir,[parameters.Directories.dataName, 'Results.mat']),'results');
+end
 end
 end

@@ -73,8 +73,14 @@ tN = triu(totalIters-fP);
  fpTotalCount = nansum(nansum(fP));
  fnTotalCount = nansum(nansum(fN));
  tnTotalCount = nansum(nansum(tN));
+ 
+ denominator = sqrt((tpTotalCount+fpTotalCount)*(tpTotalCount+fnTotalCount)*(tnTotalCount+fpTotalCount)*(tnTotalCount+fnTotalCount));
 
-MCC_Categories(fi,iters) = ((tpTotalCount*tnTotalCount)-(fpTotalCount*fnTotalCount))/sqrt((tpTotalCount+fpTotalCount)*(tpTotalCount+fnTotalCount)*(tnTotalCount+fpTotalCount)*(tnTotalCount+fnTotalCount));
+ if denominator ~= 0
+MCC_Categories(fi,iters) = ((tpTotalCount*tnTotalCount)-(fpTotalCount*fnTotalCount))/denominator;
+ else
+     MCC_Categories(fi,iters) = 0;
+ end
 end
 end
 end

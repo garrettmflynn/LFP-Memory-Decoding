@@ -7,13 +7,13 @@ end
 wrong = dataML.WrongResponse;
 
 if isfield(dataML,'PCA')
-    wrongVec = 1:size(dataML.PCA,1)
-    matrixToProcess = dataML.PCA(wrongVec~=wrong,:);
+    allVec = 1:size(dataML.PCA,1);
+    matrixToProcess = dataML.PCA(allVec~=wrong,:);
 else
-    wrongVec = 1:size(dataML.Data,1)
-    matrixToProcess = dataML.Data(wrongVec~=wrong,:);
+    allVec = 1:size(dataML.Data,1);
+    matrixToProcess = dataML.Data(allVec~=wrong,:);
 end
-
+    
 %% Begin Label Loop
 fields = fieldnames(dataML.Labels);
 fieldLabels = erase(fields,'Label_');
@@ -39,7 +39,11 @@ for learner = 1:sum(learnerTypes)
             end
         end
         
-        labelCache = categorical(labelCache(wrongVec~=wrong));
+        labelCache = categorical(labelCache(allVec~=wrong));
+        classifier = [];
+        %% Custom Loss Function
+        binaryLabels = labelCache == 
+              crossEntropy = @(~,S,~,~)mean(min(-S,[],2));
         
         %% Begin Model Testing
         if ~strcmp(learnerNames{learnerChoices(learner)},'kernel') && ~strcmp(learnerNames{learnerChoices(learner)},'naivebayes')
@@ -48,30 +52,20 @@ for learner = 1:sum(learnerTypes)
                 ourLinear = templateLinear('Learner','svm','Regularization','lasso');
                 classifier = fitcecoc(matrixToProcess', labelCache, ...
                     'Learners', ourLinear,'ObservationsIn', 'columns','Kfold',10);
+                clear ourLinear
                 % KNN
             elseif strcmp(learnerNames{learnerChoices(learner)},'knn')
                 ourKNN = templateKNN('NSMethod','exhaustive','Distance','cosine');
                 classifier = fitcecoc(matrixToProcess', labelCache, ...
                     'Learners', ourKNN,'ObservationsIn', 'columns','Kfold',10);
+                clear ourKNN
                 % RusBoost (unbalanced classes)
             elseif strcmp(learnerNames{learnerChoices(learner)},'RUSBoost')
                 N = ceil(length(labelCache)/10);         % Number of observations in training samples
                 t = templateTree('MaxNumSplits',N);
-                rusTree = fitcensemble(matrixToProcess,labelCache,'Method',learnerNames{learnerChoices(learner)}, ...
+                classifier = fitcensemble(matrixToProcess,labelCache,'Method',learnerNames{learnerChoices(learner)}, ...
                     'NumLearningCycles',1000,'Learners',t,'LearnRate',0.1,'nprint',100,'KFold',10);
-                figure;
-                grid on;
-                xlabel('Number of trees');
-                ylabel('Test classification error');
-                Yfit = kfoldPredict(rusTree);
-                confusionchart(labelCache,Yfit,'Normalization','row-normalized','RowSummary','row-normalized');
-                cmpctRus = compact(rusTree);
-                
-                sz(1) = whos('rusTree');
-                sz(2) = whos('cmpctRus');
-                scaleDown = sz(2)/sz(1);
-                classifier = removeLearners(cmpctRus,[round(scaleDown * 1000):1000]);
-                %L = loss(cmpctRus,matrixToProcess',labelCache)
+                clear t
             else
                 % SVM or Trees
                 classifier = fitcecoc(matrixToProcess', labelCache, ...
@@ -85,6 +79,7 @@ for learner = 1:sum(learnerTypes)
             testLabels =  labelCache;
             
             % Tabulate the results using a confusion matrix.
+            %confusionchart(testLabels,predictedLabels,'Normalization','row-normalized','RowSummary','row-normalized');
             [confMat,categories] = confusionmat(testLabels, predictedLabels);
             %plotconfusion(testLabels, predictedLabels);
             saveMCC.(fieldLabels{categoriesToTrain}) = ML_MCC(confMat);
@@ -115,3 +110,4 @@ for learner = 1:sum(learnerTypes)
     end
 end
 end
+
