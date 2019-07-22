@@ -13,8 +13,8 @@ ClipArt2 = 1;
 other = 0;
 
 % Data Structure Choices
-norm = [0 1]; % Carries over to ML, if chosen // A vector of two values results in two iterations
-windowOfInterest = [1,2,3,4,5]; %1; % Second before and after SAMPLE_RESPONSE
+norm = 1;%[0 1]; % Carries over to ML, if chosen // A vector of two values results in two iterations
+windowOfInterest = [1]; %1.5; % Second before and after SAMPLE_RESPONSE
 saveHHData = 0;
 
 %% ML Choices

@@ -1,4 +1,4 @@
-function [outMCCs] = trainClassifiers(dataML,learnerTypes)
+function [outMCCs] = trainClassifiers(dataML,learnerTypes,resultsDir,typeML,pcaIter)
 
 if nargin == 1
     learnerTypes = [1 1 1 1 1 1 1 0];
@@ -35,17 +35,18 @@ for learner = 1:sum(learnerTypes)
             if strfind(labels{qq},currentField)
                 labelCache{qq} = currentField;
             else
-                labelCache{qq} = ['Not ' currentField];
+                labelCache{qq} = ['~',currentField];
             end
         end
         
         labelCache = categorical(labelCache(allVec~=wrong));
         classifier = [];
         %% Custom Loss Function
-        binaryLabels = labelCache == 
-              crossEntropy = @(~,S,~,~)mean(min(-S,[],2));
+%         binaryLabels = strcmp(labelCache,currentField);
+%               crossEntropy = @(~,S,~,~)mean(min(-S,[],2));
         
         %% Begin Model Testing
+        done = 0;
         if ~strcmp(learnerNames{learnerChoices(learner)},'kernel') && ~strcmp(learnerNames{learnerChoices(learner)},'naivebayes')
             % Lasso
             if strcmp(learnerNames{learnerChoices(learner)},'linear')
@@ -79,11 +80,20 @@ for learner = 1:sum(learnerTypes)
             testLabels =  labelCache;
             
             % Tabulate the results using a confusion matrix.
-            %confusionchart(testLabels,predictedLabels,'Normalization','row-normalized','RowSummary','row-normalized');
             [confMat,categories] = confusionmat(testLabels, predictedLabels);
-            %plotconfusion(testLabels, predictedLabels);
+            cc = confusionchart(testLabels,predictedLabels);
+            if nargin > 4
+                title(['PCA',num2str(pcaIter),' ',learnerNames{learnerChoices(learner)},' ',typeML,' ',currentField]);
+            saveas(cc,fullfile(resultsDir,['PCA',num2str(pcaIter),'_',learnerNames{learnerChoices(learner)},'_',typeML,'_',currentField,'.png']));
+            else
+                title(['Raw ',learnerNames{learnerChoices(learner)},' ',typeML,' ',currentField]);
+            saveas(cc,fullfile(resultsDir,['Raw_',learnerNames{learnerChoices(learner)},'_',typeML,'_',currentField,'.png']));
+             end
             saveMCC.(fieldLabels{categoriesToTrain}) = ML_MCC(confMat);
             
+            
+            
+            done = 1;
             %% Incorporate Models with Long Execution on Raw Data
             %  Due to the Size of our Inputs, Naive Bayes and Gaussian Are Not Feasible for Raw Data Analyses
         else
@@ -95,9 +105,13 @@ for learner = 1:sum(learnerTypes)
                 testLabels =  labelCache;
                 [confMat,categories] = confusionmat(testLabels, predictedLabels);
                 saveMCC.(fieldLabels{categoriesToTrain}) = ML_MCC(confMat);
+                done = 1;
             end
         end
-        
+     
+        if ~done
+            fprintf('Not Done\n');
+        end
         
         
     end
