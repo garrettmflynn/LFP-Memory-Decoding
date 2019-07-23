@@ -42,7 +42,8 @@ for learner = 1:sum(learnerTypes)
             end
         end
         
-        labelCache = categorical(labelCache(allVec~=wrong));
+        labelCache = labelCache(allVec~=wrong);
+        labelCacheCat = categorical(labelCache);
         classifier = [];
         %% Custom Loss Function
 %         binaryLabels = ismember(labelCache,currentField);
@@ -51,9 +52,45 @@ for learner = 1:sum(learnerTypes)
         %% Begin Model Testing
         done = 0;
         if ~strcmp(learnerNames{learnerChoices(learner)},'kernel') && ~strcmp(learnerNames{learnerChoices(learner)},'naivebayes')
+            if ~strcmp(learnerNames{learnerChoices(learner)},'LassoGLM')
+            % Lasso
+            if strcmp(learnerNames{learnerChoices(learner)},'linear')
+                ourLinear = templateLinear('Learner','logistic','Regularization','lasso');
+                classifier = fitcecoc(matrixToProcess', labelCacheCat, ...
+                    'Learners', ourLinear,'ObservationsIn', 'columns','Kfold',10);
+                clear ourLinear
+                % KNN
+            elseif strcmp(learnerNames{learnerChoices(learner)},'knn')
+                ourKNN = templateKNN('NSMethod','exhaustive','Distance','cosine');
+                classifier = fitcecoc(matrixToProcess', labelCacheCat, ...
+                    'Learners', ourKNN,'ObservationsIn', 'columns','Kfold',10);
+                clear ourKNN
+                % RusBoost (unbalanced classes)
+            elseif strcmp(learnerNames{learnerChoices(learner)},'RUSBoost')
+                N = ceil(length(labelCacheCat)/10);         % Number of observations in training samples
+                t = templateTree('MaxNumSplits',N);
+                classifier = fitcensemble(matrixToProcess,labelCacheCat,'Method',learnerNames{learnerChoices(learner)}, ...
+                    'NumLearningCycles',1000,'Learners',t,'LearnRate',0.1,'nprint',100,'KFold',10);
+                clear t
+            else
+                % SVM or Trees
+                classifier = fitcecoc(matrixToProcess', labelCacheCat, ...
+                    'Learners', learnerNames{learnerChoices(learner)},'ObservationsIn', 'columns','Kfold',10);
+            end
+            % Pass features to trained classifier
+            %predictedLabels = predict(classifier, matrixToProcess', 'ObservationsIn', 'columns');
+            predictedLabels = kfoldPredict(classifier);
+            
+            % Get the known labels
+            testLabels =  labelCacheCat;
+            
+            % Tabulate the results using a confusion matrix.
+            [confMat,categories] = confusionmat(testLabels, predictedLabels);
+            conf = confusionchart(testLabels,predictedLabels);
+            
             % Lasso GLM
-            if strcmp(learnerNames{learnerChoices(learner)},'LassoGLM')
-                binaryLabels = ismember(labelCache,currentField);
+            else
+                binaryLabels = ismember(labelCacheCat,currentField);
             [Coefficients, FitInfo] = lassoglm(matrixToProcess, binaryLabels, 'binomial','MaxIter',100,'CV', 10);
             indx = FitInfo.IndexMinDeviance;
             cnst = FitInfo.Intercept(indx);
@@ -65,44 +102,34 @@ histogram(binaryLabels - preds); % plot residuals
 title('Residuals from lassoglm model');
 
             predictors = find(B0); % indices of nonzero predictors
-            classifier = fitglm(matrixToProcess,labelCache,'linear',...
-             'Distribution','binomial','PredictorVars',predictors,'Kfold',10);
+            
+    indices = crossvalind('Kfold',labelCacheCat,10);
+    cp = classperf(labelCache);
+       for i = 1:10
+    test = (indices == i); 
+    train = ~test;
+    %class = classify(matrixToProcess(test,:),matrixToProcess(train,:),labelCache(train,:)); 
+            
+            classifier = fitglm(matrixToProcess(train,:),labelCacheCat(train),'linear',...
+             'Distribution','binomial','PredictorVars',predictors);
          
-            % Lasso
-            elseif strcmp(learnerNames{learnerChoices(learner)},'linear')
-                ourLinear = templateLinear('Learner','logistic','Regularization','lasso');
-                classifier = fitcecoc(matrixToProcess', labelCache, ...
-                    'Learners', ourLinear,'ObservationsIn', 'columns','Kfold',10);
-                clear ourLinear
-                % KNN
-            elseif strcmp(learnerNames{learnerChoices(learner)},'knn')
-                ourKNN = templateKNN('NSMethod','exhaustive','Distance','cosine');
-                classifier = fitcecoc(matrixToProcess', labelCache, ...
-                    'Learners', ourKNN,'ObservationsIn', 'columns','Kfold',10);
-                clear ourKNN
-                % RusBoost (unbalanced classes)
-            elseif strcmp(learnerNames{learnerChoices(learner)},'RUSBoost')
-                N = ceil(length(labelCache)/10);         % Number of observations in training samples
-                t = templateTree('MaxNumSplits',N);
-                classifier = fitcensemble(matrixToProcess,labelCache,'Method',learnerNames{learnerChoices(learner)}, ...
-                    'NumLearningCycles',1000,'Learners',t,'LearnRate',0.1,'nprint',100,'KFold',10);
-                clear t
-            else
-                % SVM or Trees
-                classifier = fitcecoc(matrixToProcess', labelCache, ...
-                    'Learners', learnerNames{learnerChoices(learner)},'ObservationsIn', 'columns','Kfold',10);
+         predictions = (round(predict(classifier,matrixToProcess(test,:))) == 0);
+         
+            for ii = 1:length(predictions)
+         if predictions(ii)
+             realPredicts{ii} = currentField;
+         else
+             realPredicts{ii} = ['~',currentField];
+         end
             end
-            % Pass features to trained classifier
-            %predictedLabels = predict(classifier, matrixToProcess', 'ObservationsIn', 'columns');
-            predictedLabels = kfoldPredict(classifier);
             
-            % Get the known labels
-            testLabels =  labelCache;
+            classperf(cp,realPredicts,test); 
             
-            % Tabulate the results using a confusion matrix.
-            [confMat,categories] = confusionmat(testLabels, predictedLabels);
-            conf = confusionchart(testLabels,predictedLabels);
-
+            [confMat,categories] = confusionmat(labelCache, catPredicts);
+            conf = confusionchart(labelCache,catPredicts);
+       end     
+            %plotResiduals(classifier);
+            end
             done = 1;
             %% Incorporate Models with Long Execution on Raw Data
             %  Due to the Size of our Inputs, Naive Bayes and Gaussian Are Not Feasible for Raw Data Analyses
