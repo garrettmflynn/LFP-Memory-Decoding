@@ -1,16 +1,18 @@
 function [outMCCs] = trainClassifiers(dataML,learnerTypes,resultsDir,typeML,pcaIter)
 
 if nargin == 1
-    learnerTypes = [1 1 1 1 1 1 1 0];
+    learnerTypes = [1 0 0 0 0 0 0 0];
 end
 
 wrong = dataML.WrongResponse;
 
 if isfield(dataML,'PCA')
     allVec = 1:size(dataML.PCA,1);
+    dataML.PCA = permute(dataML.PCA,[1,3,2]);
     matrixToProcess = dataML.PCA(allVec~=wrong,:);
 else
     allVec = 1:size(dataML.Data,1);
+    dataML.PCA = permute(dataML.PCA,[1,3,2]);
     matrixToProcess = dataML.Data(allVec~=wrong,:);
 end
     
@@ -22,7 +24,7 @@ numTrials = size(dataML.Labels.(fields{1}),1);
 labelMaker;
 
 % BTW Linear is Lasso
-learnerNames = {'linear','kernel','knn','naivebayes','svm','tree','RUSBoost'};
+learnerNames = {'LassoGLM','linear','kernel','knn','naivebayes','svm','tree','RUSBoost'};
 for learner = 1:sum(learnerTypes)
     learnerChoices = find(learnerTypes);
     fprintf(['Learner: ',learnerNames{learnerChoices(learner)},'\n']);
@@ -42,15 +44,16 @@ for learner = 1:sum(learnerTypes)
         labelCache = categorical(labelCache(allVec~=wrong));
         classifier = [];
         %% Custom Loss Function
-%         binaryLabels = strcmp(labelCache,currentField);
+%         binaryLabels = ismember(labelCache,currentField);
 %               crossEntropy = @(~,S,~,~)mean(min(-S,[],2));
         
         %% Begin Model Testing
         done = 0;
         if ~strcmp(learnerNames{learnerChoices(learner)},'kernel') && ~strcmp(learnerNames{learnerChoices(learner)},'naivebayes')
+            if ~strcmp(learnerNames{learnerChoices(learner)},'LassoGLM')
             % Lasso
             if strcmp(learnerNames{learnerChoices(learner)},'linear')
-                ourLinear = templateLinear('Learner','svm','Regularization','lasso');
+                ourLinear = templateLinear('Learner','logistic','Regularization','lasso');
                 classifier = fitcecoc(matrixToProcess', labelCache, ...
                     'Learners', ourLinear,'ObservationsIn', 'columns','Kfold',10);
                 clear ourLinear
@@ -81,7 +84,27 @@ for learner = 1:sum(learnerTypes)
             
             % Tabulate the results using a confusion matrix.
             [confMat,categories] = confusionmat(testLabels, predictedLabels);
-            cc = confusionchart(testLabels,predictedLabels);
+            cc = confusionchart(testLabels,predictedLabels,'visible','off');
+            
+            % Lasso GLM
+            else
+            [Coefficients, FitInfo] = lassoglm(matrixToProcess, labelCache, 'binomial','CV', 10);
+            indx = FitInfo.IndexMinDeviance;
+            cnst = FitInfo.Intercept(indx);
+            B0 = Coefficients(:,indx);
+            nonzeros = sum(B0 ~= 0)
+B1 = [cnst;B0];
+preds = glmval(B1,matrixToProcess,'logit');
+binaryLabels = ismember(labelCache,currentField);
+histogram(binaryLabels - preds) % plot residuals
+title('Residuals from lassoglm model')
+
+            predictors = find(B0); % indices of nonzero predictors
+            mdl = fitglm(matrixToProcess,labelCache,'linear',...
+             'Distribution','binomial','PredictorVars',predictors)
+            plotResiduals(mdl);
+            
+            end
             if nargin > 4
                 title(['PCA',num2str(pcaIter),' ',learnerNames{learnerChoices(learner)},' ',typeML,' ',currentField]);
             saveas(cc,fullfile(resultsDir,['PCA',num2str(pcaIter),'_',learnerNames{learnerChoices(learner)},'_',typeML,'_',currentField,'.png']));
@@ -97,7 +120,7 @@ for learner = 1:sum(learnerTypes)
             %% Incorporate Models with Long Execution on Raw Data
             %  Due to the Size of our Inputs, Naive Bayes and Gaussian Are Not Feasible for Raw Data Analyses
         else
-            if size(matrixToProcess,2) < 50
+            if size(matrixToProcess,2) < 1000
                 % Naive Bayes or Gaussian
                 classifier = fitcecoc(matrixToProcess', labelCache, ...
                     'Learners', learnerNames{learnerChoices(learner)},'ObservationsIn', 'columns','Kfold',10);

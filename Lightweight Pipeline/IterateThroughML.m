@@ -78,9 +78,9 @@ for channels = 1:length(CCAChoices)
 end
 
 if Kmeans
-[CCA.CA1.Raw.clusterIndices] = kMeansClustering(MCAMatrix,[0 1 0]);
+[resultsK.CA1.Raw.clusterIndices] = kMeansClustering(MCAMatrix,[0 1 0]);
 saveBarsCA1= fullfile(saveBars,'CA1');
-[CCA.CA1.Raw.MCC,CCA.CA1.Raw.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(MCAMatrix,CCA.CA1.Raw.clusterIndices, [0 1 0],{MCAMatrix.Labels,[],'CA1',norm(iter),saveBarsCA1});
+[resultsK.CA1.Raw.MCC,resultsK.CA1.Raw.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(MCAMatrix,resultsK.CA1.Raw.clusterIndices, [0 1 0],{MCAMatrix.Labels,[],'CA1',norm(iter),saveBarsCA1});
 count = count + 1;
 end
 if allBasicClassifiers
@@ -98,9 +98,9 @@ for channels = 1:length(CCAChoices)
 end
 
 if Kmeans
-[CCA.CA3.Raw.clusterIndices] = kMeansClustering(MCAMatrix,[0 1 0]);
+[resultsK.CA3.Raw.clusterIndices] = kMeansClustering(MCAMatrix,[0 1 0]);
 saveBarsCA3= fullfile(saveBars,'CA3');
-[CCA.CA3.Raw.MCC,CCA.CA3.Raw.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(MCAMatrix,CCA.CA3.Raw.clusterIndices, [0 1 0],{MCAMatrix.Labels,[],'CA3',norm(iter),saveBarsCA3});
+[resultsK.CA3.Raw.MCC,resultsK.CA3.Raw.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(MCAMatrix,resultsK.CA3.Raw.clusterIndices, [0 1 0],{MCAMatrix.Labels,[],'CA3',norm(iter),saveBarsCA3});
 count = count + 1;
 end
 if allBasicClassifiers
@@ -110,44 +110,15 @@ end
 
 %% Organize Results
 if Kmeans && ~PCA
-    resultsK = struct();
-%     results.SCA = SCA;
-    resultsK.MCA = MCA;
-    resultsK.CCA = CCA;
-    %results.consistency = consistency;
-    resultsDirk = fullfile(parameters.Directories.filePath,'Results');  
+kSave
     
 end
 if allBasicClassifiers
-    results = struct();
-    %results.SCA = cSCA;
-    results.MCC.MCA = cMCA;
-    results.MCC.CA1 = cCA1;
-    results.MCC.CA3 = cCA3;
+classSave;
     if ~PCA
    visualizeClassifierPerformance(results,norm(iter),fullfile(resultsDir,'MCCs'));
     end
 end
-
-% Save if PCA Will Not Occur
-if ~PCA
-if norm(iter) == 1
-    if exist('results','var')
-save(fullfile(resultsDir,[parameters.Directories.dataName, 'ResultsNorm[-',num2str(range),' ',num2str(range),'].mat']),'results');
-    end
-if exist('resultsK','var') 
-save(fullfile(resultsDirk,[parameters.Directories.dataName, 'ResultsNormK',num2str(coeffs_to_retain),'.mat']),'resultsK');
-end
-else
-    if exist('results','var')
-save(fullfile(resultsDir,[parameters.Directories.dataName, 'Results[-',num2str(range),' ',num2str(range),'].mat']),'results');
-    end
-if exist('resultsK','var') 
-save(fullfile(resultsDirk,[parameters.Directories.dataName, 'ResultsK',num2str(coeffs_to_retain),'.mat']),'resultsK');
-end
-end
-end
-
 end
 
 %% Do Everything Again While Iterating Through PCA
@@ -175,71 +146,68 @@ savePCAViz = fullfile(parameters.Directories.filePath,'PCA Scatter Plots');
 %     saveas(fPCA, fullfile(savePCA,'ChannelSpecificScree.png'));
 % end
 %% PCA MCA
-fprintf('\nMCA\n');
 CCAChoices = dataML.Channels.sChannels;
-MCAMatrix = [];
-for channels = 1:length(CCAChoices)
-   MCAMatrix = [MCAMatrix dataML.Data(:,:,channels)];
+for trials = 1:size(dataML.Data,1)
+   temp = squeeze(dataML.Data(trials,:,ismember(dataML.Channels.sChannels,CCAChoices)));
+   [~,scoreMCA(trials,:,:),~,~,explained,~] = pca(temp');
 end
 
-fPCA2 =  figure('visible','off','units','normalized','outerposition',[0 0 1 1]);
-[~,scoreMCA,~,~,explained,~] = pca(MCAMatrix);
- bar(explained);
-  sgtitle('MCA Scree Plot','FontSize',30);
-if norm(iter)
-    sgtitle('Normalized MCA Scree Plot','FontSize',30);
-saveas(fPCA2, fullfile(savePCA,'NormMCAScree.png'));
-else
-    sgtitle('MCA Scree Plot','FontSize',30);
-saveas(fPCA2, fullfile(savePCA,'MCAScree.png'));
-end
-clear fPCA2
+% fPCA2 =  figure('visible','off','units','normalized','outerposition',[0 0 1 1]);
+% [~,scoreMCA,~,~,explained,~] = pca(MCAMatrix);
+%  bar(explained);
+%   sgtitle('MCA Scree Plot','FontSize',30);
+% if norm(iter)
+%     sgtitle('Normalized MCA Scree Plot','FontSize',30);
+% saveas(fPCA2, fullfile(savePCA,'NormMCAScree.png'));
+% else
+%     sgtitle('MCA Scree Plot','FontSize',30);
+% saveas(fPCA2, fullfile(savePCA,'MCAScree.png'));
+% end
+% clear fPCA2
 
 %% PCA CCA1
-fprintf('\nCA1\n');
 CCAChoices = dataML.Channels.CA1_Channels;
-MCAMatrix = [];
-for channels = 1:length(CCAChoices)
-   MCAMatrix = [MCAMatrix dataML.Data(:,:,channels)];
+for trials = 1:size(dataML.Data,1)
+   temp = squeeze(dataML.Data(trials,:,ismember(dataML.Channels.sChannels,CCAChoices)));
+   [~,scoreCA1(trials,:,:),~,~,explained,~] = pca(temp');
 end
 
- fPCA3 = figure('visible','off','units','normalized','outerposition',[0 0 1 1]);
-[~,scoreCA1,~,~,explained,~] = pca(MCAMatrix);
- bar(explained);hold on;
-  sgtitle('CA1 Scree Plot','FontSize',30);
-if norm(iter)
-    sgtitle('Normalized CA1 Scree Plot','FontSize',30);
-  saveas(fPCA3, fullfile(savePCA,'NormCA1Scree.png'));
-else
-    sgtitle('CA1 Scree Plot','FontSize',30);
-  saveas(fPCA3, fullfile(savePCA,'CA1Scree.png'));
-end
-
-clear fPCA3
+%  fPCA3 = figure('visible','off','units','normalized','outerposition',[0 0 1 1]);
+% [~,scoreCA1,~,~,explained,~] = pca(MCAMatrix);
+%  bar(explained);hold on;
+%   sgtitle('CA1 Scree Plot','FontSize',30);
+% if norm(iter)
+%     sgtitle('Normalized CA1 Scree Plot','FontSize',30);
+%   saveas(fPCA3, fullfile(savePCA,'NormCA1Scree.png'));
+% else
+%     sgtitle('CA1 Scree Plot','FontSize',30);
+%   saveas(fPCA3, fullfile(savePCA,'CA1Scree.png'));
+% end
+% 
+% clear fPCA3
 
 %% PCA CCA3
-fprintf('\nCA3\n');
 CCAChoices = dataML.Channels.CA3_Channels;
-MCAMatrix = [];
-for channels = 1:length(CCAChoices)
-   MCAMatrix = [MCAMatrix dataML.Data(:,:,channels)];
+for trials = 1:size(dataML.Data,1)
+   temp = squeeze(dataML.Data(trials,:,ismember(dataML.Channels.sChannels,CCAChoices)));
+   [~,scoreCA3(trials,:,:),~,~,explained,~] = pca(temp');
 end
 
-fPCA4 =  figure('visible','off','units','normalized','outerposition',[0 0 1 1]);
-[~,scoreCA3,~,~,explained,~] = pca(MCAMatrix);
- bar(explained);hold on;
-  if norm(iter)
-      sgtitle('Normalized CA3 Scree Plot','FontSize',30);
-  saveas(fPCA4, fullfile(savePCA,'NormCA3Scree.png'));
-  else 
-      sgtitle('CA3 Scree Plot','FontSize',30);
-      saveas(fPCA4, fullfile(savePCA,'CA3Scree.png'));
-  end
-  
-clear fPCA4
+% fPCA4 =  figure('visible','off','units','normalized','outerposition',[0 0 1 1]);
+% [~,scoreCA3,~,~,explained,~] = pca(MCAMatrix);
+%  bar(explained);hold on;
+%   if norm(iter)
+%       sgtitle('Normalized CA3 Scree Plot','FontSize',30);
+%   saveas(fPCA4, fullfile(savePCA,'NormCA3Scree.png'));
+%   else 
+%       sgtitle('CA3 Scree Plot','FontSize',30);
+%       saveas(fPCA4, fullfile(savePCA,'CA3Scree.png'));
+%   end
+%   
+% clear fPCA4
 
 %% Iterate Through PCA Components
-for coeffs_to_retain = [2,3,5,10]
+for coeffs_to_retain = coeffs; %1:size(scoreMCA,3)
 
 % dataML.PCA = scoreSCA(:,1:coeffs_to_retain,:);
 %saveDuringML;
@@ -265,7 +233,8 @@ for coeffs_to_retain = [2,3,5,10]
 % end
 %% Do MCA (non-CNN) on PCA
 fprintf('\nMCA\n');
-dataML.PCA = scoreMCA(:,1:coeffs_to_retain,:);
+toPermute = scoreMCA(:,:,1:coeffs_to_retain);
+dataML.PCA = permute(toPermute,[1,3,2]);
 if Kmeans
 [MCA.PCA.clusterIndices] = kMeansClustering(dataML,[0 1 0]);
 nIters = size(MCA.PCA.clusterIndices,3);
@@ -289,21 +258,29 @@ end
 if allBasicClassifiers
        name = 'MCA';
        pcaName = ['PCA',num2str(coeffs_to_retain)];
-    cMCA = trainClassifiers(dataML,learnerTypes,resultsDir,'MCA',coeffs_to_retain);
+    results.MCC.MCA.(pcaName) = trainClassifiers(dataML,learnerTypes,resultsDir,'MCA',coeffs_to_retain);
 end
 
+if Kmeans
+kSave;
+end
+
+end
+ plotMCCvsFeatures(results.MCC.MCA,coeffs,norm(iter),fullfile(resultsDir,'FeaturesvsMCC'));
 
 
 
+for coeffs_to_retain = 1:size(scoreCA1,3)
 %% Do CCA (non-CNN) for CA1 and PCA
 fprintf('\nCA1\n');
-dataML.PCA = scoreCA1(:,1:coeffs_to_retain,:);
+toPermute = scoreCA1(:,:,1:coeffs_to_retain);
+dataML.PCA = permute(toPermute,[1,3,2]);
 if Kmeans
-[CCA.CA1.PCA.clusterIndices] = kMeansClustering(dataML,[0 1 0]);
-nIters = size(CCA.CA1.PCA.clusterIndices,3);
+[resultsK.CA1.PCA.clusterIndices] = kMeansClustering(dataML,[0 1 0]);
+nIters = size(resultsK.CA1.PCA.clusterIndices,3);
 
 saveBarsCA1= fullfile(saveBars,'CA1');
-[CCA.CA1.PCA.MCC,CCA.CA1.PCA.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(dataML,CCA.CA1.PCA.clusterIndices, [0 1 0],{dataML.Labels,coeffs_to_retain,'CA1',norm(iter),saveBarsCA1});
+[resultsK.CA1.PCA.MCC,resultsK.CA1.PCA.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(dataML,resultsK.CA1.PCA.clusterIndices, [0 1 0],{dataML.Labels,coeffs_to_retain,'CA1',norm(iter),saveBarsCA1});
 
 if coeffs_to_retain ==  2 
 PCA2CountCA1 = count;
@@ -322,17 +299,29 @@ end
 if allBasicClassifiers
        name = 'CA1';
        pcaName = ['PCA',num2str(coeffs_to_retain)];
-    cCA1 = trainClassifiers(dataML,learnerTypes,resultsDir,'CA1',coeffs_to_retain);
+    results.MCC.MCA.(pcaName) = trainClassifiers(dataML,learnerTypes,resultsDir,'CA1',coeffs_to_retain);
+    plotMCCvsFeatures(results.MCC.MCA.(pcaName),coeffs_to_retain,norm(iter),fullfile(resultsDir,'FeaturesvsMCC'));
 end
+
+if Kmeans
+kSave;
+end
+
+end
+ plotMCCvsFeatures(results.MCC.CA1.(pcaName),coeffs_to_retain,norm(iter),fullfile(resultsDir,'FeaturesvsMCC'));
+ 
+ 
+for coeffs_to_retain = 1:size(scoreCA3,3)
 %% Do CCA (non-CNN) for CA3 and PCA
 fprintf('\nCA3\n');
- dataML.PCA = scoreCA3(:,1:coeffs_to_retain,:);
+toPermute = scoreCA3(:,:,1:coeffs_to_retain);
+dataML.PCA = permute(toPermute,[1,3,2]);
  if Kmeans
-[CCA.CA3.PCA.clusterIndices] = kMeansClustering(dataML,[0 1 0]);
-nIters = size(CCA.CA3.PCA.clusterIndices,3);
+[resultsK.CA3.PCA.clusterIndices] = kMeansClustering(dataML,[0 1 0]);
+nIters = size(resultsK.CA3.PCA.clusterIndices,3);
 
 saveBarsCA3= fullfile(saveBars,'CA3');
-[CCA.CA3.PCA.MCC,CCA.CA3.PCA.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(dataML,CCA.CA3.PCA.clusterIndices, [0 1 0],{dataML.Labels,coeffs_to_retain,'CA3',norm(iter),saveBarsCA3});
+[resultsK.CA3.PCA.MCC,resultsK.CA3.PCA.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(dataML,resultsK.CA3.PCA.clusterIndices, [0 1 0],{dataML.Labels,coeffs_to_retain,'CA3',norm(iter),saveBarsCA3});
 
 if coeffs_to_retain ==  2 
 PCA2CountCA3 = count;
@@ -350,63 +339,24 @@ end
 if allBasicClassifiers
        name = 'CA3';
        pcaName = ['PCA',num2str(coeffs_to_retain)];
-    cCA3 = trainClassifiers(dataML,learnerTypes,resultsDir,'CA3',coeffs_to_retain);
+    results.MCC.MCA.(pcaName) = trainClassifiers(dataML,learnerTypes,resultsDir,'CA3',coeffs_to_retain);
+    plotMCCvsFeatures(results.MCC.MCA.(pcaName),coeffs_to_retain,norm(iter),fullfile(resultsDir,'FeaturesvsMCC'));
 end
 
 if Kmeans
-    resultsK = struct();
-%     results.SCA = SCA;
-    resultsK.MCA = MCA;
-    resultsK.CCA = CCA;
-    %results.consistency = consistency;
-    resultsDirk = fullfile(parameters.Directories.filePath,'ResultsK');  
-    
-if ~exist(resultsDirk,'dir');
-    mkdir(resultsDirk);
-end  
-    
-% Save for K-Means
- if norm(iter) == 1
-    if exist('results','var')
-save(fullfile(resultsDirk,[parameters.Directories.dataName, 'ResultsNorm',num2str(coeffs_to_retain),'.mat']),'resultsK');
-    end
-if exist('resultsK','var') 
-save(fullfile(resultsDirk,[parameters.Directories.dataName, 'ResultsNormK',num2str(coeffs_to_retain),'.mat']),'resultsK');
-end   
+kSave;
 end
 
+end
+
+ plotMCCvsFeatures(results.MCC.CA3.(pcaName),coeffs_to_retain,norm(iter),fullfile(resultsDir,'FeaturesvsMCC'));
+
+
+if allBasicClassifiers
+classSave;
+visualizeClassifierPerformance(results,norm(iter),fullfile(resultsDir,'MCCs')); 
+end
 %% Organize Results
-end
-if allBasicClassifiers
-   if ~exist('results','var')
-    results = struct();
-   end
-    %results.SCA = SCA;
-    results.MCC.MCA.(pcaName) = cMCA;
-    results.MCC.CA1.(pcaName) = cCA1;
-    results.MCC.CA3.(pcaName) = cCA3;
-end
-
-clear MCA
-clear SCA
-clear CCA
-clear cMCA
-clear cSCA
-clear cCCA
-
-end
-if allBasicClassifiers
-    visualizeClassifierPerformance(results,norm(iter),fullfile(resultsDir,'MCCs')); 
-      if norm(iter) == 1
-          if exist('results','var')
-save(fullfile(resultsDir,[parameters.Directories.dataName, 'ResultsNorm[-',num2str(range),' ',num2str(range),'].mat']),'results');
-          end
-      else
-           if exist('results','var')
-save(fullfile(resultsDir,[parameters.Directories.dataName, 'Results[-',num2str(range),' ',num2str(range),'].mat']),'results');
-           end
-      end
-end  
 end
 end
 

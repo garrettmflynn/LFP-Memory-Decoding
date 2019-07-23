@@ -1,6 +1,9 @@
 
 clear; clc; close all;
 %% What to Run?
+% Note: Data filepaths can be specified in HHDataStructure.m
+
+
 % Function Path
 addpath(genpath('C:\SuperUser\Documents\GitHub\LFP-Memory-Decoding'));
 
@@ -13,25 +16,27 @@ ClipArt2 = 1;
 other = 0;
 
 % Data Structure Choices
-norm = 1;%[0 1]; % Carries over to ML, if chosen // A vector of two values results in two iterations
-windowOfInterest = [1]; %1.5; % Second before and after SAMPLE_RESPONSE
+norm = 1; % Carries over to ML, if chosen // A vector of two values results in two iterations
+windowOfInterest = 1;  % Seconds before and after SAMPLE_RESPONSE
 saveHHData = 0;
 
 %% ML Choices
-Raw = 1;
+Raw = 0;
 PCA = 1;
+   coeffs = [1:15];
     
     % Unsupervised
     Kmeans = 0;
 
     % Supervised
     allBasicClassifiers = 1;
+        lassoGLM = 0;
         linear = 1; % Currently set to lasso
-        kernel = 1;
+        kernel = 0;
         knn = 1;
-        naivebayes = 1;
-        svm = 1;
-         tree = 1;
+        naivebayes = 0;
+        svm = 0;
+         tree = 0;
          RUSBoost = 0; % Specializes in unbalanced classes, but does not perform well
 
     % Image Based
@@ -43,7 +48,7 @@ PCA = 1;
 
 %% ML Pipeline
 dataChoices = [data003,ClipArt2,other];
-learnerTypes = [linear kernel knn naivebayes svm tree RUSBoost];
+learnerTypes = [lassoGLM linear kernel knn naivebayes svm tree RUSBoost];
 
 for dataChoice = 1:length(dataChoices)
 

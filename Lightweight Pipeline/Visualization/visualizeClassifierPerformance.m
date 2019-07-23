@@ -72,7 +72,7 @@ end
 sgtitle([strrep(name,'_',' '),' Data'],'FontSize',30,'fontweight','bold');
 
 % Add Subplots
-barLabels = erase(learnerFields,'Label_');
+barLabels = learnerFields;
 if jj == 2
 h = subplot(12,1,(3*(jj-1)+3):((3*jj)+2)); bar(categorical(strrep(newLabelFields,'_',' ')),barGroupedByClass); hold on;
 elseif jj == 3

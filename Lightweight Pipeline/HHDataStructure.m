@@ -9,7 +9,7 @@ if ~other
 if dataChoice == 1 && dataChoices(dataChoice)        
 
 % Define data path here for extracting LFP data
-parameters.Directories.filePath = strcat('E:\LFP\Data2_Recording'); %'/media/gflynn/Seagate Backup Plus Drive/LFP Decoding/ClipArt_2');
+parameters.Directories.filePath = strcat('C:\Users\shires\OneDrive - University of Southern California\Decoding Stats\Data2_Recording'); %('E:\LFP\Data2_Recording'); %'/media/gflynn/Seagate Backup Plus Drive/LFP Decoding/ClipArt_2');
 addpath(genpath(parameters.Directories.filePath));
 
 % Choose the testing data
@@ -23,7 +23,7 @@ parameters.Channels.CA3_Channels =  [1:6,17:22];
 elseif dataChoice == 2 && dataChoices(dataChoice)  
 
 % Define data path here for extracting LFP data
-parameters.Directories.filePath = strcat('E:\LFP\ClipArt_2');
+parameters.Directories.filePath = strcat('C:\Users\shires\OneDrive - University of Southern California\Decoding Stats\ClipArt_2');
 
 % Choose the testing data
 parameters.Directories.dataName = 'ClipArt_2';
