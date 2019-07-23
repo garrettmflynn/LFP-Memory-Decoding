@@ -115,6 +115,7 @@ title('Residuals from lassoglm model');
          
          predictions = (round(predict(classifier,matrixToProcess(test,:))) == 0);
          
+         realPredicts = [];
             for ii = 1:length(predictions)
          if predictions(ii)
              realPredicts{ii} = currentField;
@@ -124,12 +125,14 @@ title('Residuals from lassoglm model');
             end
             
             classperf(cp,realPredicts,test); 
-            
-            [confMat,categories] = confusionmat(labelCache, catPredicts);
-            conf = confusionchart(labelCache,catPredicts);
-       end     
+%             
+%             [confMat,categories] = confusionmat(labelCache, catPredicts);
+%             conf = confusionchart(labelCache,catPredicts);
+
+       end    
+       confMat = cp.DiagnosticTable;
             %plotResiduals(classifier);
-            end
+        end
             done = 1;
             %% Incorporate Models with Long Execution on Raw Data
             %  Due to the Size of our Inputs, Naive Bayes and Gaussian Are Not Feasible for Raw Data Analyses
