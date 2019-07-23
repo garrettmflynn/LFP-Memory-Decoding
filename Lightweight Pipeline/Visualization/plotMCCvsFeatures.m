@@ -1,7 +1,7 @@
     
-function [] = plotMCCvsFeatures(resultsForPCA,coeffs_retained,norm,saveDir)
+function [] = plotMCCvsFeatures(resultsForPCA,coeffs_retained,norm,saveDir,mlType)
     
-    fprintf(['Now Visualizing Classifier Performance\n']);
+    fprintf(['Now Visualizing MCC as a function of Feature #\n']);
 if ~exist(saveDir,'dir')
     mkdir(saveDir);
 end
@@ -33,7 +33,18 @@ end
 %% Plot All MCCs Together
     
     
-    barFig1 = figure('visible','on','units','normalized','outerposition',[0 0 1 1]);
+    barFig1 = figure('visible','off','units','normalized','outerposition',[0 0 1 1]);
+    
+    
+    % Add Title
+if ~norm
+        name = ['Raw_',mlType];
+else
+name = ['Percent Change_', mlType];
+end
+
+sgtitle([mlType, ' | The Effect of Feature Count (per channel) on MCCs | ',erase(name,['_',mlType])],'fontweight','bold');
+
 learnerFields = fieldnames(originalResults.(typeFields{kk}));
     numLearners =  length(learnerFields);
 for zz = 1:numLearners
@@ -41,7 +52,11 @@ for zz = 1:numLearners
     numLabels = length(labelFields);
 for ii = 1:numLabels
     for kk = 1:numRvsP
+        if ~strcmp(learnerFields{zz},'LassoGLM')
     choiceOfMCC(ii,kk,zz) = resultsForPCA.(typeFields{kk}).(learnerFields{zz}).(labelFields{ii});
+        else
+            choiceOfMCC(ii,kk,zz) = -resultsForPCA.(typeFields{kk}).(learnerFields{zz}).(labelFields{ii}); 
+        end
     end
 end
 end
@@ -51,6 +66,8 @@ lineLabels = learnerFields;
 for ii = 1:numLabels
     h = subplot(round(numLabels/2),round(numLabels/ceil(numLabels/2)),ii); plot(coeffs_retained,squeeze(choiceOfMCC(ii,:,:))); hold on;
     title(strrep(labelFields{ii},'_',' '));
+    ylim([-1 1]);
+    xlim([coeffs_retained(1),coeffs_retained(end)]);
     
     if ii == 2
     originalSize1 = get(gca, 'Position');
@@ -61,19 +78,7 @@ set(h, 'Position', originalSize1); % Can also use gca instead of h1 if h1 is sti
 end
 
 
-   
-
-
-
-
-% Add Title
-if ~norm
-        name = ['Raw'];
-else
-name = ['Normalized'];
-end
-
-sgtitle(['The Effect of Feature Count (per channel) on MCCs | ',name]);
+  
 saveas(barFig1,fullfile(saveDir,[name,'.png']));
 end
     

@@ -23,19 +23,20 @@ saveHHData = 0;
 %% ML Choices
 Raw = 0;
 PCA = 1;
-   coeffs = [1:15];
+    normBetweenOneAndZeroBeforePCA = 0;
+bspline = 0;
     
     % Unsupervised
     Kmeans = 0;
 
     % Supervised
     allBasicClassifiers = 1;
-        lassoGLM = 0;
-        linear = 1; % Currently set to lasso
+        lassoGLM = 1;
+        linear = 0; % Currently set to lasso
         kernel = 0;
-        knn = 1;
-        naivebayes = 0;
-        svm = 0;
+        knn = 0;
+        naivebayes = 1;
+        svm = 1;
          tree = 0;
          RUSBoost = 0; % Specializes in unbalanced classes, but does not perform well
 

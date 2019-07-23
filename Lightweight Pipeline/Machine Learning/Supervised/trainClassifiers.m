@@ -1,5 +1,7 @@
 function [outMCCs] = trainClassifiers(dataML,learnerTypes,resultsDir,typeML,pcaIter)
 
+close all;
+
 if nargin == 1
     learnerTypes = [1 0 0 0 0 0 0 0];
 end
@@ -12,7 +14,6 @@ if isfield(dataML,'PCA')
     matrixToProcess = dataML.PCA(allVec~=wrong,:);
 else
     allVec = 1:size(dataML.Data,1);
-    dataML.PCA = permute(dataML.PCA,[1,3,2]);
     matrixToProcess = dataML.Data(allVec~=wrong,:);
 end
     
@@ -50,9 +51,25 @@ for learner = 1:sum(learnerTypes)
         %% Begin Model Testing
         done = 0;
         if ~strcmp(learnerNames{learnerChoices(learner)},'kernel') && ~strcmp(learnerNames{learnerChoices(learner)},'naivebayes')
-            if ~strcmp(learnerNames{learnerChoices(learner)},'LassoGLM')
+            % Lasso GLM
+            if strcmp(learnerNames{learnerChoices(learner)},'LassoGLM')
+                binaryLabels = ismember(labelCache,currentField);
+            [Coefficients, FitInfo] = lassoglm(matrixToProcess, binaryLabels, 'binomial','MaxIter',100,'CV', 10);
+            indx = FitInfo.IndexMinDeviance;
+            cnst = FitInfo.Intercept(indx);
+            B0 = Coefficients(:,indx);
+            nonzeros = sum(B0 ~= 0);
+B1 = [cnst;B0];
+preds = glmval(B1,matrixToProcess,'logit');
+histogram(binaryLabels - preds); % plot residuals
+title('Residuals from lassoglm model');
+
+            predictors = find(B0); % indices of nonzero predictors
+            classifier = fitglm(matrixToProcess,labelCache,'linear',...
+             'Distribution','binomial','PredictorVars',predictors,'Kfold',10);
+         
             % Lasso
-            if strcmp(learnerNames{learnerChoices(learner)},'linear')
+            elseif strcmp(learnerNames{learnerChoices(learner)},'linear')
                 ourLinear = templateLinear('Learner','logistic','Regularization','lasso');
                 classifier = fitcecoc(matrixToProcess', labelCache, ...
                     'Learners', ourLinear,'ObservationsIn', 'columns','Kfold',10);
@@ -84,38 +101,8 @@ for learner = 1:sum(learnerTypes)
             
             % Tabulate the results using a confusion matrix.
             [confMat,categories] = confusionmat(testLabels, predictedLabels);
-            cc = confusionchart(testLabels,predictedLabels,'visible','off');
-            
-            % Lasso GLM
-            else
-            [Coefficients, FitInfo] = lassoglm(matrixToProcess, labelCache, 'binomial','CV', 10);
-            indx = FitInfo.IndexMinDeviance;
-            cnst = FitInfo.Intercept(indx);
-            B0 = Coefficients(:,indx);
-            nonzeros = sum(B0 ~= 0)
-B1 = [cnst;B0];
-preds = glmval(B1,matrixToProcess,'logit');
-binaryLabels = ismember(labelCache,currentField);
-histogram(binaryLabels - preds) % plot residuals
-title('Residuals from lassoglm model')
+            conf = confusionchart(testLabels,predictedLabels);
 
-            predictors = find(B0); % indices of nonzero predictors
-            mdl = fitglm(matrixToProcess,labelCache,'linear',...
-             'Distribution','binomial','PredictorVars',predictors)
-            plotResiduals(mdl);
-            
-            end
-            if nargin > 4
-                title(['PCA',num2str(pcaIter),' ',learnerNames{learnerChoices(learner)},' ',typeML,' ',currentField]);
-            saveas(cc,fullfile(resultsDir,['PCA',num2str(pcaIter),'_',learnerNames{learnerChoices(learner)},'_',typeML,'_',currentField,'.png']));
-            else
-                title(['Raw ',learnerNames{learnerChoices(learner)},' ',typeML,' ',currentField]);
-            saveas(cc,fullfile(resultsDir,['Raw_',learnerNames{learnerChoices(learner)},'_',typeML,'_',currentField,'.png']));
-             end
-            saveMCC.(fieldLabels{categoriesToTrain}) = ML_MCC(confMat);
-            
-            
-            
             done = 1;
             %% Incorporate Models with Long Execution on Raw Data
             %  Due to the Size of our Inputs, Naive Bayes and Gaussian Are Not Feasible for Raw Data Analyses
@@ -127,6 +114,7 @@ title('Residuals from lassoglm model')
                 predictedLabels = kfoldPredict(classifier);
                 testLabels =  labelCache;
                 [confMat,categories] = confusionmat(testLabels, predictedLabels);
+                conf = confusionchart(testLabels,predictedLabels);
                 saveMCC.(fieldLabels{categoriesToTrain}) = ML_MCC(confMat);
                 done = 1;
             end
@@ -134,6 +122,17 @@ title('Residuals from lassoglm model')
      
         if ~done
             fprintf('Not Done\n');
+        else
+            if nargin > 4
+                title(['PCA',num2str(pcaIter),' ',learnerNames{learnerChoices(learner)},' ',typeML,' ',currentField]);
+            saveas(conf,fullfile(resultsDir,['PCA',num2str(pcaIter),'_',learnerNames{learnerChoices(learner)},'_',typeML,'_',currentField,'.png']));
+            close all
+            else
+                title(['Raw ',learnerNames{learnerChoices(learner)},' ',typeML,' ',currentField]);
+            saveas(conf,fullfile(resultsDir,['Raw_',learnerNames{learnerChoices(learner)},'_',typeML,'_',currentField,'.png']));
+            close all
+             end
+            saveMCC.(fieldLabels{categoriesToTrain}) = ML_MCC(confMat);
         end
         
         
@@ -141,7 +140,7 @@ title('Residuals from lassoglm model')
     if ~strcmp(learnerNames{learnerChoices(learner)},'kernel') && ~strcmp(learnerNames{learnerChoices(learner)},'naivebayes')
         outMCCs.(learnerNames{learnerChoices(learner)}) = saveMCC;
     else
-        if size(matrixToProcess,2) < 50
+        if size(matrixToProcess,2) < 1000
             outMCCs.(learnerNames{learnerChoices(learner)}) = saveMCC;
         end
     end
