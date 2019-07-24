@@ -53,11 +53,7 @@ for zz = 1:numLearners
     numLabels = length(labelFields);
 for ii = 1:numLabels
     for kk = 1:numRvsP
-        if ~strcmp(learnerFields{zz},'LassoGLM')
     choiceOfMCC(ii,kk,zz) = resultsForPCA.(typeFields{kk}).(learnerFields{zz}).(labelFields{ii});
-        else
-            choiceOfMCC(ii,kk,zz) = -resultsForPCA.(typeFields{kk}).(learnerFields{zz}).(labelFields{ii}); 
-        end
     end
 end
 end

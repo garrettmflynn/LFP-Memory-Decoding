@@ -29,7 +29,7 @@ if exist('dataML', 'var') || exist('HHData','var')
         if ~bspline
             resChoice = [];
         else
-            resChoice = 50:150;
+            resChoice = 70:150;
         end
         
         clear temp
@@ -88,7 +88,7 @@ if exist('dataML', 'var') || exist('HHData','var')
                         cMCA.(raw) = trainClassifiers(MCAMatrix,learnerTypes,resultsDir,'MCA');
                     end
                 end
-                plotMCCvsFeatures(cMCA,resChoice,norm(iter),resultsDir,'MCA','BSpline Resolution');
+                plotMCCvsFeatures(cMCA,resChoice,norm(iter),resultsDir,'MCA','BSpline Resolution',0,[],resolutions_to_retain);
             end
             
             if CA1
@@ -124,7 +124,7 @@ if exist('dataML', 'var') || exist('HHData','var')
                     if allBasicClassifiers
                         name = 'CA1';
                         raw = ['Raw',num2str(resolutions_to_retain)];
-                        cCA1.(raw) = trainClassifiers(MCAMatrix,learnerTypes,resultsDir,'CA1');
+                        cCA1.(raw) = trainClassifiers(MCAMatrix,learnerTypes,resultsDir,'CA1',0,[],resolutions_to_retain);
                     end
                     
                 end
@@ -164,7 +164,7 @@ if exist('dataML', 'var') || exist('HHData','var')
                     if allBasicClassifiers
                         name = 'CA3';
                         raw = ['Raw',num2str(resolutions_to_retain)];
-                        cCA3.(raw) = trainClassifiers(MCAMatrix,learnerTypes,resultsDir,'CA3');
+                        cCA3.(raw) = trainClassifiers(MCAMatrix,learnerTypes,resultsDir,'CA3',0,[],resolutions_to_retain);
                     end
                 end
                 plotMCCvsFeatures(cCA3,resChoice,norm(iter),resultsDir,'CA3','BSpline Resolution');
@@ -371,10 +371,12 @@ if exist('dataML', 'var') || exist('HHData','var')
                             name = 'MCA';
                             if ~bspline
                                 structureName = ['PCA',num2str(coeffs_to_retain)];
+                                indVar = 'PCA Coefficients (per channel)';
                             else
                                 structureName = ['Resolution',num2str(resolutions_to_retain)];
+                                indVar = 'BSpline Resolution';
                             end
-                            results.MCC.MCA.(structureName) = trainClassifiers(dataML,learnerTypes,resultsDir,'MCA',coeffs_to_retain);
+                            results.MCC.MCA.(structureName) = trainClassifiers(dataML,learnerTypes,resultsDir,'MCA',1,coeffs_to_retain,resolutions_to_retain);
                         end
                         
                         if Kmeans
@@ -384,7 +386,7 @@ if exist('dataML', 'var') || exist('HHData','var')
                     end
                 end
                 
-                plotMCCvsFeatures(results.MCC.MCA,1:size(scoreMCA,3),norm(iter),resultsDir,'MCA','PCA Coefficients (per channel)');
+                plotMCCvsFeatures(results.MCC.MCA,1:size(scoreMCA,3),norm(iter),resultsDir,'MCA PCA',indVar);
                 
             end
             
@@ -427,10 +429,12 @@ if exist('dataML', 'var') || exist('HHData','var')
                             name = 'CA1';
                             if ~bspline
                                 structureName = ['PCA',num2str(coeffs_to_retain)];
+                                indVar = 'PCA Coefficients (per channel)';
                             else
                                 structureName = ['Resolution',num2str(resolutions_to_retain)];
+                                indVar = 'BSpline Resolution';
                             end
-                            results.MCC.CA1.(structureName) = trainClassifiers(dataML,learnerTypes,resultsDir,'CA1',coeffs_to_retain);
+                            results.MCC.CA1.(structureName) = trainClassifiers(dataML,learnerTypes,resultsDir,'CA1',1,coeffs_to_retain,resolutions_to_retain);
                         end
                         
                         if Kmeans
@@ -439,7 +443,7 @@ if exist('dataML', 'var') || exist('HHData','var')
                         
                     end
                 end
-                plotMCCvsFeatures(results.MCC.CA1,1:size(scoreCA1,3),norm(iter),resultsDir,'CA1','PCA Coefficients (per channel)');
+                plotMCCvsFeatures(results.MCC.CA1,1:size(scoreCA1,3),norm(iter),resultsDir,'CA1 PCA',indVar);
                 
             end
             
@@ -487,10 +491,12 @@ if exist('dataML', 'var') || exist('HHData','var')
                             name = 'CA3';
                             if ~bspline
                                 structureName = ['PCA',num2str(coeffs_to_retain)];
+                                indVar = 'PCA Coefficients (per channel)';
                             else
                                 structureName = ['Resolution',num2str(resolutions_to_retain)];
+                                indVar = 'BSpline Resolution';
                             end
-                            results.MCC.CA3.(structureName) = trainClassifiers(dataML,learnerTypes,resultsDir,'CA3',coeffs_to_retain);
+                            results.MCC.CA3.(structureName) = trainClassifiers(dataML,learnerTypes,resultsDir,'CA3',1,coeffs_to_retain,resolutions_to_retain);
                         end
                         
                         if Kmeans
@@ -499,7 +505,7 @@ if exist('dataML', 'var') || exist('HHData','var')
                         
                     end
                 end
-                plotMCCvsFeatures(results.MCC.CA3,1:size(scoreCA3,3),norm(iter),resultsDir,'CA3','PCA Coefficients (per channel)');
+                plotMCCvsFeatures(results.MCC.CA3,1:size(scoreCA3,3),norm(iter),resultsDir,'CA3 PCA',indVar);
             end
             
             if allBasicClassifiers

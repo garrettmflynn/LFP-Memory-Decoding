@@ -1,4 +1,4 @@
-function [outMCCs] = trainClassifiers(dataML,learnerTypes,resultsDir,typeML,pcaIter)
+function [outMCCs] = trainClassifiers(dataML,learnerTypes,resultsDir,typeML,pca,pcaIter,resIter)
 
 close all;
 
@@ -91,32 +91,71 @@ for learner = 1:sum(learnerTypes)
                 % Lasso GLM
             else
                 binaryLabels = ismember(labelCacheCat,currentField);
-                [Coefficients, FitInfo] = lassoglm(matrixToProcess, binaryLabels, 'binomial','MaxIter',25,'CV', 10,'Lambda',power(10,1:-.1:-4));
+                [Coefficients, FitInfo] = lassoglm(matrixToProcess, binaryLabels, 'binomial','MaxIter',25,'CV', 10,'Lambda',power(10,0:-.1:-4));
                 legend('show') % Show legend
                 lp = lassoPlot(Coefficients,FitInfo,'plottype','CV');
-                indx = FitInfo.IndexMinDeviance;
-                cnst = FitInfo.Intercept(indx);
-                B0 = Coefficients(:,indx);
-                nonzeros = sum(B0 ~= 0);
-                B1 = [cnst;B0];
-                predictions = glmval(B1,matrixToProcess,'logit');
                 
-                lassoPredictions = (predictions >= .5);
-                for ii = 1:length(predictions)
-                    if lassoPredictions(ii)
-                        realPredicts{ii} = currentField;
-                    else
-                        realPredicts{ii} = ['~',currentField];
-                    end
+%% Save  Lasso Plot
+            if nargin > 4 && pca == 1
+                if ~isempty(resIter)
+                    lassoDir = fullfile(resultsDir,'Lasso Plots',['PCA' ,num2str(pcaIter)],['Resolution' ,num2str(resIter)]);
+                else
+                    lassoDir = fullfile(resultsDir,'Lasso Plots',['PCA' num2str(pcaIter)]);
                 end
-                [confMat,categories] = confusionmat(labelCache, realPredicts);
-                conf = confusionchart(labelCache,realPredicts);
+            elseif nargin > 4 && pca == 0 && ~isempty(resIter)
+                lassoDir = fullfile(resultsDir,'Lasso Plots',['Resolution' num2str(resIter)]);
+            else
+                lassoDir = fullfile(resultsDir,'Lasso Plots');
             end
-            done = 1;
-            %% Incorporate Models with Long Execution on Raw Data
-            %  Due to the Size of our Inputs, Naive Bayes and Gaussian Are Not Feasible for Raw Data Analyses
+            
+            if ~exist(lassoDir,'dir');
+                mkdir(lassoDir);
+            end
+            
+            if nargin > 4 && pca == 1
+                if ~isempty(resIter)
+                    title(['PCA',num2str(pcaIter),'Resolution',num2str(resIter),' ',learnerNames{learnerChoices(learner)},' ',typeML,' ',currentField]);
+                    saveas(lp,fullfile(lassoDir,['PCA',num2str(pcaIter),'Resolution',num2str(resIter),'_',learnerNames{learnerChoices(learner)},'_',typeML,'_',currentField,'.png']));
+                    close all
+                else
+                    title(['PCA',num2str(pcaIter),' ',learnerNames{learnerChoices(learner)},' ',typeML,' ',currentField]);
+                    saveas(lp,fullfile(lassoDir,['PCA',num2str(pcaIter),'_',learnerNames{learnerChoices(learner)},'_',typeML,'_',currentField,'.png']));
+                    close all
+                end
+            elseif nargin > 4 && pca == 0 && ~isempty(resIter)
+                title(['Raw Resolution',num2str(resIter),' ',learnerNames{learnerChoices(learner)},' ',typeML,' ',currentField]);
+                saveas(lp,fullfile(lassoDir,['Raw_Resolution',num2str(resIter),'_',learnerNames{learnerChoices(learner)},'_',typeML,'_',currentField,'.png']));
+                close all
+            else
+                title(['Raw ',learnerNames{learnerChoices(learner)},' ',typeML,' ',currentField]);
+                saveas(lp,fullfile(lassoDir,['Raw_',learnerNames{learnerChoices(learner)},'_',typeML,'_',currentField,'.png']));
+                close all
+            end
+ 
+            % Continue with Lasso Prediction
+            indx = FitInfo.IndexMinDeviance;
+            cnst = FitInfo.Intercept(indx);
+            B0 = Coefficients(:,indx);
+            nonzeros = sum(B0 ~= 0);
+            B1 = [cnst;B0];
+            predictions = glmval(B1,matrixToProcess,'logit');
+            
+            lassoPredictions = (predictions >= .5);
+            for ii = 1:length(predictions)
+                if lassoPredictions(ii)
+                    realPredicts{ii} = currentField;
+                else
+                    realPredicts{ii} = ['~',currentField];
+                end
+            end
+            [confMat,categories] = confusionmat(labelCache, realPredicts);
+            conf = confusionchart(labelCache,realPredicts);
+        end
+        done = 1;
+        %% Incorporate Models with Long Execution on Raw Data
+        %  Due to the Size of our Inputs, Naive Bayes and Gaussian Are Not Feasible for Raw Data Analyses
         else
-            if size(matrixToProcess,2) < 1000
+            if size(matrixToProcess,2) < 5000
                 % Naive Bayes or Gaussian
                 classifier = fitcecoc(matrixToProcess', labelCache, ...
                     'Learners', learnerNames{learnerChoices(learner)},'ObservationsIn', 'columns','Kfold',10);
@@ -127,32 +166,62 @@ for learner = 1:sum(learnerTypes)
                 saveMCC.(fieldLabels{categoriesToTrain}) = ML_MCC(confMat);
                 done = 1;
             end
+    end
+    
+    
+    
+    
+    %% Confusion Save
+    if ~done
+        fprintf('Not Done\n');
+    else
+        if nargin > 4 && pca == 1
+            if ~isempty(resIter)
+                confusionDir = fullfile(resultsDir,'Confusion Matrices',['PCA' ,num2str(pcaIter)],['Resolution' ,num2str(resIter)]);
+            else
+                confusionDir = fullfile(resultsDir,'Confusion Matrices',['PCA' num2str(pcaIter)]);
+            end
+        elseif nargin > 4 && pca == 0 && ~isempty(resIter)
+            confusionDir = fullfile(resultsDir,'Confusion Matrices',['Resolution' num2str(resIter)]);
+        else
+            confusionDir = fullfile(resultsDir,'Confusion Matrices');
         end
         
-        if ~done
-            fprintf('Not Done\n');
-        else
-            if nargin > 4
-                title(['PCA',num2str(pcaIter),' ',learnerNames{learnerChoices(learner)},' ',typeML,' ',currentField]);
-                saveas(conf,fullfile(resultsDir,['PCA',num2str(pcaIter),'_',learnerNames{learnerChoices(learner)},'_',typeML,'_',currentField,'.png']));
+        if ~exist(confusionDir,'dir');
+            mkdir(confusionDir);
+        end
+        
+        if nargin > 4 && pca == 1
+            if ~isempty(resIter)
+                title(['PCA',num2str(pcaIter),'Resolution',num2str(resIter),' ',learnerNames{learnerChoices(learner)},' ',typeML,' ',currentField]);
+                saveas(conf,fullfile(confusionDir,['PCA',num2str(pcaIter),'Resolution',num2str(resIter),'_',learnerNames{learnerChoices(learner)},'_',typeML,'_',currentField,'.png']));
                 close all
             else
-                title(['Raw ',learnerNames{learnerChoices(learner)},' ',typeML,' ',currentField]);
-                saveas(conf,fullfile(resultsDir,['Raw_',learnerNames{learnerChoices(learner)},'_',typeML,'_',currentField,'.png']));
+                title(['PCA',num2str(pcaIter),' ',learnerNames{learnerChoices(learner)},' ',typeML,' ',currentField]);
+                saveas(conf,fullfile(confusionDir,['PCA',num2str(pcaIter),'_',learnerNames{learnerChoices(learner)},'_',typeML,'_',currentField,'.png']));
                 close all
             end
-            saveMCC.(fieldLabels{categoriesToTrain}) = ML_MCC(confMat);
+        elseif nargin > 4 && pca == 0 && ~isempty(resIter)
+            title(['Raw Resolution',num2str(resIter),' ',learnerNames{learnerChoices(learner)},' ',typeML,' ',currentField]);
+            saveas(conf,fullfile(confusionDir,['Raw_Resolution',num2str(resIter),'_',learnerNames{learnerChoices(learner)},'_',typeML,'_',currentField,'.png']));
+            close all
+        else
+            title(['Raw ',learnerNames{learnerChoices(learner)},' ',typeML,' ',currentField]);
+            saveas(conf,fullfile(confusionDir,['Raw_',learnerNames{learnerChoices(learner)},'_',typeML,'_',currentField,'.png']));
+            close all
         end
-        
-        
+        saveMCC.(fieldLabels{categoriesToTrain}) = ML_MCC(confMat);
     end
-    if ~strcmp(learnerNames{learnerChoices(learner)},'kernel') && ~strcmp(learnerNames{learnerChoices(learner)},'naivebayes')
+    
+    
+end
+if ~strcmp(learnerNames{learnerChoices(learner)},'kernel') && ~strcmp(learnerNames{learnerChoices(learner)},'naivebayes')
+    outMCCs.(learnerNames{learnerChoices(learner)}) = saveMCC;
+else
+    if size(matrixToProcess,2) < 5000
         outMCCs.(learnerNames{learnerChoices(learner)}) = saveMCC;
-    else
-        if size(matrixToProcess,2) < 1000
-            outMCCs.(learnerNames{learnerChoices(learner)}) = saveMCC;
-        end
     end
+end
 end
 end
 
