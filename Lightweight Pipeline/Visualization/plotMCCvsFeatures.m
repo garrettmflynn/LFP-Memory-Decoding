@@ -1,5 +1,5 @@
     
-function [] = plotMCCvsFeatures(resultsForPCA,coeffs_retained,norm,saveDir,mlType)
+function [] = plotMCCvsFeatures(resultsForPCA,coeffs_retained,norm,saveDir,mlType,independentVar)
     
     fprintf(['Now Visualizing MCC as a function of Feature #\n']);
 if ~exist(saveDir,'dir')
@@ -43,7 +43,7 @@ else
 name = ['Percent Change_', mlType];
 end
 
-sgtitle([mlType, ' | The Effect of Feature Count (per channel) on MCCs | ',erase(name,['_',mlType])],'fontweight','bold');
+sgtitle([mlType, ' | The Effect of ',independentVar,' on MCCs | ',erase(name,['_',mlType])],'fontweight','bold');
 
 learnerFields = fieldnames(originalResults.(typeFields{kk}));
     numLearners =  length(learnerFields);
@@ -68,6 +68,8 @@ for ii = 1:numLabels
     title(strrep(labelFields{ii},'_',' '));
     ylim([-1 1]);
     xlim([coeffs_retained(1),coeffs_retained(end)]);
+    xlabel(independentVar);
+    ylabel('MCC');
     
     if ii == 2
     originalSize1 = get(gca, 'Position');

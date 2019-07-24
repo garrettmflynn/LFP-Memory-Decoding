@@ -21,10 +21,15 @@ windowOfInterest = 1;  % Seconds before and after SAMPLE_RESPONSE
 saveHHData = 0;
 
 %% ML Choices
-Raw = 0;
+Raw = 1;
 PCA = 1;
     normBetweenOneAndZeroBeforePCA = 0;
-bspline = 0;
+bspline = 1;
+
+% Methods
+MCA = 1;
+CA1 = 0;
+CA3 = 0;
     
     % Unsupervised
     Kmeans = 0;
@@ -32,7 +37,7 @@ bspline = 0;
     % Supervised
     allBasicClassifiers = 1;
         lassoGLM = 1;
-        linear = 0; % Currently set to lasso
+        linear = 1; % Currently set to lasso
         kernel = 0;
         knn = 0;
         naivebayes = 1;

@@ -34,5 +34,3 @@ fprintf('Now Saving HHData. This may take a while...');
 save(fullfile(parameters.Directories.filePath,[parameters.Directories.dataName, 'HHData.mat']),'HHData','-v7.3');
     end
 end
-
-clear HHData
