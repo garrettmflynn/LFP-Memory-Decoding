@@ -2,6 +2,7 @@
 function [] = plotMCCvsFeatures(resultsForPCA,coeffs_retained,norm,saveDir,mlType,independentVar)
     
     fprintf(['Now Visualizing MCC as a function of Feature #\n']);
+    saveDir = fullfile(saveDir,['MCCvs',independentVar]);
 if ~exist(saveDir,'dir')
     mkdir(saveDir);
 end

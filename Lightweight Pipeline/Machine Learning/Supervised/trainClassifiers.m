@@ -91,7 +91,7 @@ for learner = 1:sum(learnerTypes)
                 % Lasso GLM
             else
                 binaryLabels = ismember(labelCacheCat,currentField);
-                [Coefficients, FitInfo] = lassoglm(matrixToProcess, binaryLabels, 'binomial','MaxIter',25,'CV', 10);
+                [Coefficients, FitInfo] = lassoglm(matrixToProcess, binaryLabels, 'binomial','MaxIter',25,'CV', 10,'Lambda',power(10,1:-.1:-4));
                 legend('show') % Show legend
                 lp = lassoPlot(Coefficients,FitInfo,'plottype','CV');
                 indx = FitInfo.IndexMinDeviance;

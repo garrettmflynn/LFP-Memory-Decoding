@@ -63,6 +63,10 @@ if exist('dataML', 'var') || exist('HHData','var')
                     for channels = 1:length(CCAChoices)
                         MCAMatrix.Data(:, :, channels) = dataML.Data(:,:,channels);
                     end
+                   
+                    if normBetweenOneAndZero
+                        MCAMatrix.Data = (MCAMatrix.Data - min(min(MCAMatrix.Data)))/(max(max(MCAMatrix.Data))-min(min(MCAMatrix.Data)))
+                   end
                     
                     if bspline
                         BSplineInput = MCAMatrix.Data;
@@ -84,7 +88,7 @@ if exist('dataML', 'var') || exist('HHData','var')
                         cMCA.(raw) = trainClassifiers(MCAMatrix,learnerTypes,resultsDir,'MCA');
                     end
                 end
-                plotMCCvsFeatures(cMCA,resChoice,norm(iter),fullfile(resultsDir,'MCCvsResolutions'),'MCA','BSpline Resolution');
+                plotMCCvsFeatures(cMCA,resChoice,norm(iter),resultsDir,'MCA','BSpline Resolution');
             end
             
             if CA1
@@ -98,6 +102,10 @@ if exist('dataML', 'var') || exist('HHData','var')
                         MCAMatrix.Data(:, :, channels) = dataML.Data(:,:,channels);
                     end
                     
+                   if normBetweenOneAndZero
+                        MCAMatrix.Data = (MCAMatrix.Data - min(min(MCAMatrix.Data)))/(max(max(MCAMatrix.Data))-min(min(MCAMatrix.Data)))
+                   end
+                    
                     if bspline
                         BSplineInput = MCAMatrix.Data;
                         disp(['Current number of B-Spline knots: ', mat2str(resolutions_to_retain)]);
@@ -105,6 +113,7 @@ if exist('dataML', 'var') || exist('HHData','var')
                         MCA_BSFeatures = InputTensor2BSplineFeatureMatrix(BSplineInput,resolutions_to_retain,BSOrder);
                         MCAMatrix.Data = MCA_BSFeatures;
                     end
+                    
                     
                     if Kmeans
                         [resultsK.CA1.Raw.clusterIndices] = kMeansClustering(MCAMatrix,[0 1 0]);
@@ -119,7 +128,7 @@ if exist('dataML', 'var') || exist('HHData','var')
                     end
                     
                 end
-                plotMCCvsFeatures(cCA1,resChoice,norm(iter),fullfile(resultsDir,'MCCvsResolutions'),'CA1','BSpline Resolution');
+                plotMCCvsFeatures(cCA1,resChoice,norm(iter),resultsDir,'CA1','BSpline Resolution');
             end
             
             if CA3
@@ -132,6 +141,11 @@ if exist('dataML', 'var') || exist('HHData','var')
                     for channels = 1:length(CCAChoices)
                         MCAMatrix.Data(:, :, channels) = dataML.Data(:,:,channels);
                     end
+                    
+                                        
+                   if normBetweenOneAndZero
+                        MCAMatrix.Data = (MCAMatrix.Data - min(min(MCAMatrix.Data)))/(max(max(MCAMatrix.Data))-min(min(MCAMatrix.Data)))
+                   end
                     
                     if bspline
                         BSplineInput = MCAMatrix.Data;
@@ -153,7 +167,7 @@ if exist('dataML', 'var') || exist('HHData','var')
                         cCA3.(raw) = trainClassifiers(MCAMatrix,learnerTypes,resultsDir,'CA3');
                     end
                 end
-                plotMCCvsFeatures(cCA3,resChoice,norm(iter),fullfile(resultsDir,'MCCvsResolutions'),'CA3','BSpline Resolution');
+                plotMCCvsFeatures(cCA3,resChoice,norm(iter),resultsDir,'CA3','BSpline Resolution');
             end
             
             %% Organize Results
@@ -370,7 +384,7 @@ if exist('dataML', 'var') || exist('HHData','var')
                     end
                 end
                 
-                plotMCCvsFeatures(results.MCC.MCA,1:size(scoreMCA,3),norm(iter),fullfile(resultsDir,'FeaturesvsMCC'),'MCA','PCA Coefficients (per channel)');
+                plotMCCvsFeatures(results.MCC.MCA,1:size(scoreMCA,3),norm(iter),resultsDir,'MCA','PCA Coefficients (per channel)');
                 
             end
             
@@ -425,7 +439,7 @@ if exist('dataML', 'var') || exist('HHData','var')
                         
                     end
                 end
-                plotMCCvsFeatures(results.MCC.CA1,1:size(scoreCA1,3),norm(iter),fullfile(resultsDir,'FeaturesvsMCC'),'CA1','PCA Coefficients (per channel)');
+                plotMCCvsFeatures(results.MCC.CA1,1:size(scoreCA1,3),norm(iter),resultsDir,'CA1','PCA Coefficients (per channel)');
                 
             end
             
@@ -485,7 +499,7 @@ if exist('dataML', 'var') || exist('HHData','var')
                         
                     end
                 end
-                plotMCCvsFeatures(results.MCC.CA3,1:size(scoreCA3,3),norm(iter),fullfile(resultsDir,'FeaturesvsMCC'),'CA3','PCA Coefficients (per channel)');
+                plotMCCvsFeatures(results.MCC.CA3,1:size(scoreCA3,3),norm(iter),resultsDir,'CA3','PCA Coefficients (per channel)');
             end
             
             if allBasicClassifiers

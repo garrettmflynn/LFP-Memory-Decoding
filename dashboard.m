@@ -23,7 +23,7 @@ saveHHData = 0;
 %% ML Choices
 Raw = 1;
 PCA = 1;
-    normBetweenOneAndZeroBeforePCA = 0;
+    normBetweenOneAndZero = 0;
 bspline = 1;
 
 % Methods
