@@ -29,7 +29,7 @@ if exist('dataML', 'var') || exist('HHData','var')
         if ~bspline
             resChoice = [];
         else
-            resChoice = 70:150;
+            resChoice = 1:150;
         end
         
         clear temp
@@ -38,6 +38,8 @@ if exist('dataML', 'var') || exist('HHData','var')
         realCluster = realClusters(dataML.Labels);
         
         saveBars = fullfile(parameters.Directories.filePath,'MCC Bar Plots');
+        
+        channelStandard = dataML.Channels.sChannels;
         
         if Raw
             fprintf('Conducting Raw Classification\n');
@@ -59,10 +61,11 @@ if exist('dataML', 'var') || exist('HHData','var')
                     fprintf('\nMCA\n');
                     CCAChoices = dataML.Channels.sChannels;
                     MCAMatrix = dataML;
-                    MCAMatrix.Data  = zeros(size(dataML.Data, 1), size(dataML.Data, 2), length(CCAChoices));
-                    for channels = 1:length(CCAChoices)
+                    MCAMatrix.Data  = zeros(size(dataML.Data, 1), size(dataML.Data, 2)*length(CCAChoices));
+                    for channels = find(ismember(channelStandard,CCAChoices))
                         MCAMatrix.Data(:, :, channels) = dataML.Data(:,:,channels);
                     end
+                    
                    
                     if normBetweenOneAndZero
                         MCAMatrix.Data = (MCAMatrix.Data - min(min(MCAMatrix.Data)))/(max(max(MCAMatrix.Data))-min(min(MCAMatrix.Data)))
@@ -97,8 +100,8 @@ if exist('dataML', 'var') || exist('HHData','var')
                     fprintf('\nCA1\n');
                     CCAChoices = dataML.Channels.CA1_Channels;
                     MCAMatrix = dataML;
-                    MCAMatrix.Data  = zeros(size(dataML.Data, 1), size(dataML.Data, 2), length(CCAChoices));
-                    for channels = 1:length(CCAChoices)
+                    MCAMatrix.Data  = zeros(size(dataML.Data, 1), size(dataML.Data, 2)*length(CCAChoices));
+                    for channels = find(ismember(channelStandard,CCAChoices))
                         MCAMatrix.Data(:, :, channels) = dataML.Data(:,:,channels);
                     end
                     
@@ -137,8 +140,8 @@ if exist('dataML', 'var') || exist('HHData','var')
                     fprintf('\nCA3\n');
                     CCAChoices = dataML.Channels.CA3_Channels;
                     MCAMatrix = dataML;
-                    MCAMatrix.Data  = zeros(size(dataML.Data, 1), size(dataML.Data, 2), length(CCAChoices));
-                    for channels = 1:length(CCAChoices)
+                   MCAMatrix.Data  = zeros(size(dataML.Data, 1), size(dataML.Data, 2)*length(CCAChoices));
+                    for channels = find(ismember(channelStandard,CCAChoices))
                         MCAMatrix.Data(:, :, channels) = dataML.Data(:,:,channels);
                     end
                     
@@ -222,12 +225,13 @@ if exist('dataML', 'var') || exist('HHData','var')
             if MCA
                 %% PCA MCA
                 CCAChoices = dataML.Channels.sChannels;
+                scoreMCA = zeros(size(dataML.Data,1),length(CCAChoices),length(CCAChoices)-1);
                 for trials = 1:size(dataML.Data,1)
                     temp = squeeze(dataML.Data(trials,:,ismember(dataML.Channels.sChannels,CCAChoices)));
                     if normBetweenOneAndZero
                         temp = (temp - min(min(temp)))/(max(max(temp))-min(min(temp)))
                     end
-                    [~,scoreMCA(trials,:,:),~,~,explained,~] = pca(temp');
+                    [~,scoreMCA(trials,:,:)] = pca(temp');
                 end
                 
                 % fPCA2 =  figure('visible','off','units','normalized','outerposition',[0 0 1 1]);
@@ -249,12 +253,13 @@ if exist('dataML', 'var') || exist('HHData','var')
             if CA1
                 %% PCA CCA1
                 CCAChoices = dataML.Channels.CA1_Channels;
+                scoreCA1 = zeros(size(dataML.Data,1),length(CCAChoices),length(CCAChoices)-1);
                 for trials = 1:size(dataML.Data,1)
                     temp = squeeze(dataML.Data(trials,:,ismember(dataML.Channels.sChannels,CCAChoices)));
                     if normBetweenOneAndZero
                         temp = (temp - min(min(temp)))/(max(max(temp))-min(min(temp)))
                     end
-                    [~,scoreCA1(trials,:,:),~,~,explained,~] = pca(temp');
+                    [~,scoreCA1(trials,:,:)] = pca(temp');
                 end
                 
                 %  fPCA3 = figure('visible','off','units','normalized','outerposition',[0 0 1 1]);
@@ -277,12 +282,13 @@ if exist('dataML', 'var') || exist('HHData','var')
             if CA3
                 %% PCA CCA3
                 CCAChoices = dataML.Channels.CA3_Channels;
+                scoreCA3 = zeros(size(dataML.Data,1),length(CCAChoices),length(CCAChoices)-1);
                 for trials = 1:size(dataML.Data,1)
                     temp = squeeze(dataML.Data(trials,:,ismember(dataML.Channels.sChannels,CCAChoices)));
                     if normBetweenOneAndZero
                         temp = (temp - min(min(temp)))/(max(max(temp))-min(min(temp)))
                     end
-                    [~,scoreCA3(trials,:,:),~,~,explained,~] = pca(temp');
+                    [~,scoreCA3(trials,:,:)] = pca(temp');
                 end
                 
                 % fPCA4 =  figure('visible','off','units','normalized','outerposition',[0 0 1 1]);
@@ -404,6 +410,17 @@ if exist('dataML', 'var') || exist('HHData','var')
                         fprintf('\nCA1\n');
                         toPermute = scoreCA1(:,:,1:coeffs_to_retain);
                         dataML.PCA = permute(toPermute,[1,3,2]);
+                        
+                        
+                      if bspline
+                            BSplineInput = dataML.PCA;
+                            disp(['Current number of B-Spline knots: ', mat2str(resolutions_to_retain)]);
+                            BSOrder = 2;
+                            MCA_BSFeatures = InputTensor2BSplineFeatureMatrix(BSplineInput,resolutions_to_retain,BSOrder);
+                            dataML.PCA = MCA_BSFeatures;
+                        end
+                        
+                    
                         if Kmeans
                             [resultsK.CA1.PCA.clusterIndices] = kMeansClustering(dataML,[0 1 0]);
                             nIters = size(resultsK.CA1.PCA.clusterIndices,3);
@@ -467,6 +484,16 @@ if exist('dataML', 'var') || exist('HHData','var')
                         fprintf('\nCA3\n');
                         toPermute = scoreCA3(:,:,1:coeffs_to_retain);
                         dataML.PCA = permute(toPermute,[1,3,2]);
+                        
+                        if bspline
+                            BSplineInput = dataML.PCA;
+                            disp(['Current number of B-Spline knots: ', mat2str(resolutions_to_retain)]);
+                            BSOrder = 2;
+                            MCA_BSFeatures = InputTensor2BSplineFeatureMatrix(BSplineInput,resolutions_to_retain,BSOrder);
+                            dataML.PCA = MCA_BSFeatures;
+                        end
+                        
+                        
                         if Kmeans
                             [resultsK.CA3.PCA.clusterIndices] = kMeansClustering(dataML,[0 1 0]);
                             nIters = size(resultsK.CA3.PCA.clusterIndices,3);
