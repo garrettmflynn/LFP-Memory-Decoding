@@ -6,12 +6,13 @@ clear LFP_Cell
 
 %% Signal Normalization | ZScore
 frequencyMu = mean(LFP_Data');
-frequencySigma = std(LFP_Data');
-LFP_Signal_ZScore = ((LFP_Data'-frequencyMu)./frequencySigma)';
 
-normStruct.Signal = LFP_Signal_ZScore;
-
-
+for channels = 1:size(LFP_Data,1)
+    channelMu = mean(LFP_Data(channels,:));
+    %channelSTD = std(LFP_Data(channels,:));
+LFP_Signal_PctChange(channels,:) = 100*(LFP_Data(channels,:) - channelMu)/channelMu;
+end
+normStruct.Signal = LFP_Signal_PctChange;
 %% Spectral Normalization
 
 if strncmp(dataMethod,'STFT',4)
@@ -44,30 +45,30 @@ end
 normStruct.Spectrum = LFP_Spectrum_PctChange;
 
 
-elseif strncmp(dataMethod,'Morlet',4)
-%% Wavelet dB Change
-if strncmpi(normMethod,'dB',2)
-%[-10 10]
-baseline_power = mean(LFP_Spectrum,2);
-spectrumNorm = 10*log10( bsxfun(@rdivide,LFP_Spectrum,baseline_power));
-
-% elseif strncmpi(parameters.Optional.normMethod,'Percent',2)
-% % Percent Change from ITI-Averaged Baseline [-500 500]
-% baseline_power = squeeze(mean(LFP_Spectrum,2));
+% elseif strncmp(dataMethod,'Morlet',4)
+% %% Wavelet dB Change
+% if strncmpi(normMethod,'dB',2)
+% %[-10 10]
+% baseline_power = mean(LFP_Spectrum,2);
+% spectrumNorm = 10*log10( bsxfun(@rdivide,LFP_Spectrum,baseline_power));
 % 
-% for channeli = 1:size(LFP_Spectrum,3)
-% pctchange(:,:,channeli) = 100 * (LFP_Spectrum(:,:,channeli)-baseline_power(:,channeli)) ./ (baseline_power(:,channeli));
-% baselinediv(:,:,channeli) = LFP_Spectrum(:,:,channeli) ./ baseline_power(:,channeli)
+% % elseif strncmpi(parameters.Optional.normMethod,'Percent',2)
+% % % Percent Change from ITI-Averaged Baseline [-500 500]
+% % baseline_power = squeeze(mean(LFP_Spectrum,2));
+% % 
+% % for channeli = 1:size(LFP_Spectrum,3)
+% % pctchange(:,:,channeli) = 100 * (LFP_Spectrum(:,:,channeli)-baseline_power(:,channeli)) ./ (baseline_power(:,channeli));
+% % baselinediv(:,:,channeli) = LFP_Spectrum(:,:,channeli) ./ baseline_power(:,channeli)
+% % end
+% 
+% %% Wavelet ZScore
+% elseif strncmpi(normMethod,'ZScore',2)
+% %  [-3.5 3.5]
+% spectrumNorm = ((LFP_Spectrum-repmat(mean(LFP_Spectrum,2),1,size(LFP_Spectrum,2))) ./ repmat(std(LFP_Spectrum,[],2),1,size(LFP_Spectrum,2)));
 % end
-
-%% Wavelet ZScore
-elseif strncmpi(normMethod,'ZScore',2)
-%  [-3.5 3.5]
-spectrumNorm = ((LFP_Spectrum-repmat(mean(LFP_Spectrum,2),1,size(LFP_Spectrum,2))) ./ repmat(std(LFP_Spectrum,[],2),1,size(LFP_Spectrum,2)));
-end
-
-normStruct.Spectrum = spectrumNorm;
-
+% 
+% normStruct.Spectrum = spectrumNorm;
+% 
 
 end
 end

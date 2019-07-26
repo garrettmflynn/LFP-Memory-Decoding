@@ -1,9 +1,9 @@
 
-
-if exist('dataML', 'var') || exist('HHData','var')
-    if exist('HHData','var') && ~exist('dataML', 'var')
-        dataML = HHData.ML;
-    end
+%% If Spectral Classification is Requested
+if sigVsSpec(2)
+if exist('dataML', 'var')
+    dataML.Data = dataML.Spectrum;
+    
     
     if Kmeans || allBasicClassifiers
         
@@ -595,3 +595,34 @@ else
         end
     end
 end
+
+end
+
+
+
+
+
+%% If Signal Classification is Requested
+if sigVsSpec(1)
+if exist('dataML', 'var')
+    dataML.Data = dataML.Signal;
+    
+    
+    
+    
+
+
+
+
+
+end
+end
+
+
+
+
+
+
+
+
+
