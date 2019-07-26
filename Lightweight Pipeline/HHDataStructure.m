@@ -1,7 +1,10 @@
-%% This script is written for building data structures for recorded Human Hippocampal neural signals.
-% Project: USC RAM
-% Author: Xiwei She and Garrett Flynn
-% Date: 2019 June 14
+
+%% Create HHData Structure
+% This script is written for building data structures for recorded Human Hippocampal neural signals.
+
+                                                                            % Project: USC RAM
+                                                                            % Author: Xiwei She and Garrett Flynn
+                                                                            % Date: 2019 June 14
 
 %% Load Correct File Specifications 
 if strcmp(dataChoices{chosenData},'Other')

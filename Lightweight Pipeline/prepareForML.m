@@ -1,9 +1,16 @@
-%% PrepareForML.m
-% Create Bands
-% Normalize Data
-% Generate Intervals
-% Save Into ML Variable
 
+%% Prepare For ML
+% This script allows for Memory Decoders to do the following with HHData structures:
+%   - Create Bands
+%   - Normalize Data
+%   - Generate Intervals
+%
+% All of these changes are then saved into a dataML variable for use in
+% iterateThroughML.m
+
+                                                                            % Project: USC RAM
+                                                                            % Author: Garrett Flynn
+                                                                            % Date: July 26th, 2019
 
 
 

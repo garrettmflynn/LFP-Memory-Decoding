@@ -1,4 +1,12 @@
+
 function [outMCCs] = trainClassifiers(dataML,mlAlgorithms,resultsDir,typeML,feature,pcaIter,resIter)
+%% Train Classifiers
+% This function uses supervised methods to classify LFP data
+
+                                                                            % Project: USC RAM
+                                                                            % Author: Garrett Flynn
+                                                                            % Date: July 26th, 2019
+
 
 close all;
 

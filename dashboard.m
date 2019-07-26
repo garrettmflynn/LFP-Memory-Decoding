@@ -1,25 +1,35 @@
 
+%% Dashboard
+% Dashboard.m allows Memory Decoders to easily specify +
+% iterate through many parameters.
+
+
+                                                                            % Project: USC RAM
+                                                                            % Author: Garrett Flynn
+                                                                            % Date: July 26th, 2019
+
 clear; clc; close all;
-%% What to Run?
-% Note: Data filepaths can be specified in HHDataStructure.m
 
-
-% Function Path
+%% Function Path
 addpath(genpath('C:\SuperUser\Documents\GitHub\LFP-Memory-Decoding'));
 
-% NPMK Path
+%% NPMK Path
 addpath(genpath('E:\Useful MATLAB Scripts\NPMK'));
 
-% Data Choices
+%% Patient Choices
 dataChoices = {'ClipArt2'}; %{'Recording003','ClipArt2','Other'}
-saveHHData = 0;
+% Note: Data filepaths can be specified in HHDataStructure.m
+                                                                            %   Current Choices
+                                                                            %         - ClipArt2
+                                                                            %         - Recording003
+                                                                            %         - Other
 
 %% Data Format
 dataFormat = {'alphaSpectrum','Signal'};
-                                                                            %   Suffixes
-                                                                            %         - Spectrum
-                                                                            %         - Signal
-                                                                            %   Prefixes (for spectrum only)
+saveHHData = 0;
+                                                                            %   (1) Signal, or (2) Spectrum
+                                                                            
+                                                                            %   Additional Prefixes (for spectrum only)
                                                                             %         - theta
                                                                             %         - alpha
                                                                             %         - beta
@@ -55,5 +65,6 @@ mlAlgorithms = {'lassoGLM','kMeans'};
                                                                             % Image Based
                                                                             %   - CNN_SVM
 
-%% Run ML Pipeline
+%% PIPELINE BEGINS HERE
+% Run ML Pipeline
 runPipeline;
