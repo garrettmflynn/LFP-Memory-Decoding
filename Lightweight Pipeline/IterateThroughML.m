@@ -1,628 +1,208 @@
 
-%% If Spectral Classification is Requested
-if sigVsSpec(2)
+
 if exist('dataML', 'var')
-    dataML.Data = dataML.Spectrum;
+
+for chosenFormat = 1:length(dataFormat)
+    format = dataFormat{chosenFormat};
     
-    
-    if Kmeans || allBasicClassifiers
-        
-        if allBasicClassifiers
+ dataML.Data = dataML.(format);
+
+ 
+ 
+ kMeans = ~isempty(cell2mat(regexp(mlAlgorithms,{'kMeans'})));
+ supervisedMethods =  ~isempty(cell2mat(regexp(mlAlgorithms,{'lassoGLM','naiveBayes','SVM','linear','kernel','knn','tree','RUSBoost'})));
+ imageMethods = ~isempty(cell2mat(regexp(mlAlgorithms,{'CNN_SVM'})));
+ 
+ 
+ % Initialize Save Directories and Other Parameters
+        if supervisedMethods
             resultsDir = fullfile(parameters.Directories.filePath,['Classifier Results [-',num2str(range),' ',num2str(range),']']);
+        end
+        
+        if kMeans
+            kResultsDir =  fullfile(parameters.Directories.filePath,['kMeans Results [-',num2str(range),' ',num2str(range),']']);
+            saveBars = fullfile(parameters.Directories.filePath,'MCC Bar Plots');
             
-            if ~exist(resultsDir,'dir');
-                mkdir(resultsDir);
-            end
+            realCluster = realClusters(dataML.Labels);
+            savePCAViz = fullfile(parameters.Directories.filePath,'PCA Scatter Plots');
         end
         
-        %% K-MEANS SECTION
-        % Reshape Matrices
-        temp = permute(dataML.Data,[4,3,2,1]);
-        dataML.Data = temp(:,:,:)
-        
-        
-        % Use the following code to reverse a given trial/electrode
-        %reshaped = reshape(dataML.Data(1,1,:),size(temp,3),size(temp,4))';
         count = 1;
-        
-        if ~bspline
-            resChoice = [];
-        else
-            resChoice = 1:150;
-        end
-        
-        clear temp
-        
-        % Make Real Clusters Vector
-        realCluster = realClusters(dataML.Labels);
-        
-        saveBars = fullfile(parameters.Directories.filePath,'MCC Bar Plots');
         
         channelStandard = dataML.Channels.sChannels;
         
-        if Raw
-            fprintf('Conducting Raw Classification\n');
-            % Do SCA KMeans
+        
+        
+% Unfold Time & Frequency Components into Vectors (or leave as is)
+        temp = permute(dataML.Data,[4,3,2,1]);
+        dataML.Data = temp(:,:,:)
+        clear temp
+        
+        % Use the following code to reverse a given trial/electrode
+        %reshaped = reshape(dataML.Data(1,1,:),size(temp,3),size(temp,4))';
+        
+for featureIter = 1:length(featureMethod)
+    feature = featureMethod{featureIter};
+            fprintf(['Conducting ', feature ,' Classification\n']);
             
-            % fprintf('\nSCA\n');
-            % CCAChoices = dataML.Channels.sChannels;
-            % [SCA.Raw.clusterIndices] = kMeansClustering(dataML,[1 0 0]);
-            % [SCA.Raw.MCC,SCA.Raw.MCC_Categories,orderedClustersSCA] = parseClusterAssignments(dataML,SCA.Raw.clusterIndices, [1 0 0]);
-            %
-            %
-            % if ~exist(fullfile(saveBars,'SCA'),'dir');
-            %     mkdir(fullfile(saveBars,'SCA'));
-            % end
-            % makeMCCBars(SCA.Raw.MCC,SCA.Raw.MCC_Categories,dataML.Labels,[],'SCA',norm(iter),fullfile(saveBars,'SCA'));
-            if MCA
+            for method = 1:length(mlScope)
+                name = mlScope{method};
+                
+                %% Switch Between MCA, CA1, and CA3 Methods
+                    fprintf(['\n',name,'\n']);
+                    switch name
+                        case 'MCA'
+                    channelChoices = dataML.Channels.sChannels;
+                        case 'CA1'
+                    channelChoices = dataML.Channels.CA1_Channels;
+                        case 'CA3'
+                    channelChoices = dataML.Channels.CA3_Channels;      
+                    end
+                
                 for resolutions_to_retain = resChoice
                     
+                    % If Bspline, Include all PCA Components
+                    % Else, Iterate Through All Component Rankings
                     if ~bspline
-                    % Do MCA (non-CNN)
-                    fprintf('\nMCA\n');
-                    CCAChoices = dataML.Channels.sChannels;
-                    MCAMatrix = dataML;
-                    MCAMatrix.Data  = zeros(size(dataML.Data, 1), size(dataML.Data, 2)*length(CCAChoices));
-                    for channels = find(ismember(channelStandard,CCAChoices))
-                        MCAMatrix.Data(:,((channels-1)*size(dataML.Data, 2))+1:(channels)*size(dataML.Data, 2)) =  dataML.Data(:,:,channels);
+                        switch feature
+                            case 'PCA'
+                        coeffIter = 1:length(channelChoices)-1;
+                            otherwise
+                                coeffIter = 1;
+                        end
+                    else
+                        switch feature
+                            case 'PCA'
+                        coeffIter = length(channelChoices)-1;
+                            otherwise
+                           coeffIter = 1;
+                        end
                     end
                     
-                   
-                    if normBetweenOneAndZero
-                        MCAMatrix.Data = (MCAMatrix.Data - min(min(MCAMatrix.Data)))/(max(max(MCAMatrix.Data))-min(min(MCAMatrix.Data)));
-                   end
                     
-                   else
-                        
-                   % Do MCA (non-CNN)
-                    fprintf('\nMCA\n');
-                    CCAChoices = dataML.Channels.sChannels;
-                    MCAMatrix = dataML;
-                    BSplineInput = MCAMatrix.Data;
-                    
-                    if normBetweenOneAndZero
-                        BSplineInput = (BSplineInput - min(min(BSplineInput)))/(max(max(BSplineInput))-min(min(BSplineInput)));
+                     for coeffRanks_to_retain = coeffIter
+                         switch feature
+                            case 'PCA'
+                        retained = coeffRanks_to_retain;
+                            otherwise
+                           retained = [];
+                         end
+                         
+                         
+                   featureMatrix = dataML;
+                   %% Original Features: Concatenated Channel Features
+                   % Run when PCA is active OR when Bspline is not active
+                    if strcmp(feature,'PCA') || ~bspline
+                    featureMatrix.Data  = zeros(size(dataML.Data, 1), size(dataML.Data, 2)*length(channelChoices));
+                    for channels = find(ismember(channelStandard,channelChoices))
+                        featureMatrix.Data(:,((channels-1)*size(featureMatrix.Data, 2))+1:(channels)*size(featureMatrix.Data, 2)) =  dataML.Data(:,:,channels);
                     end
-                   
+                    indVar = 'PCA Coefficients (per channel)';
+                    end
+                   %% PCA Features 
+                    if strcmp(feature,'PCA')
+                    channelScore = zeros(size(featureMatrix.Data,1),length(CCAChoices),length(CCAChoices)-1);
+                for trials = 1:size(featureMatrix.Data,1)
+                    temp = squeeze(featureMatrix.Data(trials,:,ismember(channelChoices,CCAChoices)));
+                    [~,channelScore(trials,:,:)] = pca(temp');
+                end
+                    clear temp
+
+                    toPermute = channelScore(:,:,1:coeffRanks_to_retain);
+                        rPCA = permute(toPermute,[1,3,2]);
+                    
+                   featureMatrix.Data = rPCA;
+                    end
+                   %% BSpline Features
+                    if bspline
+                        BSplineInput = featureMatrix.Data;
                         disp(['Current number of B-Spline knots: ', mat2str(resolutions_to_retain)]);
-                        BSOrder = 2;
                         MCA_BSFeatures = InputTensor2BSplineFeatureMatrix(BSplineInput,resolutions_to_retain,BSOrder);
-                        MCAMatrix.Data = MCA_BSFeatures;
+                        featureMatrix.Data = MCA_BSFeatures;
+                        clear MCA_BSFeatures
+                        
+                        indVar = 'BSpline Resolution';
+                        
                     end
+
                     
-                    if Kmeans
-                        [MCA.Raw.clusterIndices] = kMeansClustering(MCAMatrix,[0 1 0]);
-                        saveBarsMCA= fullfile(saveBars,'MCA');
-                        [MCA.Raw.MCC,MCA.Raw.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(MCAMatrix,MCA.Raw.clusterIndices, [0 1 0],{MCAMatrix.Labels,[],'MCA',norm(iter),saveBarsMCA});
+                    %% Classification Section
+                    % Count the Number of Feature Permutations
+                     if bspline && isempty(retained)
+                        featureCounter = [feature,'_',num2str(resolutions_to_retain),'Resolution'];
+                        elseif bspline && ~isempty(retained)
+                            featureCounter = [feature,'_',num2str(retained),'Components_',num2str(resolutions_to_retain),'Resolution'];
+                        else
+                            featureCounter = [feature,'_',num2str(retained),'Components_'];
+                     end
+                    
+                    
+                    % Run K-Means
+                    if kMeans
+                        [kResults.(name).(featureCounter).clusterIndices] = kMeansClustering(featureMatrix,name);
+                        saveBarsFull = fullfile(saveBars,name,featureCounter);
+                        [kResults.(name).(featureCounter).MCC,kResults.(name).(featureCounter).MCC_Categories,~,~] = parseClusterAssignments(featureMatrix,kResults.(name).(featureCounter).clusterIndices, name,{featureMatrix.Labels,retained,name,norm(iter),saveBarsFull});
                         count = count + 1;
                     end
-                    if allBasicClassifiers
-                        name = 'MCA';
-                        raw = ['Raw',num2str(resolutions_to_retain)];
-                        cMCA.(raw) = trainClassifiers(MCAMatrix,learnerTypes,resultsDir,'MCA',0,[],resolutions_to_retain);
+                    
+                  % Run Supervised Classifiers
+                    if supervisedMethods
+                        cResults.(name).(featureCounter) = trainClassifiers(featureMatrix,mlAlgorithms,resultsDir,name,feature,retained,resolutions_to_retain);
                     end
+                     end
                 end
-                plotMCCvsFeatures(cMCA,resChoice,norm(iter),resultsDir,'MCA','BSpline Resolution');
-            end
-            
-            if CA1
-                for resolutions_to_retain = resChoice
-                    
-                    
-                    if ~bspline
-                    % Do CCA (non-CNN) for CA1
-                    fprintf('\nCA1\n');
-                    CCAChoices = dataML.Channels.CA1_Channels;
-                    MCAMatrix = dataML;
-                   MCAMatrix.Data  = zeros(size(dataML.Data, 1), size(dataML.Data, 2)*length(CCAChoices));
-                    for channels = find(ismember(channelStandard,CCAChoices))
-                        MCAMatrix.Data(:,((channels-1)*size(dataML.Data, 2))+1:(channels)*size(dataML.Data, 2)) =  dataML.Data(:,:,channels);
-                    end
-                    
-                   if normBetweenOneAndZero
-                        MCAMatrix.Data = (MCAMatrix.Data - min(min(MCAMatrix.Data)))/(max(max(MCAMatrix.Data))-min(min(MCAMatrix.Data)));
-                   end
-                    
-else
-                        
-                    fprintf('\nCA1\n');
-                    CCAChoices = dataML.Channels.CA1_Channels;
-                    MCAMatrix = dataML;
-                    BSplineInput = MCAMatrix.Data;
-                    
-                    if normBetweenOneAndZero
-                       BSplineInput = (BSplineInput - min(min(BSplineInput)))/(max(max(BSplineInput))-min(min(BSplineInput)));
-                    end
-                   
-                        disp(['Current number of B-Spline knots: ', mat2str(resolutions_to_retain)]);
-                        BSOrder = 2;
-                        MCA_BSFeatures = InputTensor2BSplineFeatureMatrix(BSplineInput,resolutions_to_retain,BSOrder);
-                        MCAMatrix.Data = MCA_BSFeatures;
-                    end
-                    
-                    
-                    if Kmeans
-                        [resultsK.CA1.Raw.clusterIndices] = kMeansClustering(MCAMatrix,[0 1 0]);
-                        saveBarsCA1= fullfile(saveBars,'CA1');
-                        [resultsK.CA1.Raw.MCC,resultsK.CA1.Raw.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(MCAMatrix,resultsK.CA1.Raw.clusterIndices, [0 1 0],{MCAMatrix.Labels,[],'CA1',norm(iter),saveBarsCA1});
-                        count = count + 1;
-                    end
-                    if allBasicClassifiers
-                        name = 'CA1';
-                        raw = ['Raw',num2str(resolutions_to_retain)];
-                        cCA1.(raw) = trainClassifiers(MCAMatrix,learnerTypes,resultsDir,'CA1',0,[],resolutions_to_retain);
-                    end
-                    
-                end
-                plotMCCvsFeatures(cCA1,resChoice,norm(iter),resultsDir,'CA1','BSpline Resolution');
-            end
-            
-            if CA3
-                for resolutions_to_retain = resChoice
-                    
-                    
-                    if ~bspline
-                    % Do CCA (non-CNN) for CA3
-                    fprintf('\nCA3\n');
-                    CCAChoices = dataML.Channels.CA3_Channels;
-                    MCAMatrix = dataML;
-                 MCAMatrix.Data  = zeros(size(dataML.Data, 1), size(dataML.Data, 2)*length(CCAChoices));
-                    for channels = find(ismember(channelStandard,CCAChoices))
-                        MCAMatrix.Data(:,((channels-1)*size(dataML.Data, 2))+1:(channels)*size(dataML.Data, 2)) =  dataML.Data(:,:,channels);
-                    end
-                    
-                                        
-                   if normBetweenOneAndZero
-                        MCAMatrix.Data = (MCAMatrix.Data - min(min(MCAMatrix.Data)))/(max(max(MCAMatrix.Data))-min(min(MCAMatrix.Data)));
-                   end
-                   
-                  else
-                        
-                    fprintf('\nCA3\n');
-                    CCAChoices = dataML.Channels.CA3_Channels;
-                    MCAMatrix = dataML;
-                    BSplineInput = MCAMatrix.Data;
-                    
-                    if normBetweenOneAndZero
-                        BSplineInput = (BSplineInput - min(min(BSplineInput)))/(max(max(BSplineInput))-min(min(BSplineInput)));
-                    end
-                   
-                        disp(['Current number of B-Spline knots: ', mat2str(resolutions_to_retain)]);
-                        BSOrder = 2;
-                        MCA_BSFeatures = InputTensor2BSplineFeatureMatrix(BSplineInput,resolutions_to_retain,BSOrder);
-                        MCAMatrix.Data = MCA_BSFeatures;
-                    end
-                    
-                    if Kmeans
-                        [resultsK.CA3.Raw.clusterIndices] = kMeansClustering(MCAMatrix,[0 1 0]);
-                        saveBarsCA3= fullfile(saveBars,'CA3');
-                        [resultsK.CA3.Raw.MCC,resultsK.CA3.Raw.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(MCAMatrix,resultsK.CA3.Raw.clusterIndices, [0 1 0],{MCAMatrix.Labels,[],'CA3',norm(iter),saveBarsCA3});
-                        count = count + 1;
-                    end
-                    if allBasicClassifiers
-                        name = 'CA3';
-                        raw = ['Raw',num2str(resolutions_to_retain)];
-                        cCA3.(raw) = trainClassifiers(MCAMatrix,learnerTypes,resultsDir,'CA3',0,[],resolutions_to_retain);
-                    end
-                end
-                plotMCCvsFeatures(cCA3,resChoice,norm(iter),resultsDir,'CA3','BSpline Resolution');
+                plotMCCvsFeatures(cResults.(name),resChoice,norm(iter),resultsDir,[name,' ',feature],indVar);
             end
             
             %% Organize Results
-            if Kmeans && ~PCA
+            if kMeans 
                 kSave
-                
             end
-            if allBasicClassifiers
+            if supervisedMethods
                 classSave;
-                if ~PCA
-                    visualizeClassifierPerformance(results,norm(iter),fullfile(resultsDir,'MCCs'));
-                end
+                visualizeClassifierPerformance(results,norm(iter),fullfile(resultsDir,['MCCs for ',feature]));
             end
-        end
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        %% Do Everything Again While Iterating Through PCA
-        if PCA
-            fprintf('Conducting PCA Classification\n');
-            savePCA = fullfile(parameters.Directories.filePath,'Scree Plots');
-            if ~exist(savePCA,'dir')
-                mkdir(savePCA);
-            end
+    clear cResults
+    clear kResults
             
-            savePCAViz = fullfile(parameters.Directories.filePath,'PCA Scatter Plots');
-            %% PCA SCA
-            % fprintf('Now Conducting PCA on SCA\n');
-            % fPCA = figure('visible','off','units','normalized','outerposition',[0 0 1
-            % 1]);
-            % for channel = 1:length(dataML.Channels.sChannels)
-            % [~,scoreSCA(:,:,channel),~,~,explained(:,:,channel),~] = pca(dataML.Data(:,:,channel,:));
-            %   subplot(ceil(sqrt(length(dataML.Channels.sChannels))),round(sqrt(length(dataML.Channels.sChannels))),channel);bar(explained(:,:,channel));hold on;
-            %   title(num2str(dataML.Channels.sChannels(channel)))
-            % end
-            % if norm(iter)
-            % sgtitle('Normalized Channel-Specific Scree Plot','FontSize',30);
-            % % saveas(fPCA, fullfile(savePCA,'NormChannelSpecificScree.png'));
-            % % else
-            % sgtitle('Channel-Specific Scree Plot','FontSize',30);
-            %     saveas(fPCA, fullfile(savePCA,'ChannelSpecificScree.png'));
-            % end
-            if MCA
-                %% PCA MCA
-                CCAChoices = dataML.Channels.sChannels;
-                scoreMCA = zeros(size(dataML.Data,1),length(CCAChoices),length(CCAChoices)-1);
-                for trials = 1:size(dataML.Data,1)
-                    temp = squeeze(dataML.Data(trials,:,ismember(dataML.Channels.sChannels,CCAChoices)));
-                    if normBetweenOneAndZero
-                        temp = (temp - min(min(temp)))/(max(max(temp))-min(min(temp)));
-                    end
-                    [~,scoreMCA(trials,:,:)] = pca(temp');
-                end
-                
-                % fPCA2 =  figure('visible','off','units','normalized','outerposition',[0 0 1 1]);
-                % [~,scoreMCA,~,~,explained,~] = pca(MCAMatrix);
-                %  bar(explained);
-                %   sgtitle('MCA Scree Plot','FontSize',30);
-                % if norm(iter)
-                %     sgtitle('Normalized MCA Scree Plot','FontSize',30);
-                % saveas(fPCA2, fullfile(savePCA,'NormMCAScree.png'));
-                % else
-                %     sgtitle('MCA Scree Plot','FontSize',30);
-                % saveas(fPCA2, fullfile(savePCA,'MCAScree.png'));
-                % end
-                % clear fPCA2
-            end
-            
-            
-            
-            if CA1
-                %% PCA CCA1
-                CCAChoices = dataML.Channels.CA1_Channels;
-                scoreCA1 = zeros(size(dataML.Data,1),length(CCAChoices),length(CCAChoices)-1);
-                for trials = 1:size(dataML.Data,1)
-                    temp = squeeze(dataML.Data(trials,:,ismember(dataML.Channels.sChannels,CCAChoices)));
-                    if normBetweenOneAndZero
-                        temp = (temp - min(min(temp)))/(max(max(temp))-min(min(temp)));
-                    end
-                    [~,scoreCA1(trials,:,:)] = pca(temp');
-                end
-                
-                %  fPCA3 = figure('visible','off','units','normalized','outerposition',[0 0 1 1]);
-                % [~,scoreCA1,~,~,explained,~] = pca(MCAMatrix);
-                %  bar(explained);hold on;
-                %   sgtitle('CA1 Scree Plot','FontSize',30);
-                % if norm(iter)
-                %     sgtitle('Normalized CA1 Scree Plot','FontSize',30);
-                %   saveas(fPCA3, fullfile(savePCA,'NormCA1Scree.png'));
-                % else
-                %     sgtitle('CA1 Scree Plot','FontSize',30);
-                %   saveas(fPCA3, fullfile(savePCA,'CA1Scree.png'));
-                % end
-                %
-                % clear fPCA3
-            end
-            
-            
-            
-            if CA3
-                %% PCA CCA3
-                CCAChoices = dataML.Channels.CA3_Channels;
-                scoreCA3 = zeros(size(dataML.Data,1),length(CCAChoices),length(CCAChoices)-1);
-                for trials = 1:size(dataML.Data,1)
-                    temp = squeeze(dataML.Data(trials,:,ismember(dataML.Channels.sChannels,CCAChoices)));
-                    if normBetweenOneAndZero
-                        temp = (temp - min(min(temp)))/(max(max(temp))-min(min(temp)));
-                    end
-                    [~,scoreCA3(trials,:,:)] = pca(temp');
-                end
-                
-                % fPCA4 =  figure('visible','off','units','normalized','outerposition',[0 0 1 1]);
-                % [~,scoreCA3,~,~,explained,~] = pca(MCAMatrix);
-                %  bar(explained);hold on;
-                %   if norm(iter)
-                %       sgtitle('Normalized CA3 Scree Plot','FontSize',30);
-                %   saveas(fPCA4, fullfile(savePCA,'NormCA3Scree.png'));
-                %   else
-                %       sgtitle('CA3 Scree Plot','FontSize',30);
-                %       saveas(fPCA4, fullfile(savePCA,'CA3Scree.png'));
-                %   end
-                %
-                % clear fPCA4
-            end
-            %% Iterate Through PCA Components
-            
-            % dataML.PCA = scoreSCA(:,1:coeffs_to_retain,:);
-            %saveDuringML;
-            
-            %% Do SCA KMeans on PCA
-            % fprintf('\Now Clustering SCA\n');
-            % [SCA.PCA.clusterIndices] = kMeansClustering(dataML,[0 1 0]);
-            % [SCA.PCA.MCC,SCA.PCA.MCC_Categories,SCA.PCA.dominantClusters,prevalence.PCA.SCA] = parseClusterAssignments(dataML, SCA.PCA.clusterIndices,[0 1 0]);
-            
-            % if ~exist(fullfile(saveBars,'SCA'),'dir');
-            %     mkdir(fullfile(saveBars,'SCA'));
-            % end
-            
-            % makeMCCBars(SCA.PCA.MCC,SCA.PCA.MCC_Categories,dataML.Labels,coeffs_to_retain,'SCA',norm(iter), fullfile(saveBars,'SCA'));
-            % if ~exist(fullfile(savePCAViz,'SCA'),'dir');
-            %     mkdir(fullfile(savePCAViz,'SCA'));
-            % end
-            % if coeffs_to_retain ==  2
-            % orderedClustersSCA_PCA{1} = analyzeClusters(dataML,SCA.PCA.clusterIndices)
-            % elseif coeffs_to_retain ==  3
-            % orderedClustersSCA_PCA{2} = analyzeClusters(dataML,SCA.PCA.clusterIndices)
-            % createPCAVisualizations(scoreSCA,orderedClustersSCA_PCA,'SCA',norm(iter),fullfile(savePCAViz,'SCA'));
-            % end
-            
-            
-            if MCA
-                %% Do MCA (non-CNN) | PCA
-                for resolutions_to_retain = resChoice
-                    if ~bspline
-                        retained = 1:size(scoreMCA,3);
-                    else
-                        retained = size(scoreMCA,3);
-                    end
-                    for coeffs_to_retain = retained
-                        fprintf('\nMCA\n');
-                        toPermute = scoreMCA(:,:,1:coeffs_to_retain);
-                        dataML.PCA = permute(toPermute,[1,3,2]);
-                        
-                        if bspline
-                            BSplineInput = dataML.PCA;
-                            disp(['Current number of B-Spline knots: ', mat2str(resolutions_to_retain)]);
-                            BSOrder = 2;
-                            MCA_BSFeatures = InputTensor2BSplineFeatureMatrix(BSplineInput,resolutions_to_retain,BSOrder);
-                            dataML.PCA = MCA_BSFeatures;
-                        end
-                        
-                        
-                        
-                        if Kmeans
-                            [MCA.PCA.clusterIndices] = kMeansClustering(dataML,[0 1 0]);
-                            nIters = size(MCA.PCA.clusterIndices,3);
-                            
-                            saveBarsMCA = fullfile(saveBars,'MCA');
-                            [MCA.PCA.MCC,MCA.PCA.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(dataML, MCA.PCA.clusterIndices,[0 1 0],{dataML.Labels,coeffs_to_retain,'MCA',norm(iter),saveBarsMCA});
-                            if coeffs_to_retain ==  2
-                                PCA2CountMCA = count;
-                            elseif coeffs_to_retain ==  3
-                                for len = 1:size(collectedClusterings,1)
-                                    orderedClustersMCA_PCA = [collectedClusterings(len,PCA2CountMCA) , collectedClusterings(len,count)];
-                                    excludedMCA_PCA = {excluded{PCA2CountMCA} , excluded{count}};
-                                    label = 'All Above';
-                                    createPCAVisualizations(scoreMCA,orderedClustersMCA_PCA,['MCA ' ,label,' ', num2str(nIters-(len-1))],norm(iter),fullfile(savePCAViz,['MCA_' label]),excludedMCA_PCA);
-                                    createPCAVisualizations_RealClusters(scoreMCA,realCluster,'MCA Correct Cluster',norm(iter),fullfile(savePCAViz,['CorrectMCA_' label]),fieldnames(dataML.Labels));
-                                    
-                                end
-                            end
-                            count = count + 1;
-                        end
-                        if allBasicClassifiers
-                            name = 'MCA';
-                            if ~bspline
-                                structureName = ['PCA',num2str(coeffs_to_retain)];
-                                indVar = 'PCA Coefficients (per channel)';
-                            else
-                                structureName = ['Resolution',num2str(resolutions_to_retain)];
-                                indVar = 'BSpline Resolution';
-                            end
-                            results.MCC.MCA.(structureName) = trainClassifiers(dataML,learnerTypes,resultsDir,'MCA',1,coeffs_to_retain,resolutions_to_retain);
-                        end
-                        
-                        if Kmeans
-                            kSave;
-                        end
-                        
-                    end
-                end
-                
-                plotMCCvsFeatures(results.MCC.MCA,1:size(scoreMCA,3),norm(iter),resultsDir,'MCA PCA',indVar);
-                
-            end
-            
-            
-            
-            if CA1
-                %% Do CCA (non-CNN) for CA1 | PCA
-                for resolutions_to_retain = resChoice
-                    if ~bspline
-                        retained = 1:size(scoreCA1,3);
-                    else
-                        retained = size(scoreCA1,3);
-                    end
-                    for coeffs_to_retain = retained
-                        fprintf('\nCA1\n');
-                        toPermute = scoreCA1(:,:,1:coeffs_to_retain);
-                        dataML.PCA = permute(toPermute,[1,3,2]);
-                        
-                        
-                      if bspline
-                            BSplineInput = dataML.PCA;
-                            disp(['Current number of B-Spline knots: ', mat2str(resolutions_to_retain)]);
-                            BSOrder = 2;
-                            MCA_BSFeatures = InputTensor2BSplineFeatureMatrix(BSplineInput,resolutions_to_retain,BSOrder);
-                            dataML.PCA = MCA_BSFeatures;
-                        end
-                        
-                    
-                        if Kmeans
-                            [resultsK.CA1.PCA.clusterIndices] = kMeansClustering(dataML,[0 1 0]);
-                            nIters = size(resultsK.CA1.PCA.clusterIndices,3);
-                            
-                            saveBarsCA1= fullfile(saveBars,'CA1');
-                            [resultsK.CA1.PCA.MCC,resultsK.CA1.PCA.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(dataML,resultsK.CA1.PCA.clusterIndices, [0 1 0],{dataML.Labels,coeffs_to_retain,'CA1',norm(iter),saveBarsCA1});
-                            
-                            if coeffs_to_retain ==  2
-                                PCA2CountCA1 = count;
-                            elseif coeffs_to_retain ==  3
-                                for len = 1:size(collectedClusterings,1)
-                                    orderedClustersCA1_PCA = [collectedClusterings(len,PCA2CountCA1) , collectedClusterings(len,count)];
-                                    excludedCA1_PCA = {excluded{PCA2CountCA1} , excluded{count}};
-                                    label = 'All Above';
-                                    createPCAVisualizations(scoreCA1,orderedClustersCA1_PCA,['CA1 ' ,label,' ', num2str(nIters-(len-1))],norm(iter),fullfile(savePCAViz,['CA1_' label]),excludedCA1_PCA);
-                                    createPCAVisualizations_RealClusters(scoreCA1,realCluster,'CA1 Correct Cluster',norm(iter),fullfile(savePCAViz,['CorrectCA1_' label]),fieldnames(dataML.Labels));
-                                    
-                                end
-                            end
-                            count = count + 1;
-                        end
-                        if allBasicClassifiers
-                            name = 'CA1';
-                            if ~bspline
-                                structureName = ['PCA',num2str(coeffs_to_retain)];
-                                indVar = 'PCA Coefficients (per channel)';
-                            else
-                                structureName = ['Resolution',num2str(resolutions_to_retain)];
-                                indVar = 'BSpline Resolution';
-                            end
-                            results.MCC.CA1.(structureName) = trainClassifiers(dataML,learnerTypes,resultsDir,'CA1',1,coeffs_to_retain,resolutions_to_retain);
-                        end
-                        
-                        if Kmeans
-                            kSave;
-                        end
-                        
-                    end
-                end
-                plotMCCvsFeatures(results.MCC.CA1,1:size(scoreCA1,3),norm(iter),resultsDir,'CA1 PCA',indVar);
-                
-            end
-            
-            
-            
-            
-            
-            
-            
-            
-            if CA3
-                %% Do CCA (non-CNN) for CA3 | PCA
-                for resolutions_to_retain = resChoice
-                    if ~bspline
-                        retained = 1:size(scoreCA3,3);
-                    else
-                        retained = size(scoreCA3,3);
-                    end
-                    for coeffs_to_retain = retained
-                        %% Do CCA (non-CNN) for CA3 and PCA
-                        fprintf('\nCA3\n');
-                        toPermute = scoreCA3(:,:,1:coeffs_to_retain);
-                        dataML.PCA = permute(toPermute,[1,3,2]);
-                        
-                        if bspline
-                            BSplineInput = dataML.PCA;
-                            disp(['Current number of B-Spline knots: ', mat2str(resolutions_to_retain)]);
-                            BSOrder = 2;
-                            MCA_BSFeatures = InputTensor2BSplineFeatureMatrix(BSplineInput,resolutions_to_retain,BSOrder);
-                            dataML.PCA = MCA_BSFeatures;
-                        end
-                        
-                        
-                        if Kmeans
-                            [resultsK.CA3.PCA.clusterIndices] = kMeansClustering(dataML,[0 1 0]);
-                            nIters = size(resultsK.CA3.PCA.clusterIndices,3);
-                            
-                            saveBarsCA3= fullfile(saveBars,'CA3');
-                            [resultsK.CA3.PCA.MCC,resultsK.CA3.PCA.MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(dataML,resultsK.CA3.PCA.clusterIndices, [0 1 0],{dataML.Labels,coeffs_to_retain,'CA3',norm(iter),saveBarsCA3});
-                            
-                            if coeffs_to_retain ==  2
-                                PCA2CountCA3 = count;
-                            elseif coeffs_to_retain ==  3
-                                for len = 1:size(collectedClusterings,1)
-                                    orderedClustersCA3_PCA = [collectedClusterings(len,PCA2CountCA3) , collectedClusterings(len,count)];
-                                    excludedCA3_PCA = {excluded{:,PCA2CountCA3} , excluded{count}};
-                                    label = 'All Above';
-                                    createPCAVisualizations(scoreCA3,orderedClustersCA3_PCA,['CA3 ' ,label,' ', num2str(nIters-(len-1))],norm(iter),fullfile(savePCAViz,['CA3_' label]),excludedCA3_PCA);
-                                    createPCAVisualizations_RealClusters(scoreCA3,realCluster,'CA3 Correct Cluster',norm(iter),fullfile(savePCAViz,['CorrectCA3_' label]),fieldnames(dataML.Labels));
-                                end
-                            end
-                            count = count + 1;
-                        end
-                        if allBasicClassifiers
-                            name = 'CA3';
-                            if ~bspline
-                                structureName = ['PCA',num2str(coeffs_to_retain)];
-                                indVar = 'PCA Coefficients (per channel)';
-                            else
-                                structureName = ['Resolution',num2str(resolutions_to_retain)];
-                                indVar = 'BSpline Resolution';
-                            end
-                            results.MCC.CA3.(structureName) = trainClassifiers(dataML,learnerTypes,resultsDir,'CA3',1,coeffs_to_retain,resolutions_to_retain);
-                        end
-                        
-                        if Kmeans
-                            kSave;
-                        end
-                        
-                    end
-                end
-                plotMCCvsFeatures(results.MCC.CA3,1:size(scoreCA3,3),norm(iter),resultsDir,'CA3 PCA',indVar);
-            end
-            
-            if allBasicClassifiers
-                classSave;
-                visualizeClassifierPerformance(results,norm(iter),fullfile(resultsDir,'MCCs'));
-            end
-        end
-    end
-    
-    
-    
-    % CNN Methods Only
-    if CNN_SVM
-        CNN_Pipeline;
-        processAllClassestoResults(results,'CNN_SVM');
-        supervisedDir = fullfile(parameters.Directories.filePath,'CNN Results');
-        
-        if ~exist(supervisedDir,'dir')
-            mkdir(supervisedDir);
-        end
-        if norm(iter) == 1
-            save(fullfile(supervisedDir,[parameters.Directories.dataName, 'ResultsNorm.mat']),'results');
-        else
-            save(fullfile(supervisedDir,[parameters.Directories.dataName, 'Results.mat']),'results');
-        end
-    end
-end
-
-end
-
-
-
-
-
-%% If Signal Classification is Requested
-if sigVsSpec(1)
-if exist('dataML', 'var')
-    dataML.Data = dataML.Signal;
-    
-    
-    
-    
-
-
-
-
-
 end
 end
 
+%% PCA 2D/3D Visualizations
+
+%[kResults.(name).(featureCounter).MCC,kResults.(name).(featureCounter).MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(featureMatrix,kResults.(name).(featureCounter).clusterIndices, name,{featureMatrix.Labels,retained,name,norm(iter),saveBarsFull});
+%                             if coeffRanks_to_retain ==  2
+%                                 PCA2CountMCA = count;
+%                             elseif coeffRanks_to_retain ==  3
+%                                 for len = 1:size(collectedClusterings,1)
+%                                     orderedClustersMCA_PCA = [collectedClusterings(len,PCA2CountMCA) , collectedClusterings(len,count)];
+%                                     excludedMCA_PCA = {excluded{PCA2CountMCA} , excluded{count}};
+%                                     label = 'All Above';
+%                                     createPCAVisualizations(scoreMCA,orderedClustersMCA_PCA,['MCA ' ,label,' ', num2str(nIters-(len-1))],norm(iter),fullfile(savePCAViz,['MCA_' label]),excludedMCA_PCA);
+%                                     createPCAVisualizations_RealClusters(scoreMCA,realCluster,'MCA Correct Cluster',norm(iter),fullfile(savePCAViz,['CorrectMCA_' label]),fieldnames(dataML.Labels));
+%                                     
+%                                 end
+%                             end
+%                             count = count + 1;
+            
+            
+    
+    
+%% CNN For Feature Selection (on hiatus)
+%     if CNN_SVM
+%         CNN_Pipeline;
+%         processAllClassestoResults(results,'CNN_SVM');
+%         supervisedDir = fullfile(parameters.Directories.filePath,'CNN Results');
+%         
+%         if ~exist(supervisedDir,'dir')
+%             mkdir(supervisedDir);
+%         end
+%         if norm(iter) == 1
+%             save(fullfile(supervisedDir,[parameters.Directories.dataName, 'ResultsNorm.mat']),'results');
+%         else
+%             save(fullfile(supervisedDir,[parameters.Directories.dataName, 'Results.mat']),'results');
+%         end
+%     end
 
 
-
-
-
-
-
-
+end

@@ -11,19 +11,19 @@ highGamma = [65, 140];
 %% Match Bounds to Actual Frequency Bins
 for ii = 1:2
 [minValue,closestIndex] = min(abs(freqUsed-theta(ii)'));
-    SpectralAnalysis.Theta(ii) = freqUsed(closestIndex);
+    SpectralAnalysis.theta(ii) = freqUsed(closestIndex);
 
 [minValue,closestIndex] = min(abs(freqUsed-alpha(ii)'));
-    SpectralAnalysis.Alpha(ii) = freqUsed(closestIndex);
+    SpectralAnalysis.alpha(ii) = freqUsed(closestIndex);
 
 [minValue,closestIndex] = min(abs(freqUsed-beta(ii)'));
-SpectralAnalysis.Beta(ii) = freqUsed(closestIndex);
+SpectralAnalysis.beta(ii) = freqUsed(closestIndex);
 
 
 [minValue,closestIndex] = min(abs(freqUsed-lowGamma(ii)'));
-   SpectralAnalysis.Gamma_L(ii) = freqUsed(closestIndex);
+   SpectralAnalysis.lowGamma(ii) = freqUsed(closestIndex);
 
 [minValue,closestIndex] = min(abs(freqUsed-highGamma(ii)'));
-   SpectralAnalysis.Gamma_H(ii) = freqUsed(closestIndex);
+   SpectralAnalysis.highGamma(ii) = freqUsed(closestIndex);
 end
 

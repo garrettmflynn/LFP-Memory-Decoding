@@ -6,10 +6,10 @@ if ~exist(saveDir,'dir')
 end
     
 % The Following Fields Will All Be Filled or All Be Missing
-typeFields = fieldnames(results.MCC);
+typeFields = fieldnames(results);
 numTypes = length(typeFields);
 
-pcavsrawField = fieldnames(results.MCC.(typeFields{1}));
+pcavsrawField = fieldnames(results.(typeFields{1}));
 numRvsP = length(pcavsrawField);
 
 originalResults = results;
@@ -19,21 +19,21 @@ overallName = 'All Classes';
 
 for jj = 1:numTypes
 for kk = 1:numRvsP
-    learnerFields = fieldnames(originalResults.MCC.(typeFields{jj}).(pcavsrawField{kk}));
+    learnerFields = fieldnames(originalResults.(typeFields{jj}).(pcavsrawField{kk}));
     numLearners =  length(learnerFields);
 for zz = 1:numLearners
-    labelFields = fieldnames(originalResults.MCC.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}));
+    labelFields = fieldnames(originalResults.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}));
     numLabels = length(labelFields);
 for ii = 1:numLabels
 if typeFields{jj} == 'SCA'
-multiClassVector(ii,:) = originalResults.MCC.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}).(labelFields{ii});
+multiClassVector(ii,:) = originalResults.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}).(labelFields{ii});
 else
-multiClassVector(ii) = originalResults.MCC.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}).(labelFields{ii});
+multiClassVector(ii) = originalResults.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}).(labelFields{ii});
 end
 end
 meanForAll = nanmean(multiClassVector);
 overallName = 'All_Classes';
-results.MCC.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}).(overallName) = meanForAll;
+results.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}).(overallName) = meanForAll;
 clear multiClassVector
 end
 end
@@ -47,17 +47,17 @@ newLabelFields = [overallName;labelFields];
 for kk = 1:numRvsP
     barFig1 = figure('visible','off','units','normalized','outerposition',[0 0 1 1]);
 for jj = 1:numTypes
-    learnerFields = fieldnames(results.MCC.(typeFields{jj}).(pcavsrawField{kk}));
+    learnerFields = fieldnames(results.(typeFields{jj}).(pcavsrawField{kk}));
     numLearners =  length(learnerFields);
 for zz = 1:numLearners
-    labelFields = fieldnames(results.MCC.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}));
+    labelFields = fieldnames(results.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}));
     numLabels = length(labelFields);
 for ii = 1:numLabels
 % Each Row is a New Group
 if strcmp(newLabelFields{ii},overallName)
-choiceOfMCC = results.MCC.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}).(newLabelFields{ii});
+choiceOfMCC = results.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}).(newLabelFields{ii});
 else
-    choiceOfMCC = results.MCC.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}).(newLabelFields{ii});
+    choiceOfMCC = results.(typeFields{jj}).(pcavsrawField{kk}).(learnerFields{zz}).(newLabelFields{ii});
 end
 barGroupedByClass(ii,zz) = choiceOfMCC;
 end

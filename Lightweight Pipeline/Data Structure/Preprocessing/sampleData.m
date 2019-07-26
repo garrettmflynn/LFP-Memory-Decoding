@@ -1,14 +1,15 @@
 function [sampledData] = sampleData(data, intervals,sampling)
 
-freqs = size(data,1);
+if ndims(data) == 3
+[freqs,time,channels] = size(data);
+else
+    
+[freqs,time] = size(data);
+channels = 1;
+end
 
 %% If Sampling is a Rate
 if isscalar(sampling)
-if ndims(data) == 3
-channels = size(data,3);
-else
-    channels = 1;
-end
 
 intervalSize = (intervals(2,1)*sampling-intervals(1,1)*sampling);
 numIntervals = size(intervals,2);
@@ -35,12 +36,10 @@ end
 end
 end
 
-%% If Sampling is a Time Vector (only for spectral data)
+%% Spectral Data (time sampling)
 
 elseif isvector(sampling)
 if ndims(data) == 3
-channels = size(data,3);
-
 intervalSize = closest(sampling,intervals(2,1))-closest(sampling,intervals(1,1));
 numIntervals = size(intervals,2);
 

@@ -5,7 +5,6 @@ outputReconstruct = false;
 
 
 channelVec = dataML.Channels.sChannels;
-sessionDir = dataML.Directory;
 data = clusters;
 
 % Load Correct Labels and Bounds
@@ -15,7 +14,8 @@ kRange = 5;
 iterations = size(data,3);
 label = 'Trial';
 
-if methodML(1)
+switch methodML
+    case 'SCA'
     warning('Code has not been updated in a while. Make sure to fix before trusting results.');
     prevalenceAcrossK = zeros(intervalRange(end),intervalRange(end));
     for kVal = kRange
@@ -43,11 +43,8 @@ if methodML(1)
             
         end
     end
-end
 
-
-% Load Correct Data
-if methodML(2)
+otherwise
     clusterAssignments = data(:,:,:);
     
     prevalenceAcrossK = zeros(intervalRange(end),intervalRange(end));

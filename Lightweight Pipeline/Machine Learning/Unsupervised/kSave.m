@@ -1,12 +1,18 @@
-if ~exist(resultsDirk,'dir');
-    mkdir(resultsDirk);
+
+
+%% Easy Save for K-Means Results
+
+if ~exist(kResultsDir,'dir');
+    mkdir(kResultsDir);
 end  
     
 % Save for K-Means
  if norm(iter) == 1
-    if exist('results','var')
-save(fullfile(resultsDirk,[parameters.Directories.dataName, 'ResultsNorm',num2str(coeffs_to_retain),'.mat']),'resultsK');
+    if exist('kResults','var')
+save(fullfile(resultsDirk,[parameters.Directories.dataName, 'kResultsNorm',feature,'_',num2str(coeffs_to_retain),'.mat']),'kResults');
     end
-if exist('resultsK','var') 
-save(fullfile(resultsDirk,[parameters.Directories.dataName, 'ResultsNormK',num2str(coeffs_to_retain),'.mat']),'resultsK');
+ else
+if exist('kResults','var') 
+save(fullfile(resultsDirk,[parameters.Directories.dataName, 'kResults',feature,'_',num2str(coeffs_to_retain),'.mat']),'kResults');
 end   
+ end

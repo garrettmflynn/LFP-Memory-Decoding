@@ -4,9 +4,18 @@
 % Date: 2019 June 14
 
 %% Load Correct File Specifications 
-if ~other
+if strcmp(dataChoices{chosenData},'Other')
     
-if dataChoice == 1 && dataChoices(dataChoice)        
+% Define data path here for extracting LFP data
+parameters.Directories.filePath = input('What is the directory containing all data? (e.g. E:\LFP\ClipArt_2)? \n Directory: ','s');
+parameters.Directories.dataName = input('What is the standardized name of all data files (e.g. ClipArt_2)?\n Directory: ','s');
+addpath(genpath(parameters.Directories.filePath));
+parameters.Channels.sChannels = input('What channels are valid (specify as vector)\n Channel Vector: ');
+parameters.Channels.CA1_Channels =  input('What channels are located in CA1 (specify as vector)?\n Channel Vector: ');
+parameters.Channels.CA3_Channels =  input('What channels are located in CA3 (specify as vector)?\n Channel Vector: ');
+else
+    
+if strcmp(dataChoices{chosenData},'Recording003')
 
 % Define data path here for extracting LFP data
 parameters.Directories.filePath = strcat('C:\Users\shires\OneDrive - University of Southern California\Decoding Stats\Data2_Recording'); %('E:\LFP\Data2_Recording'); %'/media/gflynn/Seagate Backup Plus Drive/LFP Decoding/ClipArt_2');
@@ -20,7 +29,7 @@ parameters.Channels.sChannels = [1:6,7:10,17:22,23:26];
 parameters.Channels.CA1_Channels =  [7:10,23:26]; 
 parameters.Channels.CA3_Channels =  [1:6,17:22]; 
 
-elseif dataChoice == 2 && dataChoices(dataChoice)  
+elseif strcmp(dataChoices{chosenData},'ClipArt2')
 
 % Define data path here for extracting LFP data
 parameters.Directories.filePath = strcat('C:\Users\shires\OneDrive - University of Southern California\Decoding Stats\ClipArt_2');
@@ -33,16 +42,6 @@ parameters.Channels.sChannels = [1:10, 17:26, 33:42];
 parameters.Channels.CA1_Channels = [7:10, 23:26, 39:42];
 parameters.Channels.CA3_Channels = [1:6, 17:22, 33:38];
 end
-
-
-elseif dataChoice == 3 && dataChoices(dataChoice)  
-% Define data path here for extracting LFP data
-parameters.Directories.filePath = input('What is the directory containing all data? (e.g. E:\LFP\ClipArt_2)? \n Directory: ','s');
-parameters.Directories.dataName = input('What is the standardized name of all data files (e.g. ClipArt_2)?\n Directory: ','s');
-addpath(genpath(parameters.Directories.filePath));
-parameters.Channels.sChannels = input('What channels are valid (specify as vector)\n Channel Vector: ');
-parameters.Channels.CA1_Channels =  input('What channels are located in CA1 (specify as vector)?\n Channel Vector: ');
-parameters.Channels.CA3_Channels =  input('What channels are located in CA3 (specify as vector)?\n Channel Vector: ');
 end
 
 
@@ -120,6 +119,14 @@ end
 clear neuralData
 clear nexFileData
 
-% Saves Data Structure with Exhaustive Variables
-prepareForML();
+%% Save HHData If Desired
+if saveHHData
+    if norm(iter) == 1
+fprintf('Now Saving Normalized HHData. This may take a while...');
+save(fullfile(parameters.Directories.filePath,[parameters.Directories.dataName, 'HHDataNorm.mat']),'HHData','-v7.3');
+    else
+fprintf('Now Saving HHData. This may take a while...');
+save(fullfile(parameters.Directories.filePath,[parameters.Directories.dataName, 'HHData.mat']),'HHData','-v7.3');
+    end
+end
 end

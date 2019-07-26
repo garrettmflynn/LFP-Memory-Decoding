@@ -12,8 +12,6 @@ intervalMatrix = (intervals');
 
 %% Extract Intervals from Supplied Data
 dataIntervals = sampleData(data,intervalMatrix,sampling);
-
-
 end
 
 

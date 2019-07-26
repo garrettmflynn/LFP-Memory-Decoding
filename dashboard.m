@@ -11,61 +11,49 @@ addpath(genpath('C:\SuperUser\Documents\GitHub\LFP-Memory-Decoding'));
 addpath(genpath('E:\Useful MATLAB Scripts\NPMK'));
 
 % Data Choices
-data003 = 0;
-ClipArt2 = 1;
-other = 0;
-
-% Data Structure Choices
-norm = 1; % Carries over to ML, if chosen // A vector of two values results in two iterations
-windowOfInterest = 1;  % Seconds before and after SAMPLE_RESPONSE
+dataChoices = {'ClipArt2'}; %{'Recording003','ClipArt2','Other'}
 saveHHData = 0;
 
-%% ML Choices
-Raw = 1;
-PCA = 0;
-    normBetweenOneAndZero = 0;
+%% Data Format
+dataFormat = {'alphaSpectrum','Signal'};
+                                                                            %   Suffixes
+                                                                            %         - Spectrum
+                                                                            %         - Signal
+                                                                            %   Prefixes (for spectrum only)
+                                                                            %         - theta
+                                                                            %         - alpha
+                                                                            %         - beta
+                                                                            %         - lowGamma
+                                                                            %         - highGamma
+
+
+%% Feature Methods
+featureMethod = {'Raw'};
 bspline = 1;
+    BSOrder = 2;
+    resChoice = 50:150;
+norm = 1; % Carries over to ML, if chosen // A vector of two values results in two iterations
+windowOfInterest = 1;  % Seconds before and after SAMPLE_RESPONSE
 
-% Methods
-MCA = 1;
-CA1 = 0;
-CA3 = 0;
-    
-    % Unsupervised
-    Kmeans = 0;
+%% ML Scope
+mlScope = {'MCA'};
+                                                                            % Choices: MCA, CA1, and CA3
 
-    % Supervised
-    allBasicClassifiers = 1;
-        lassoGLM = 1;
-        linear = 1; % Currently set to lasso
-        kernel = 0;
-        knn = 0;
-        naivebayes = 1;
-        svm = 1;
-         tree = 0;
-         RUSBoost = 0; % Specializes in unbalanced classes, but does not perform well
+%% ML Algorithms
+mlAlgorithms = {'lassoGLM','kMeans'};
+                                                                            % Unsupervised 
+                                                                            %   - kMeans
+                                                                            % Supervised
+                                                                            %   - lassoGLM
+                                                                            %   - naiveBayes
+                                                                            %   - SVM
+                                                                            %   - linear
+                                                                            %   - kernel
+                                                                            %   - knn
+                                                                            %   - tree
+                                                                            %   - RUSBoost
+                                                                            % Image Based
+                                                                            %   - CNN_SVM
 
-    % Image Based
-    CNN_SVM = 0;
-        mlChoice = [1 3 4]; % 1 = MCA
-                            % 2 = SCA
-                            % 3 = CA1
-                            % 4 = CA3
-
-%% ML Pipeline
-dataChoices = [data003,ClipArt2,other];
-learnerTypes = [lassoGLM linear kernel knn naivebayes svm tree RUSBoost];
-
-for dataChoice = 1:length(dataChoices)
-
-for iter = 1:length(norm)
-for range = windowOfInterest
-HHDataStructure;
-iterateThroughML;
-clear HHData
-clear dataML
-clear results
-end
-end
-
-end
+%% Run ML Pipeline
+runPipeline;
