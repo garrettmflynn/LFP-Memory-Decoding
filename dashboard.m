@@ -21,8 +21,8 @@ windowOfInterest = 1;  % Seconds before and after SAMPLE_RESPONSE
 saveHHData = 0;
 
 %% ML Choices
-Raw = 0;
-PCA = 1;
+Raw = 1;
+PCA = 0;
     normBetweenOneAndZero = 0;
 bspline = 1;
 

@@ -17,14 +17,13 @@ if exist('dataML', 'var') || exist('HHData','var')
         
         %% K-MEANS SECTION
         % Reshape Matrices
-        temp = dataML.Data;
-        dataML.Data = [];
-        count = 1;
+        temp = permute(dataML.Data,[4,3,2,1]);
+        dataML.Data = temp(:,:,:)
         
-        % To use raw or normalized data as base
-        for channels = 1:size(temp,3)
-            dataML.Data(:,:,channels) = reshape(permute(squeeze(temp(:,:,channels,:)),[3,2,1]),size(temp,4),size(temp,2)*size(temp,1));
-        end
+        
+        % Use the following code to reverse a given trial/electrode
+        %reshaped = reshape(dataML.Data(1,1,:),size(temp,3),size(temp,4))';
+        count = 1;
         
         if ~bspline
             resChoice = [];
@@ -57,22 +56,34 @@ if exist('dataML', 'var') || exist('HHData','var')
             % makeMCCBars(SCA.Raw.MCC,SCA.Raw.MCC_Categories,dataML.Labels,[],'SCA',norm(iter),fullfile(saveBars,'SCA'));
             if MCA
                 for resolutions_to_retain = resChoice
+                    
+                    if ~bspline
                     % Do MCA (non-CNN)
                     fprintf('\nMCA\n');
                     CCAChoices = dataML.Channels.sChannels;
                     MCAMatrix = dataML;
                     MCAMatrix.Data  = zeros(size(dataML.Data, 1), size(dataML.Data, 2)*length(CCAChoices));
                     for channels = find(ismember(channelStandard,CCAChoices))
-                        MCAMatrix.Data(:, :, channels) = dataML.Data(:,:,channels);
+                        MCAMatrix.Data(:,((channels-1)*size(dataML.Data, 2))+1:(channels)*size(dataML.Data, 2)) =  dataML.Data(:,:,channels);
                     end
                     
                    
                     if normBetweenOneAndZero
-                        MCAMatrix.Data = (MCAMatrix.Data - min(min(MCAMatrix.Data)))/(max(max(MCAMatrix.Data))-min(min(MCAMatrix.Data)))
+                        MCAMatrix.Data = (MCAMatrix.Data - min(min(MCAMatrix.Data)))/(max(max(MCAMatrix.Data))-min(min(MCAMatrix.Data)));
                    end
                     
-                    if bspline
-                        BSplineInput = MCAMatrix.Data;
+                   else
+                        
+                   % Do MCA (non-CNN)
+                    fprintf('\nMCA\n');
+                    CCAChoices = dataML.Channels.sChannels;
+                    MCAMatrix = dataML;
+                    BSplineInput = MCAMatrix.Data;
+                    
+                    if normBetweenOneAndZero
+                        BSplineInput = (BSplineInput - min(min(BSplineInput)))/(max(max(BSplineInput))-min(min(BSplineInput)));
+                    end
+                   
                         disp(['Current number of B-Spline knots: ', mat2str(resolutions_to_retain)]);
                         BSOrder = 2;
                         MCA_BSFeatures = InputTensor2BSplineFeatureMatrix(BSplineInput,resolutions_to_retain,BSOrder);
@@ -88,29 +99,41 @@ if exist('dataML', 'var') || exist('HHData','var')
                     if allBasicClassifiers
                         name = 'MCA';
                         raw = ['Raw',num2str(resolutions_to_retain)];
-                        cMCA.(raw) = trainClassifiers(MCAMatrix,learnerTypes,resultsDir,'MCA');
+                        cMCA.(raw) = trainClassifiers(MCAMatrix,learnerTypes,resultsDir,'MCA',0,[],resolutions_to_retain);
                     end
                 end
-                plotMCCvsFeatures(cMCA,resChoice,norm(iter),resultsDir,'MCA','BSpline Resolution',0,[],resolutions_to_retain);
+                plotMCCvsFeatures(cMCA,resChoice,norm(iter),resultsDir,'MCA','BSpline Resolution');
             end
             
             if CA1
                 for resolutions_to_retain = resChoice
+                    
+                    
+                    if ~bspline
                     % Do CCA (non-CNN) for CA1
                     fprintf('\nCA1\n');
                     CCAChoices = dataML.Channels.CA1_Channels;
                     MCAMatrix = dataML;
-                    MCAMatrix.Data  = zeros(size(dataML.Data, 1), size(dataML.Data, 2)*length(CCAChoices));
+                   MCAMatrix.Data  = zeros(size(dataML.Data, 1), size(dataML.Data, 2)*length(CCAChoices));
                     for channels = find(ismember(channelStandard,CCAChoices))
-                        MCAMatrix.Data(:, :, channels) = dataML.Data(:,:,channels);
+                        MCAMatrix.Data(:,((channels-1)*size(dataML.Data, 2))+1:(channels)*size(dataML.Data, 2)) =  dataML.Data(:,:,channels);
                     end
                     
                    if normBetweenOneAndZero
-                        MCAMatrix.Data = (MCAMatrix.Data - min(min(MCAMatrix.Data)))/(max(max(MCAMatrix.Data))-min(min(MCAMatrix.Data)))
+                        MCAMatrix.Data = (MCAMatrix.Data - min(min(MCAMatrix.Data)))/(max(max(MCAMatrix.Data))-min(min(MCAMatrix.Data)));
                    end
                     
-                    if bspline
-                        BSplineInput = MCAMatrix.Data;
+else
+                        
+                    fprintf('\nCA1\n');
+                    CCAChoices = dataML.Channels.CA1_Channels;
+                    MCAMatrix = dataML;
+                    BSplineInput = MCAMatrix.Data;
+                    
+                    if normBetweenOneAndZero
+                       BSplineInput = (BSplineInput - min(min(BSplineInput)))/(max(max(BSplineInput))-min(min(BSplineInput)));
+                    end
+                   
                         disp(['Current number of B-Spline knots: ', mat2str(resolutions_to_retain)]);
                         BSOrder = 2;
                         MCA_BSFeatures = InputTensor2BSplineFeatureMatrix(BSplineInput,resolutions_to_retain,BSOrder);
@@ -136,22 +159,34 @@ if exist('dataML', 'var') || exist('HHData','var')
             
             if CA3
                 for resolutions_to_retain = resChoice
+                    
+                    
+                    if ~bspline
                     % Do CCA (non-CNN) for CA3
                     fprintf('\nCA3\n');
                     CCAChoices = dataML.Channels.CA3_Channels;
                     MCAMatrix = dataML;
-                   MCAMatrix.Data  = zeros(size(dataML.Data, 1), size(dataML.Data, 2)*length(CCAChoices));
+                 MCAMatrix.Data  = zeros(size(dataML.Data, 1), size(dataML.Data, 2)*length(CCAChoices));
                     for channels = find(ismember(channelStandard,CCAChoices))
-                        MCAMatrix.Data(:, :, channels) = dataML.Data(:,:,channels);
+                        MCAMatrix.Data(:,((channels-1)*size(dataML.Data, 2))+1:(channels)*size(dataML.Data, 2)) =  dataML.Data(:,:,channels);
                     end
                     
                                         
                    if normBetweenOneAndZero
-                        MCAMatrix.Data = (MCAMatrix.Data - min(min(MCAMatrix.Data)))/(max(max(MCAMatrix.Data))-min(min(MCAMatrix.Data)))
+                        MCAMatrix.Data = (MCAMatrix.Data - min(min(MCAMatrix.Data)))/(max(max(MCAMatrix.Data))-min(min(MCAMatrix.Data)));
                    end
+                   
+                  else
+                        
+                    fprintf('\nCA3\n');
+                    CCAChoices = dataML.Channels.CA3_Channels;
+                    MCAMatrix = dataML;
+                    BSplineInput = MCAMatrix.Data;
                     
-                    if bspline
-                        BSplineInput = MCAMatrix.Data;
+                    if normBetweenOneAndZero
+                        BSplineInput = (BSplineInput - min(min(BSplineInput)))/(max(max(BSplineInput))-min(min(BSplineInput)));
+                    end
+                   
                         disp(['Current number of B-Spline knots: ', mat2str(resolutions_to_retain)]);
                         BSOrder = 2;
                         MCA_BSFeatures = InputTensor2BSplineFeatureMatrix(BSplineInput,resolutions_to_retain,BSOrder);
@@ -229,7 +264,7 @@ if exist('dataML', 'var') || exist('HHData','var')
                 for trials = 1:size(dataML.Data,1)
                     temp = squeeze(dataML.Data(trials,:,ismember(dataML.Channels.sChannels,CCAChoices)));
                     if normBetweenOneAndZero
-                        temp = (temp - min(min(temp)))/(max(max(temp))-min(min(temp)))
+                        temp = (temp - min(min(temp)))/(max(max(temp))-min(min(temp)));
                     end
                     [~,scoreMCA(trials,:,:)] = pca(temp');
                 end
@@ -257,7 +292,7 @@ if exist('dataML', 'var') || exist('HHData','var')
                 for trials = 1:size(dataML.Data,1)
                     temp = squeeze(dataML.Data(trials,:,ismember(dataML.Channels.sChannels,CCAChoices)));
                     if normBetweenOneAndZero
-                        temp = (temp - min(min(temp)))/(max(max(temp))-min(min(temp)))
+                        temp = (temp - min(min(temp)))/(max(max(temp))-min(min(temp)));
                     end
                     [~,scoreCA1(trials,:,:)] = pca(temp');
                 end
@@ -286,7 +321,7 @@ if exist('dataML', 'var') || exist('HHData','var')
                 for trials = 1:size(dataML.Data,1)
                     temp = squeeze(dataML.Data(trials,:,ismember(dataML.Channels.sChannels,CCAChoices)));
                     if normBetweenOneAndZero
-                        temp = (temp - min(min(temp)))/(max(max(temp))-min(min(temp)))
+                        temp = (temp - min(min(temp)))/(max(max(temp))-min(min(temp)));
                     end
                     [~,scoreCA3(trials,:,:)] = pca(temp');
                 end

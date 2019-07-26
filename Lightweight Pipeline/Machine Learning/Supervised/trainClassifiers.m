@@ -91,21 +91,21 @@ for learner = 1:sum(learnerTypes)
                 % Lasso GLM
             else
                 binaryLabels = ismember(labelCacheCat,currentField);
-                [Coefficients, FitInfo] = lassoglm(matrixToProcess, binaryLabels, 'binomial','MaxIter',25,'CV', 10,'Lambda',power(10,0:-.1:-4));
+                [Coefficients, FitInfo] = lassoglm(matrixToProcess, binaryLabels, 'binomial','MaxIter',25,'CV', 10,'Lambda',power(10,0:-.1:-2));
                 legend('show') % Show legend
                 lp = lassoPlot(Coefficients,FitInfo,'plottype','CV');
                 
 %% Save  Lasso Plot
             if nargin > 4 && pca == 1
                 if ~isempty(resIter)
-                    lassoDir = fullfile(resultsDir,'Lasso Plots',['PCA' ,num2str(pcaIter)],['Resolution' ,num2str(resIter)]);
+                    lassoDir = fullfile(resultsDir,'Lasso Plots',typeML,['PCA' ,num2str(pcaIter)],['Resolution' ,num2str(resIter)]);
                 else
-                    lassoDir = fullfile(resultsDir,'Lasso Plots',['PCA' num2str(pcaIter)]);
+                    lassoDir = fullfile(resultsDir,'Lasso Plots',typeML,['PCA' num2str(pcaIter)]);
                 end
             elseif nargin > 4 && pca == 0 && ~isempty(resIter)
-                lassoDir = fullfile(resultsDir,'Lasso Plots',['Resolution' num2str(resIter)]);
+                lassoDir = fullfile(resultsDir,'Lasso Plots',typeML,['Resolution' num2str(resIter)]);
             else
-                lassoDir = fullfile(resultsDir,'Lasso Plots');
+                lassoDir = fullfile(resultsDir,'Lasso Plots',typeML);
             end
             
             if ~exist(lassoDir,'dir');
@@ -177,14 +177,14 @@ for learner = 1:sum(learnerTypes)
     else
         if nargin > 4 && pca == 1
             if ~isempty(resIter)
-                confusionDir = fullfile(resultsDir,'Confusion Matrices',['PCA' ,num2str(pcaIter)],['Resolution' ,num2str(resIter)]);
+                confusionDir = fullfile(resultsDir,'Confusion Matrices',typeML,['PCA' ,num2str(pcaIter)],['Resolution' ,num2str(resIter)]);
             else
-                confusionDir = fullfile(resultsDir,'Confusion Matrices',['PCA' num2str(pcaIter)]);
+                confusionDir = fullfile(resultsDir,'Confusion Matrices',typeML,['PCA' num2str(pcaIter)]);
             end
         elseif nargin > 4 && pca == 0 && ~isempty(resIter)
-            confusionDir = fullfile(resultsDir,'Confusion Matrices',['Resolution' num2str(resIter)]);
+            confusionDir = fullfile(resultsDir,'Confusion Matrices',typeML,['Resolution' num2str(resIter)]);
         else
-            confusionDir = fullfile(resultsDir,'Confusion Matrices');
+            confusionDir = fullfile(resultsDir,'Confusion Matrices',typeML);
         end
         
         if ~exist(confusionDir,'dir');
