@@ -1,10 +1,10 @@
 function [sampledData] = sampleData(data, intervals,sampling)
 
 if ndims(data) == 3
-[freqs,time,channels] = size(data);
+[freqs,~,channels] = size(data);
 else
     
-[freqs,time] = size(data);
+[freqs,~] = size(data);
 channels = 1;
 end
 

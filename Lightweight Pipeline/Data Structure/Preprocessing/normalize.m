@@ -8,8 +8,9 @@ frequencyMu = mean(LFP_Data');
 
 for channels = 1:size(LFP_Data,1)
     channelMu = mean(LFP_Data(channels,:));
+    inputToModify = LFP_Data(channels,:);
     %channelSTD = std(LFP_Data(channels,:));
-    LFP_Signal_PctChange(channels,:) = 100*(LFP_Data(channels,:) - channelMu)/channelMu;
+    LFP_Signal_PctChange(channels,:) = 100*(inputToModify - channelMu)/channelMu;
 end
 norm = LFP_Signal_PctChange;
     %% Spectrum | STFT | MultiChannel | Percent Change

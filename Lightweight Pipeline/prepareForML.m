@@ -16,12 +16,12 @@
 
 for ii = 1:length(dataFormat)
     choiceFull = dataFormat{ii};
-if ~isempty(regexp(choiceFull,'Spectrum','ONCE'))
+if ~isempty(regexpi(choiceFull,'Spectrum','ONCE'))
     form = 'Spectrum';
 %% All Bands
-    if ~isempty(cell2mat(regexp(choiceFull,{'theta','alpha','beta','lowGamma','highGamma'})))
+    if ~isempty(cell2mat(regexpi(choiceFull,{'theta','alpha','beta','lowGamma','highGamma'})))
         bandType = erase(choiceFull,'Spectrum');
-        spectrumFrequencies = HHData.Data.Parameters.SpectrumFrequencies;  
+        spectrumFrequencies = HHData.Data.Parameters.SpectrumFrequencies;
         [HHData] = bandSpectrum(HHData,spectrumFrequencies,bandType);
         if norm(iter) 
             dataToInterval = normalize(HHData.ML.(choiceFull),'STFT',form);
@@ -42,15 +42,29 @@ end
 
 
 
-%% Just Signal
-if ~isempty(regexp(choiceFull,'Signal','ONCE'))
+if ~isempty(regexpi(choiceFull,'Signal','ONCE'))
     form = 'Signal';
+%% Signal Bands
+     if ~isempty(cell2mat(regexpi(choiceFull,{'theta','alpha','beta','lowGamma','highGamma'})))
+        bandType = erase(choiceFull,'Signal');
+        spectrumFrequencies = HHData.Data.Parameters.SpectrumFrequencies; 
+        fs = HHData.Data.Parameters.SamplingFrequency;
+        [HHData] = bandSignal(HHData,spectrumFrequencies,fs,bandType);
+        if norm(iter) 
+            dataToInterval = normalize(HHData.ML.(choiceFull),'STFT',form);
+        else
+            dataToInterval = HHData.ML.(choiceFull);
+        end
+%% Just Signal
+     else
        if norm(iter) 
             dataToInterval = normalize(HHData.Data.LFP.LFP,'STFT',form);
         else
             dataToInterval = HHData.Data.LFP.LFP;
         end
 [dataSignal,HHData.ML.Times] = makeIntervals(dataToInterval,HHData.Events.SAMPLE_RESPONSE,HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SamplingFrequency); 
+     end
+     
 dataML.(choiceFull) = permute(dataSignal,[3,2,1,4]);
 end
 

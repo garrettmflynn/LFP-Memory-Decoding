@@ -8,7 +8,6 @@
                                                                             % Date: July 26th, 2019
 
 if exist('dataML', 'var')
-
 for chosenFormat = 1:length(dataFormat)
     format = dataFormat{chosenFormat};
     
@@ -16,9 +15,9 @@ for chosenFormat = 1:length(dataFormat)
 
  
  
- kMeans = ~isempty(cell2mat(regexp(mlAlgorithms,{'kMeans'})));
- supervisedMethods =  ~isempty(cell2mat(regexp(mlAlgorithms,{'lassoGLM','naiveBayes','SVM','linear','kernel','knn','tree','RUSBoost'})));
- imageMethods = ~isempty(cell2mat(regexp(mlAlgorithms,{'CNN_SVM'})));
+ kMeans = ~isempty(cell2mat(regexpi(mlAlgorithms,{'kMeans'})));
+ supervisedMethods =  ~isempty(cell2mat(regexpi(mlAlgorithms,{'lassoGLM','naiveBayes','SVM','linear','kernel','knn','tree','RUSBoost'})));
+ imageMethods = ~isempty(cell2mat(regexpi(mlAlgorithms,{'CNN_SVM'})));
  
  
  % Initialize Save Directories and Other Parameters
