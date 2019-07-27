@@ -14,9 +14,13 @@ for chosenFormat = 1:length(dataFormat)
  dataML.Data = dataML.(format);
 
  
- 
+ % Choose Correct Methods
  kMeans = ~isempty(cell2mat(regexpi(mlAlgorithms,{'kMeans'})));
- supervisedMethods =  ~isempty(cell2mat(regexpi(mlAlgorithms,{'lassoGLM','naiveBayes','SVM','linear','kernel','knn','tree','RUSBoost'})));
+ supervisedMethods = zeros(1,length(mlAlgorithms));
+ for algIter = 1:length(mlAlgorithms)
+ supervisedMethods(algIter) =  cell2mat(regexpi(mlAlgorithms{algIter},{'lassoGLM','naiveBayes','SVM','linear','kernel','knn','tree','RUSBoost'}));
+ end
+ supervisedMethods = ~isempty(sum(supervisedMethods));
  imageMethods = ~isempty(cell2mat(regexpi(mlAlgorithms,{'CNN_SVM'})));
  
  
