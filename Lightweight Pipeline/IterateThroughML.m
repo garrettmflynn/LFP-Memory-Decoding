@@ -41,6 +41,8 @@ for chosenFormat = 1:length(dataFormat)
 % Unfold Time & Frequency Components into Vectors (or leave as is)
         temp = permute(dataML.Data,[4,3,2,1]);
         dataML.Data = temp(:,:,:);
+        dataML.Data = permute(dataML.Data,[1,3,2]);
+        [t,d,c] = size(dataML.Data);
         clear temp
         
         % Use the following code to reverse a given trial/electrode
@@ -105,18 +107,18 @@ for featureIter = 1:length(featureMethod)
                    % Run when PCA is active OR when Bspline is not active
                     if  ~bspline
                         if ~strcmp(feature,'PCA')
-                    featureMatrix.Data  = zeros(size(dataML.Data, 1), size(dataML.Data, 3)*length(channelChoices));
+                    featureMatrix.Data  = zeros(t, d*length(channelChoices));
                     channelIndices = find(ismember(channelStandard,channelChoices));
                     for channels = 1:length(channelChoices)
-                        featureMatrix.Data(:,((channels-1)*size(dataML.Data, 3))+1:(channels)*size(dataML.Data, 3)) =  squeeze(dataML.Data(:,channelIndices(channels),:));
+                        featureMatrix.Data(:,((channels-1)*d)+1:(channels)*d) =  squeeze(dataML.Data(:,channelIndices(channels),:));
                     end
                     indVar = 'PCA Coefficients (per channel)';
                         end
                     end
                    %% PCA Features 
                     if strcmp(feature,'PCA')
-                    channelScore = zeros(size(featureMatrix.Data,1),length(channelChoices),length(channelChoices)-1);
-                for trials = 1:size(featureMatrix.Data,1)
+                    channelScore = zeros(t,length(channelChoices),length(channelChoices)-1);
+                for trials = 1:t
                     temp = squeeze(featureMatrix.Data(trials,:,:));
                     [~,channelScore(trials,:,:)] = pca(temp);
                 end

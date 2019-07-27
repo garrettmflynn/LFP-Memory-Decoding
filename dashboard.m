@@ -21,7 +21,7 @@ dataChoices = {'ClipArt2'}; % ClipArt2 | Recording003 | Other
 dataFormat = {'Signal','thetaSignal','alphaSignal','betaSignal','lowGammaSignal','highGammaSignal','Spectrum'}; % [band]Signal/Spectrum 
     % Note: Spectrums AND Signals are Normalized to % Change (hardcoded in runPipeline.m)
 
-featureMethod = {'PCA'}; % Raw | PCA
+featureMethod = {'Raw'}; % Raw | PCA
 
 bspline = 1;
     BSOrder = 2;
