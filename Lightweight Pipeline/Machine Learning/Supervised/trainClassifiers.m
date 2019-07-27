@@ -192,7 +192,7 @@ for learner = 1:length(usableAlgorithms)
         if ~done
             fprintf('Not Done\n');
         else
-            if nargin > 4 && pca == 1
+            if nargin > 4 && pcaFlag == 1
                 if ~isempty(resIter)
                     confusionDir = fullfile(resultsDir,'Confusion Matrices',typeML,['PCA' ,num2str(pcaIter)],['Resolution' ,num2str(resIter)]);
                 else

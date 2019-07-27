@@ -38,15 +38,20 @@ for chosenFormat = 1:length(dataFormat)
         channelStandard = dataML.Channels.sChannels;
         
         
-        
 % Unfold Time & Frequency Components into Vectors (or leave as is)
         temp = permute(dataML.Data,[4,3,2,1]);
-        dataML.Data = temp(:,:,:)
+        dataML.Data = temp(:,:,:);
         clear temp
         
         % Use the following code to reverse a given trial/electrode
         %reshaped = reshape(dataML.Data(1,1,:),size(temp,3),size(temp,4))';
-        
+
+
+% Visualization of Signal Data
+    % if ndims(dataML.Data) == 3
+    %     TrialChannelData_Visualization(dataML.Data,dataML.Labels,{channelStandard,iCA1,dataML.Channels.CA3_Channels},fullfile(parameters.Directories.filePath,'Region Signal Responses',chosenFormat)
+    % end
+    
 for featureIter = 1:length(featureMethod)
     feature = featureMethod{featureIter};
             fprintf(['Conducting ', feature ,' Classification\n']);
@@ -98,19 +103,22 @@ for featureIter = 1:length(featureMethod)
                    featureMatrix = dataML;
                    %% Original Features: Concatenated Channel Features
                    % Run when PCA is active OR when Bspline is not active
-                    if strcmp(feature,'PCA') || ~bspline
-                    featureMatrix.Data  = zeros(size(dataML.Data, 1), size(dataML.Data, 2)*length(channelChoices));
-                    for channels = find(ismember(channelStandard,channelChoices))
-                        featureMatrix.Data(:,((channels-1)*size(featureMatrix.Data, 2))+1:(channels)*size(featureMatrix.Data, 2)) =  dataML.Data(:,:,channels);
+                    if  ~bspline
+                        if ~strcmp(feature,'PCA')
+                    featureMatrix.Data  = zeros(size(dataML.Data, 1), size(dataML.Data, 3)*length(channelChoices));
+                    channelIndices = find(ismember(channelStandard,channelChoices));
+                    for channels = 1:length(channelChoices)
+                        featureMatrix.Data(:,((channels-1)*size(dataML.Data, 3))+1:(channels)*size(dataML.Data, 3)) =  squeeze(dataML.Data(:,channelIndices(channels),:));
                     end
                     indVar = 'PCA Coefficients (per channel)';
+                        end
                     end
                    %% PCA Features 
                     if strcmp(feature,'PCA')
-                    channelScore = zeros(size(featureMatrix.Data,1),length(CCAChoices),length(CCAChoices)-1);
+                    channelScore = zeros(size(featureMatrix.Data,1),length(channelChoices),length(channelChoices)-1);
                 for trials = 1:size(featureMatrix.Data,1)
-                    temp = squeeze(featureMatrix.Data(trials,:,ismember(channelChoices,CCAChoices)));
-                    [~,channelScore(trials,:,:)] = pca(temp');
+                    temp = squeeze(featureMatrix.Data(trials,:,:));
+                    [~,channelScore(trials,:,:)] = pca(temp);
                 end
                     clear temp
 
