@@ -26,7 +26,7 @@ for chosenFormat = 1:length(dataFormat)
  
  % Initialize Save Directories and Other Parameters
         if supervisedMethods
-            resultsDir = fullfile(parameters.Directories.filePath,['Classifier Results [-',num2str(range),' ',num2str(range),']']);
+            resultsDir = fullfile(parameters.Directories.filePath,['Classifier Results [-',num2str(range),' ',num2str(range),']'],format);
         end
         
         if kMeans
@@ -120,11 +120,11 @@ for featureIter = 1:length(featureMethod)
                         end
                     end
                    %% PCA Features 
-                    if strcmp(feature,'PCA')
+                if strcmp(feature,'PCA')
                     channelScore = zeros(t,length(channelChoices),length(channelChoices)-1);
                 for trials = 1:t
                     temp = squeeze(featureMatrix.Data(trials,:,:));
-                    [~,channelScore(trials,:,:)] = pca(temp);
+                    [~,channelScore(trials,:,:)] = pca(temp');
                 end
                     clear temp
 
@@ -180,7 +180,7 @@ for featureIter = 1:length(featureMethod)
             end
             if supervisedMethods
                 classSave;
-                visualizeClassifierPerformance(results,norm(iter),fullfile(resultsDir,['MCCs for ',feature]));
+                %visualizeClassifierPerformance(cResults,norm(iter),fullfile(resultsDir,['MCCs for ',feature]));
             end
     clear cResults
     clear kResults
