@@ -18,7 +18,7 @@ addpath(genpath('E:\Useful MATLAB Scripts\NPMK'));
 dataChoices = {'ClipArt2'}; % ClipArt2 | Recording003 | Other
     % Additional data filepaths can be specified in HHDataStructure.m
     
-dataFormat = {'Signal','thetaSpectrum','alphaSpectrum','betaSpectrum','lowGammaSpectrum','highGammaSpectrum'}; % [band]Signal/Spectrum 
+dataFormat = {'Spectrum','Signal'};%,'thetaSpectrum','alphaSpectrum','betaSpectrum','lowGammaSpectrum','highGammaSpectrum'}; % [band]Signal/Spectrum 
     % Note: Spectrums AND Signals are Normalized to % Change (hardcoded in runPipeline.m)
 
 featureMethod = {'Raw','PCA'}; % Raw | PCA
@@ -29,7 +29,7 @@ bspline = 1;
 
 mlScope = {'MCA'}; % MCA | CA1 | CA3
 
-mlAlgorithms = {'LassoGLM','naiveBayes','SVM'}; % | kMeans | LassoGLM | naiveBayes | 
+mlAlgorithms = {'kMeans','LassoGLM','naiveBayes','SVM'}; % | kMeans | LassoGLM | naiveBayes | 
 % | SVM | linear | kernel | knn | tree | RUSBoost | CNN_SVM
 
 saveHHData = 0;                                                                  

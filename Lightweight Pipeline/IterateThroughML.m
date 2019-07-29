@@ -18,9 +18,12 @@ for chosenFormat = 1:length(dataFormat)
  kMeans = ~isempty(cell2mat(regexpi(mlAlgorithms,{'kMeans'})));
  supervisedMethods = zeros(1,length(mlAlgorithms));
  for algIter = 1:length(mlAlgorithms)
+     match = cell2mat(regexpi(mlAlgorithms{algIter},{'lassoGLM','naiveBayes','SVM','linear','kernel','knn','tree','RUSBoost'}));
+     if ~isempty(match)
  supervisedMethods(algIter) =  cell2mat(regexpi(mlAlgorithms{algIter},{'lassoGLM','naiveBayes','SVM','linear','kernel','knn','tree','RUSBoost'}));
- end
- supervisedMethods = ~isempty(sum(supervisedMethods));
+     end
+     end
+ supervisedMethods = (sum(supervisedMethods)) > 0;
  imageMethods = ~isempty(cell2mat(regexpi(mlAlgorithms,{'CNN_SVM'})));
  
  
@@ -33,7 +36,7 @@ for chosenFormat = 1:length(dataFormat)
             kResultsDir =  fullfile(parameters.Directories.filePath,['kMeans Results [-',num2str(range),' ',num2str(range),']']);
             saveBars = fullfile(parameters.Directories.filePath,'MCC Bar Plots');
             
-            realCluster = realClusters(dataML.Labels);
+            realClust = realClusters(dataML.Labels);
             savePCAViz = fullfile(parameters.Directories.filePath,'PCA Scatter Plots');
         end
         
@@ -114,7 +117,7 @@ for featureIter = 1:length(featureMethod)
                     featureMatrix.Data  = zeros(t, d*length(channelChoices));
                     channelIndices = find(ismember(channelStandard,channelChoices));
                     for channels = 1:length(channelChoices)
-                        featureMatrix.Data(:,((channels-1)*d)+1:(channels)*d) =  squeeze(dataML.Data(:,channelIndices(channels),:));
+                        featureMatrix.Data(:,((channels-1)*d)+1:(channels)*d) =  squeeze(dataML.Data(:,:,channelIndices(channels)));
                     end
                     indVar = 'PCA Coefficients (per channel)';
                         end
@@ -143,6 +146,10 @@ for featureIter = 1:length(featureMethod)
                         
                         indVar = 'BSpline Resolution';
                         
+                    elseif ~bspline && strcmp(feature,'PCA')
+                        % Resultant Matrix is organized by PC importance
+                        toReplace = permute(featureMatrix.Data,[1,3,2]);
+                        featureMatrix.Data = toReplace(:,:);
                     end
 
                     
@@ -159,9 +166,10 @@ for featureIter = 1:length(featureMethod)
                     
                     % Run K-Means
                     if kMeans
-                        [kResults.(name).(featureCounter).clusterIndices] = kMeansClustering(featureMatrix,name);
-                        saveBarsFull = fullfile(saveBars,name,featureCounter);
-                        [kResults.(name).(featureCounter).MCC,kResults.(name).(featureCounter).MCC_Categories,~,~] = parseClusterAssignments(featureMatrix,kResults.(name).(featureCounter).clusterIndices, name,{featureMatrix.Labels,retained,name,norm(iter),saveBarsFull});
+                        quickSNE
+                        %[kResults.(name).(featureCounter).clusterIndices] = kMeansClustering(featureMatrix,name);
+                        %saveBarsFull = fullfile(saveBars,name,featureCounter);
+                        %[kResults.(name).(featureCounter).MCC,kResults.(name).(featureCounter).MCC_Categories,~,~] = parseClusterAssignments(featureMatrix,kResults.(name).(featureCounter).clusterIndices, name,{featureMatrix.Labels,retained,name,norm(iter),saveBarsFull});
                         count = count + 1;
                     end
                     
@@ -171,12 +179,14 @@ for featureIter = 1:length(featureMethod)
                     end
                      end
                 end
+                if supervisedMethods
                 plotMCCvsFeatures(cResults.(name),resChoice,norm(iter),resultsDir,[name,' ',feature],indVar);
+                end
             end
             
             %% Organize Results
             if kMeans 
-                kSave
+                %kSave
             end
             if supervisedMethods
                 classSave;
@@ -199,7 +209,7 @@ end
 %                                     excludedMCA_PCA = {excluded{PCA2CountMCA} , excluded{count}};
 %                                     label = 'All Above';
 %                                     createPCAVisualizations(scoreMCA,orderedClustersMCA_PCA,['MCA ' ,label,' ', num2str(nIters-(len-1))],norm(iter),fullfile(savePCAViz,['MCA_' label]),excludedMCA_PCA);
-%                                     createPCAVisualizations_RealClusters(scoreMCA,realCluster,'MCA Correct Cluster',norm(iter),fullfile(savePCAViz,['CorrectMCA_' label]),fieldnames(dataML.Labels));
+%                                     createPCAVisualizations_RealClusters(scoreMCA,realClust,'MCA Correct Cluster',norm(iter),fullfile(savePCAViz,['CorrectMCA_' label]),fieldnames(dataML.Labels));
 %                                     
 %                                 end
 %                             end

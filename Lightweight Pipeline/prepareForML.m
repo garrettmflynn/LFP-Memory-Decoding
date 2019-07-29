@@ -62,23 +62,23 @@ if ~isempty(regexpi(choiceFull,'Signal','ONCE'))
         else
             dataToInterval = HHData.Data.LFP.LFP;
         end
-[dataSignal,HHData.ML.Times] = makeIntervals(dataToInterval,HHData.Events.SAMPLE_RESPONSE,HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SamplingFrequency); 
+[dataSignal,HHData.Data.Intervals.Times] = makeIntervals(dataToInterval,HHData.Events.SAMPLE_RESPONSE,HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SamplingFrequency); 
      end
      
 dataML.(choiceFull) = permute(dataSignal,[3,2,1,4]);
 end
 
-%% Extract Images if Desired    
-    %     for ii = 1:size(HHData.ML.Data,3)
+% %% Extract Images if Desired    
+%     for ii = 1:size(HHData.ML.Data,3)
 %         for jj = 1:size(HHData.ML.Data,4)
-%     standardImage(HHData.ML.Data(:,:,ii,jj), HHData.Events,parameters, parameters.Derived.samplingFreq, ['Interval ' num2str(jj)], HHData.Channels.sChannels(ii),jj,HHData.ML.Times(:,jj),'% Change', [-500 500], fullfile(parameters.Directories.filePath,['Interval Images'],['Channel_',num2str(ii)]), 'Spectrum',0);
-%         end
-%     end
-end
+%      standardImage(HHData.ML.Data(:,:,ii,jj), HHData.Events,parameters, parameters.Derived.samplingFreq, ['Interval ' num2str(jj)], HHData.Channels.sChannels(ii),jj,HHData.ML.Times(:,jj),'% Change', [-500 500], fullfile(parameters.Directories.filePath,['Interval Images'],['Channel_',num2str(ii)]), 'Spectrum',0);
+%          end
+%      end
+ end
 
 %% Only Keep a Small Sampling of Additional Parameters
 dataML.Channels = HHData.Channels;
 dataML.Directory = parameters.Directories.filePath;
 dataML.Labels = HHData.Labels;
 dataML.WrongResponse = find(HHData.Data.Intervals.Outcome == 0);
-dataML.Times = HHData.ML.Times;
+dataML.Times = HHData.Data.Intervals.Times;

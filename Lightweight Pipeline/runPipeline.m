@@ -7,6 +7,9 @@
                                                                             % Author: Garrett Flynn
                                                                             % Date: July 26th, 2019
 norm = 1; % Hardcoded for now
+if ~bspline
+   resChoice = 1;
+end
 
 for chosenData = 1:length(dataChoices)
 for iter = 1:length(norm)
