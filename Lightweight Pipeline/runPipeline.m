@@ -6,16 +6,22 @@
                                                                             % Project: USC RAM
                                                                             % Author: Garrett Flynn
                                                                             % Date: July 26th, 2019
-norm = 1; % Hardcoded for now
+
+                                                                            
+% Hardcoded Iterators                                                                            
+norm = 1;
 if ~bspline
    resChoice = 1;
 end
+tf_method = {'Hanning'};
+tB = 100; 
+fB = .5;
+
 
 for chosenData = 1:length(dataChoices)
 for iter = 1:length(norm)
     windowOfInterest = 1; % Hardcoded for now
-for range = windowOfInterest
-    
+for range = windowOfInterest 
 % Creates Core Data Structure
 HHDataStructure
 

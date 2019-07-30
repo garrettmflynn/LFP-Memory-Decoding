@@ -18,10 +18,10 @@ addpath(genpath('E:\Useful MATLAB Scripts\NPMK'));
 dataChoices = {'ClipArt2'}; % ClipArt2 | Recording003 | Other
     % Additional data filepaths can be specified in HHDataStructure.m
     
-dataFormat = {'Spectrum','Signal'};%,'thetaSpectrum','alphaSpectrum','betaSpectrum','lowGammaSpectrum','highGammaSpectrum'}; % [band]Signal/Spectrum 
+dataFormat = {'Spectrum'};%,'thetaSpectrum','alphaSpectrum','betaSpectrum','lowGammaSpectrum','highGammaSpectrum'}; % [band]Signal/Spectrum 
     % Note: Spectrums AND Signals are Normalized to % Change (hardcoded in runPipeline.m)
 
-featureMethod = {'Raw','PCA'}; % Raw | PCA
+featureMethod = {'PCA'}; % Raw | PCA
 
 bspline = 1;
     BSOrder = 2;

@@ -1,6 +1,6 @@
-function [] = standardImage(data, allEvents,parameters, samplingFreq, dataName, channelNumber,intervalNumber,intervalTimes,colorUnit, lims, saveDir, whichtypes,logSignal,band)
+function [] = standardImage(data, allEvents,parameters, samplingFreq, dataName, channelNumber,intervalNumber,intervalTimes,colorUnit, lims, saveDir, whichtypes,logSignal,timeBin,freqBin,band)
 
-if nargin < 14
+if nargin < 16
     band = 'Signal';
 end
 
@@ -86,7 +86,7 @@ for type = types
             set(gca, 'Position', originalSize1);
             text( -.25,.5,['Channel ', num2str(channelNumber)],'Units','Normalized','FontSize',15);
             sText = text( -.25,.6,['Interval ' num2str(intervalNumber)],'Units','Normalized','FontSize',30,'FontWeight','bold');
-        saveas(figRaw,fullfile(saveDir,[dataName, '.png']));
+        saveas(figRaw,fullfile(saveDir,[dataName,'_time',num2str(timeBin),'_freq',num2str(freqBin), '.png']));
     end
     
 close all;

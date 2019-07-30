@@ -52,11 +52,11 @@ if exist('parameters','var')
 
 %% HHDataStructure Primary Section
 % Processing | Binning & Windows
-parameters.Optional.methods = 'Hanning'; % Either Morlet or STFT Window (such as Hanning)
+parameters.Optional.methods = tf_method{spect_method}; % Either Morlet or STFT Window (such as Hanning)
 parameters.Choices.freqMin = 1; % Minimum Frequency of Interest (Hz)
 parameters.Choices.freqMax = 150; % Maximum Frequency of Interest (Hz)
-parameters.Choices.freqBin = .5; % Frequency Bin Width (Hz)
-parameters.Choices.timeBin = .1;  % Time Bin Width (s)
+parameters.Choices.freqBin = fB(fChoice); % Frequency Bin Width (Hz)
+parameters.Choices.timeBin = tB(tChoice)/2000;  % Time Bin Width (s)
 parameters.Choices.trialWindow = [-range range]; % Trial Interval Window
 parameters.Filters.lowPass = 250; % Low Pass Filter Frequency (Hz)
 parameters.Choices.downSample = 500; % Samples/s
@@ -89,7 +89,7 @@ parameters.Filters.notchFilter = designfilt('bandstopiir','FilterOrder',2, ...
     'HalfPowerFrequency1',59,'HalfPowerFrequency2',61, ...
     'DesignMethod','butter','SampleRate',parameters.Derived.samplingFreq); % Notch Filter to Remove Powerline Noise (Hz)
 parameters.Derived.freq = linspace(parameters.Choices.freqMin, parameters.Choices.freqMax, ((parameters.Choices.freqMax-parameters.Choices.freqMin)+1)/parameters.Choices.freqBin);
-parameters.Derived.overlap = round((parameters.Choices.timeBin * parameters.Derived.samplingFreq)/2);
+parameters.Derived.overlap = round((parameters.Choices.timeBin * parameters.Derived.samplingFreq)/1.5);
 
 % (1) Multi-Session Configuration
 if size(neuralData.Data,1) == 1
@@ -103,6 +103,7 @@ if size(neuralData.Data,1) == 1
         fprintf(['Session' , num2str(session), 'Created\n']);
         HHDataMultiple.(['Session',num2str(session)]) = HHData;
         clear HHData
+        clear nexFileData
     end
     
 fprintf('Done\n');
