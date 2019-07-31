@@ -9,7 +9,12 @@ parameters = humanDataSpikeProcessing(nexFileData,parameters);
     % Initialization
     HHData = struct;
     nData = neuralData.Data;
+    if isfield(neuralData.MetaTags,'DateTime')
     HHData.RecordTime = neuralData.MetaTags.DateTime; % Recording Date
+    else
+         HHData.RecordTime = 'Unspecified';
+         fprintf('Record Data & Time is Unspecified\n');
+    end
     clear neuralData
 
 %% Raw data
@@ -65,16 +70,17 @@ HHData.Session = parameters.Directories.dataName;
 
 % Experimental Behavioral Information
 HHData.Events = struct;
-HHData.Events.FOCUS_ON = parameters.Times.FOCUS_ON;
-HHData.Events.SAMPLE_ON = parameters.Times.SAMPLE_ON;
-HHData.Events.SAMPLE_RESPONSE = parameters.Times.SAMPLE_RESPONSE;
-HHData.Events.MATCH_ON = parameters.Times.MATCH_ON;
-HHData.Events.MATCH_RESPONSE = parameters.Times.MATCH_RESPONSE;
-HHData.Events.CORRECT_RESPONSE = parameters.Times.CORRECT_RESPONSE;
+timeFields = fieldnames(parameters.Times);
+for iFields = 1:length(timeFields)
+field = timeFields{iFields};
+HHData.Events.(field) = parameters.Times.(field);
+end
 
 % Channel mapping information
 HHData.Channels = struct; % Channels information
 HHData.Channels.sChannels = parameters.Channels.sChannels;
+
+if parameters.isHuman
 HHData.Channels.CA1_Channels = parameters.Channels.CA1_Channels;
 HHData.Channels.CA3_Channels = parameters.Channels.CA3_Channels;
 
@@ -89,6 +95,14 @@ HHData.Data.Intervals = struct;
 for ii = 1:length(parameters.Times.MATCH_RESPONSE)
 HHData.Data.Intervals.Outcome(ii) = ismember(round(parameters.Times.MATCH_RESPONSE(ii)),round(parameters.Times.CORRECT_RESPONSE));
 end
+
+else
+HHData.Channels.CA1_Channels = [];
+HHData.Channels.CA3_Channels = [];
+HHData.Data.Timecourse = [0 size(HHData.Data.Voltage.Raw,2)/parameters.Derived.samplingFreq]; % Session start & end (in seconds)
+HHData.Data.Spikes = []; % Original Neuron Spike Data
+end 
+
 
 if exist(fullfile(parameters.Directories.filePath,[parameters.Directories.dataName,'_labels.mat']),'file')
     HHData.Labels = load(fullfile(parameters.Directories.filePath,[parameters.Directories.dataName,'_labels.mat']));

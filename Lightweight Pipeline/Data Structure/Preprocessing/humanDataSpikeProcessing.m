@@ -43,6 +43,13 @@ for i = 1:length(nexFileData.events)
 end
 
 % For Neurons TimeStamps
+if isfield(nexFileData,'neurons')
+    
+%     for jj = 1:length(nexFileData.neurons)
+%     NameStr = nexFileData.neurons{jj,1}.name;
+%     parameters.Neuron = nexFileData.neurons{jj,1};
+    
+else
 for i = 1:length(nexFileData.events)
     NameStr = nexFileData.events{i,1}.name;
     if strcmp(NameStr(1:2), 'nr') && (NameStr(end) ~= '0') % Make sure those are REAL neurons
@@ -53,5 +60,6 @@ for i = 1:length(nexFileData.events)
             parameters.Neuron.(['CA3_', NameStr]) = nexFileData.events{i,1}.timestamps;
         end
     end
+end
 end
 end

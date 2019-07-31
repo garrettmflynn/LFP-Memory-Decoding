@@ -13,7 +13,8 @@
                                                                             % Date: July 26th, 2019
 
 
-
+% if parameters.isHuman
+    
 for ii = 1:length(dataFormat)
     choiceFull = dataFormat{ii};
 if ~isempty(regexpi(choiceFull,'Spectrum','ONCE'))
@@ -28,7 +29,7 @@ if ~isempty(regexpi(choiceFull,'Spectrum','ONCE'))
         else
             dataToInterval = HHData.ML.(choiceFull);
         end
-[dataML.(choiceFull), HHData.Data.Intervals.Times] = makeIntervals(dataToInterval,HHData.Events.SAMPLE_RESPONSE,HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SpectrumTime);
+[dataML.(choiceFull), HHData.Data.Intervals.Times] = makeIntervals(dataToInterval,HHData.Events.(centerEvent),HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SpectrumTime);
 %% Just Spectrum  
     else
        if norm(iter) 
@@ -36,7 +37,7 @@ if ~isempty(regexpi(choiceFull,'Spectrum','ONCE'))
         else
             dataToInterval = HHData.Data.LFP.Spectrum;
        end
-[dataML.(choiceFull), HHData.Data.Intervals.Times] = makeIntervals(dataToInterval,HHData.Events.SAMPLE_RESPONSE,HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SpectrumTime);
+[dataML.(choiceFull), HHData.Data.Intervals.Times] = makeIntervals(dataToInterval,HHData.Events.(centerEvent),HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SpectrumTime);
     end
 end
 
@@ -55,6 +56,9 @@ if ~isempty(regexpi(choiceFull,'Signal','ONCE'))
         else
             dataToInterval = HHData.ML.(choiceFull);
         end
+        [dataSignal,HHData.Data.Intervals.Times] = makeIntervals(dataToInterval,HHData.Events.(centerEvent),HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SamplingFrequency); 
+
+        
 %% Just Signal
      else
        if norm(iter) 
@@ -62,24 +66,29 @@ if ~isempty(regexpi(choiceFull,'Signal','ONCE'))
         else
             dataToInterval = HHData.Data.LFP.LFP;
         end
-[dataSignal,HHData.Data.Intervals.Times] = makeIntervals(dataToInterval,HHData.Events.SAMPLE_RESPONSE,HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SamplingFrequency); 
+[dataSignal,HHData.Data.Intervals.Times] = makeIntervals(dataToInterval,HHData.Events.(centerEvent),HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SamplingFrequency); 
      end
     clear dataToInterval
 dataML.(choiceFull) = permute(dataSignal,[3,2,1,4]);
 end
 
  %% Extract Images if Desired
-%  dC = dataML.(choiceFull);
-%      for ii = size(dC,3)
-%          for jj = size(dC,4)
-%       standardImage(dC(:,:,ii,jj), HHData.Events,parameters, parameters.Derived.samplingFreq, ['Interval ' num2str(jj)], HHData.Channels.sChannels(ii),jj,HHData.Data.Intervals.Times(:,jj),'% Change', [-500 500], fullfile(parameters.Directories.filePath,['Interval Images'],parameters.Optional.methods), 'Spectrum',0,parameters.Choices.timeBin,parameters.Choices.freqBin);
-%           end
-%       end
- end
+  dC = dataML.(choiceFull);
+      for qq = 1:size(dC,3)
+          for jj = 1:size(dC,4)
+       standardImage(dC(:,:,qq,jj), [],parameters, parameters.Derived.samplingFreq, ['downInterval ' num2str(jj)], HHData.Channels.sChannels(qq),jj,HHData.Data.Intervals.Times(:,jj),'% Change', [-500 500], fullfile(parameters.Directories.filePath,['Rat Interval Images'],['Channel' num2str(qq)]), 'Spectrum',0);
+           end
+       end
+  end
 
 %% Only Keep a Small Sampling of Additional Parameters
 dataML.Channels = HHData.Channels;
 dataML.Directory = parameters.Directories.filePath;
+if parameters.isHuman
 dataML.Labels = HHData.Labels;
 dataML.WrongResponse = find(HHData.Data.Intervals.Outcome == 0);
+end
 dataML.Times = HHData.Data.Intervals.Times;
+
+    
+    

@@ -15,8 +15,8 @@ addpath(genpath('E:\Useful MATLAB Scripts\NPMK'));
 %% Core Choices
 % Specifying multiple options will result in iteration over that parameter.
 
-dataChoices = {'ClipArt2'}; % ClipArt2 | Recording003 | Other
-    % Additional data filepaths can be specified in HHDataStructure.m
+dataChoices = {'Rat_Data'}; % ClipArt2 | Recording003 | Rat_Data | Other
+    % Additional data filepaths can be specified in loadFiles.m
     
 dataFormat = {'Spectrum'};%,'thetaSpectrum','alphaSpectrum','betaSpectrum','lowGammaSpectrum','highGammaSpectrum'}; % [band]Signal/Spectrum 
     % Note: Spectrums AND Signals are Normalized to % Change (hardcoded in runPipeline.m)

@@ -7,6 +7,7 @@
                                                                             % Date: 2019 June 14
 
 %% Load Correct File Specifications 
+
 if strcmp(dataChoices{chosenData},'Other')
     
 % Define data path here for extracting LFP data
@@ -16,6 +17,7 @@ addpath(genpath(parameters.Directories.filePath));
 parameters.Channels.sChannels = input('What channels are valid (specify as vector)\n Channel Vector: ');
 parameters.Channels.CA1_Channels =  input('What channels are located in CA1 (specify as vector)?\n Channel Vector: ');
 parameters.Channels.CA3_Channels =  input('What channels are located in CA3 (specify as vector)?\n Channel Vector: ');
+parameters.isHuman = input('Is this session a human? Yes (1) or No (0)?\n Answer: ');
 else
     
 if strcmp(dataChoices{chosenData},'Recording003')
@@ -32,6 +34,8 @@ parameters.Channels.sChannels = [1:6,7:10,17:22,23:26];
 parameters.Channels.CA1_Channels =  [7:10,23:26]; 
 parameters.Channels.CA3_Channels =  [1:6,17:22]; 
 
+parameters.isHuman = 1;
+
 elseif strcmp(dataChoices{chosenData},'ClipArt2')
 
 % Define data path here for extracting LFP data
@@ -44,30 +48,47 @@ parameters.Directories.dataName = 'ClipArt_2';
 parameters.Channels.sChannels = [1:10, 17:26, 33:42];
 parameters.Channels.CA1_Channels = [7:10, 23:26, 39:42];
 parameters.Channels.CA3_Channels = [1:6, 17:22, 33:38];
-end
-end
 
+parameters.isHuman = 1;
+
+elseif strcmp(dataChoices{chosenData},'Rat_Data')
+    
+    % Define data path here for extracting LFP data
+parameters.Directories.filePath = strcat('C:\Users\shires\OneDrive - University of Southern California\Decoding Stats\Rat_Data');
+
+% Choose the testing data
+parameters.Directories.dataName = 'Rat_Data';
+
+parameters.isHuman = 0;
+end
+end
 
 if exist('parameters','var')
 
 %% HHDataStructure Primary Section
 % Processing | Binning & Windows
-parameters.Optional.methods = tf_method{spect_method}; % Either Morlet or STFT Window (such as Hanning)
+parameters.Optional.methods = tf_method{1}; % Either Morlet or STFT Window (such as Hanning)
 parameters.Choices.freqMin = 1; % Minimum Frequency of Interest (Hz)
 parameters.Choices.freqMax = 150; % Maximum Frequency of Interest (Hz)
-parameters.Choices.freqBin = fB(fChoice); % Frequency Bin Width (Hz)
-parameters.Choices.timeBin = tB(tChoice)/2000;  % Time Bin Width (s)
+parameters.Choices.freqBin = fB(1); % Frequency Bin Width (Hz)
+parameters.Choices.timeBin = tB(1)/2000;  % Time Bin Width (s)
 parameters.Choices.trialWindow = [-range range]; % Trial Interval Window
 parameters.Filters.lowPass = 250; % Low Pass Filter Frequency (Hz)
 parameters.Choices.downSample = 500; % Samples/s
 
 % Load Data
+
+if parameters.isHuman
 % Neural Data collected from BlackRock Microsystem
 neuralData = extractNSx(parameters.Directories.filePath,parameters.Directories.dataName); % Fixed for all .nsX files
-
 % Spike and Experimental Behavioral Data collectred from DMS memory task
 nexFileData = readNexFile(fullfile(parameters.Directories.filePath,[parameters.Directories.dataName, '.nex']));
-
+else
+nexFileData = readNexFile(fullfile(parameters.Directories.filePath,[parameters.Directories.dataName, '.nex']));
+[neuralData,nexFileData] = replaceHumanWithRat(nexFileData);
+parameters.Channels.sChannels = 1:neuralData.MetaTags.ChannelCount
+parameters.Times.(centerEvent) = [1:2:neuralData.MetaTags.DataDurationSec-1]
+end
 
 if ~isstruct(neuralData)
     neuralData = load('E:\LFP\Data2_Recording\NS4.mat');

@@ -1,5 +1,8 @@
 function rasterEvents(Events)
 
+if isempty(Events)
+    % Rat Data Does Not Contain Events
+else
 behaviors = fieldnames(Events);
 colors = parula(5);
 
@@ -22,6 +25,6 @@ xlabel('Time (seconds)','FontSize',10);
 cols = cell2mat(get(l, 'color'));
 [~, uidx] = unique(cols, 'rows', 'stable');
 legend(l(uidx), {'FO', 'SO','SR','MO','MR'})
-
+end
 
 end
