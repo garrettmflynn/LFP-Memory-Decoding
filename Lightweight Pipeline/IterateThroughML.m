@@ -43,12 +43,47 @@ if exist('dataML', 'var')
 for chosenFormat = 1:length(dataFormat)
     format = dataFormat{chosenFormat};
     currentData = dataML.(format);
+        [f,t,c,tr] = size(currentData);
+    d = f*t;
+  
+%% PCA Channel Reduction
+if parameters.Choices.reduceChannels    
+channelPCA = zeros(f, t, 2,tr);
+
+for CA1vsCA3 = 1:2
+     if CA1vsCA3 == 1
+         cChoice = find(ismember(channelStandard,dataML.Channels.CA1_Channels));
+     elseif CA1vsCA3 == 2
+     cChoice = find(ismember(channelStandard,dataML.Channels.CA3_Channels));
+     end
+     
+for trial = 1:tr
+    for freq = 1:f
+           tempTimeChannel = squeeze(currentData(freq,:,cChoice,trial));
+           [~, scoreTemp, ~,~,explained(:,trial*freq),~] = pca(tempTimeChannel);
+           channelPCA(freq,:, CA1vsCA3,trial) = scoreTemp(:, 1); % Only pick the first PC due to the dimension limit   
+    end
+end
+figure;
+histogram(explained(1,:))
+clear explained
+clear scoreTemp
+clear tempTimeChannel
+end 
+currentData = channelPCA;
+    [f,t,c,tr] = size(currentData);
+    d = f*t;
+clear channelPCA
+    
+end
+    
+    
+signalOn = 0; % Assume Signal is Off   
 if ndims(currentData) == 4
 %% Method One: Unfold Time & Frequency Components into Vectors (or leave as is)
         temp = permute(currentData,[4,3,2,1]);
         dataPermute = temp(:,:,:);
-        featureMatrix.Data.dataPermute =  permute(dataPermute,[1,3,2]);
-        [t,d,c] = size(dataPermute);
+        featureMatrix.dataPermute =  permute(dataPermute,[1,3,2]);
         clear temp
         
         % Use the following code to reverse a given trial/electrode
@@ -56,26 +91,32 @@ if ndims(currentData) == 4
         
 %% Method Two: Compress Each Interval-Channel Combination into its First PC
 pcaParsed = zeros(size(currentData, 2), size(currentData, 3), size(currentData, 4));
-        for channel = 1:size(currentData, 3)
-            for trial = 1:size(currentData, 4)
+        for channel = 1:c
+            for trial = 1:tr
                 tempFreqTime = currentData(:, :, channel, trial);
                 [~, scoreTemp, ~] = pca(tempFreqTime');
                 pcaParsed(:, channel, trial) = scoreTemp(:, 1); % Only pick the first PC due to the dimension limit
             end
         end
         
-       featureMatrix.Data.pcaParsed = permute(pcaParsed, [3, 1, 2]); % Set the dimension order as Trial * Time(Feature) * Neuron for the B-Spline input
+       featureMatrix.pcaParsed = permute(pcaParsed, [3, 1, 2]); % Set the dimension order as Trial * Time(Feature) * Neuron for the B-Spline input
        clear tempFreqTime
        clear scoreTemp
        
 elseif ndims(currentData) == 3     
-%% Method Three: Signals Only
-featureMatrix.Data.(format) = dataML.(format);
+%% Method Four: Signals Only
+featureMatrix.Signals.(format) = dataML.(format);
+
+signalOn = 1;
 
 % Visualization of Signal Data
     % if ndims(dataML.Data) == 3
     %     TrialChannelData_Visualization(dataML.Data,dataML.Labels,{channelStandard,iCA1,dataML.Channels.CA3_Channels},fullfile(parameters.Directories.filePath,'Region Signal Responses',chosenFormat)
     % end
+    
+    
+    
+end
 end
 
 %% Begin Iterations
@@ -108,55 +149,33 @@ end
                      for coeffRanks_to_retain = coeffIter
                            retained = [];
                            retainCache = length(channelChoices)-1; % Amount of PCA Components Available
-                        
-                   
-%                    %% Original Features: Concatenated Channel Features
-%                    % Run when PCA is active OR when Bspline is not active
-%                     if  ~bspline
-%                         if ~strcmp(feature,'PCA')
-%                     featureMatrix.Data  = zeros(t, d*length(channelChoices));
-%                     channelIndices = find(ismember(channelStandard,channelChoices));
-%                     for channels = 1:length(channelChoices)
-%                         featureMatrix.Data(:,((channels-1)*d)+1:(channels)*d) =  squeeze(dataML.Data(:,:,channelIndices(channels)));
-%                     end
-%                     indVar = 'PCA Coefficients (per channel)';
-%                         end
-%                     end
-                   %% PCA Features 
-%                 if strcmp(feature,'PCA')
-%                     channelScore = zeros(t,length(channelChoices),length(channelChoices)-1);
-%                 for trials = 1:t
-%                     temp = squeeze(featureMatrix.Data(trials,:,:));
-%                     [~,channelScore(trials,:,:)] = pca(temp');
-%                 end
-%                     clear temp
-% 
-%                     toPermute = channelScore(:,:,1:coeffRanks_to_retain);
-%                         rPCA = permute(toPermute,[1,3,2]);
-%                     
-%                    featureMatrix.Data = rPCA;
-%                     end
                    %% BSpline Features
                     if bspline
                         
                          % Permute (concatenate) data
-                            BSplineInput1 = featureMatrix.Data.dataPermute;
+                            BSplineInput1 = featureMatrix.dataPermute;
                             MCA_BSFeatures_Permute = InputTensor2BSplineFeatureMatrix(BSplineInput1,resolutions_to_retain,BSOrder);
                             featureMatrix.Data.dataPermute = MCA_BSFeatures_Permute;
                             clear MCA_BSFeatures_Permute
                             
                             % PCA parsed data
-                            BSplineInput2 = featureMatrix.Data.pcaParsed;
+                            BSplineInput2 = featureMatrix.pcaParsed;
                             MCA_BSFeatures_PCA = InputTensor2BSplineFeatureMatrix(BSplineInput2,resolutions_to_retain,BSOrder);
                             featureMatrix.Data.pcaParsed = MCA_BSFeatures_PCA;
                             clear MCA_BSFeatures_PCA
                             
                             % Permute (concatenate) data
-                            BSplineInput3 = featureMatrix.Data.Signal;
+                            if signalOn
+                                sigFields = fieldnames(featureMatrix.Signals)
+                                
+                                for sigIter = 1:length(sigFields)
+                            BSplineInput3 = featureMatrix.Signals.(sigFields{sigIter});
                             BSplineInput3 = permute(squeeze(BSplineInput3), [3, 1, 2]);
                             MCA_BSFeatures_Signal = InputTensor2BSplineFeatureMatrix(BSplineInput3,resolutions_to_retain,BSOrder);
-                            featureMatrix.Data.Signal = MCA_BSFeatures_Signal;
+                            featureMatrix.Data.(sigFields{sigIter}) = MCA_BSFeatures_Signal;
                             clear MCA_BSFeatures_Signal
+                                end
+                            end
                             
                             indVar = 'BSpline Resolution';
 
@@ -166,19 +185,18 @@ end
                     
                     %% Classification Section
                     
-                    % Run K-Means
-                    if kMeans
-                        quickSNE
-                        [kResults.(name).(featureCounter).clusterIndices] = kMeansClustering(featureMatrix,name);
-                        saveBarsFull = fullfile(saveBars,name,featureCounter);
-                        [kResults.(name).(featureCounter).MCC,kResults.(name).(featureCounter).MCC_Categories,~,~] = parseClusterAssignments(featureMatrix,kResults.(name).(featureCounter).clusterIndices, name,{featureMatrix.Labels,retained,name,norm(iter),saveBarsFull});
-                        count = count + 1;
-                    end
+                    % Run K-Means: Does not work with new feature set
+%                     if kMeans
+%                         quickSNE
+%                         [kResults.(name).(featureCounter).clusterIndices] = kMeansClustering(featureMatrix,name);
+%                         saveBarsFull = fullfile(saveBars,name,featureCounter);
+%                         [kResults.(name).(featureCounter).MCC,kResults.(name).(featureCounter).MCC_Categories,~,~] = parseClusterAssignments(featureMatrix,kResults.(name).(featureCounter).clusterIndices, name,{featureMatrix.Labels,retained,name,norm(iter),saveBarsFull});
+%                         count = count + 1;
+%                     end
                     
                   % Run Supervised Classifiers
                     if supervisedMethods
-                        [collectMCC,learners, categories,features] = trainClassifiers(featureMatrix,mlAlgorithms,feature,collectMCC,coeffCount,resCount);
-                    
+                        [collectMCC,learners, categories,features] = trainClassifiers(featureMatrix,mlAlgorithms,collectMCC,coeffCount,resCount);
                     end
                     
                     coeffCount = coeffCount + 1;
@@ -215,7 +233,6 @@ end
     clear cResults
     clear kResults
             
-end
 end
 
 %% PCA 2D/3D Visualizations

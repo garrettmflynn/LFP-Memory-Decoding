@@ -16,9 +16,9 @@
 for ii = 1:length(dataFormat)
     choiceFull = dataFormat{ii};
 if ~isempty(regexpi(choiceFull,'Spectrum','ONCE'))
-    form = 'Spectrum';
 %% All Bands
     if ~isempty(cell2mat(regexpi(choiceFull,{'theta','alpha','beta','lowGamma','highGamma'})))
+        form = 'bandSpectrum';
         bandType = erase(choiceFull,'Spectrum');
         spectrumFrequencies = HHData.Data.Parameters.SpectrumFrequencies;
         [HHData] = bandSpectrum(HHData,spectrumFrequencies,bandType,parameters.Choices.bandAveragedPower);
@@ -27,15 +27,16 @@ if ~isempty(regexpi(choiceFull,'Spectrum','ONCE'))
         else
             dataToInterval = HHData.ML.(choiceFull);
         end
-[dataML.(choiceFull), HHData.Data.Intervals.Times] = makeIntervals(dataToInterval,HHData.Events.(centerEvent),HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SpectrumTime);
+[dataML.(choiceFull), HHData.Data.Intervals.Times] = makeIntervals(dataToInterval,HHData.Events.(centerEvent),HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SpectrumTime,'Spectrum'); 
 %% Just Spectrum  
     else
+        form = 'Spectrum';
        if norm(iter) 
             dataToInterval = normalize(HHData.Data.LFP.Spectrum,'STFT',form);
         else
             dataToInterval = HHData.Data.LFP.Spectrum;
        end
-[dataML.(choiceFull), HHData.Data.Intervals.Times] = makeIntervals(dataToInterval,HHData.Events.(centerEvent),HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SpectrumTime);
+[dataML.(choiceFull), HHData.Data.Intervals.Times] = makeIntervals(dataToInterval,HHData.Events.(centerEvent),HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SpectrumTime,'Spectrum'); 
     end
 end
 
@@ -54,7 +55,7 @@ if ~isempty(regexpi(choiceFull,'Signal','ONCE'))
         else
             dataToInterval = HHData.ML.(choiceFull);
         end
-        [dataSignal,HHData.Data.Intervals.Times] = makeIntervals(dataToInterval,HHData.Events.(centerEvent),HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SamplingFrequency); 
+        [dataML.(choiceFull),HHData.Data.Intervals.Times] = makeIntervals(dataToInterval,HHData.Events.(centerEvent),HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SamplingFrequency,'Signal'); 
 
         
 %% Just Signal
@@ -64,18 +65,17 @@ if ~isempty(regexpi(choiceFull,'Signal','ONCE'))
         else
             dataToInterval = HHData.Data.LFP.LFP;
         end
-[dataSignal,HHData.Data.Intervals.Times] = makeIntervals(dataToInterval,HHData.Events.(centerEvent),HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SamplingFrequency); 
+[dataML.(choiceFull),HHData.Data.Intervals.Times] = makeIntervals(dataToInterval,HHData.Events.(centerEvent),HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SamplingFrequency,'Signal'); 
      end
     clear dataToInterval
-dataML.(choiceFull) = permute(dataSignal,[3,2,1,4]);
 end
 end
 
   
 
-       for qq = 1:size(HHData.Data.LFP.Spectrum,3)
-        Signal_Spectrum_Events_Polygons({HHData.Data.LFP.LFP(qq,:),HHData.Data.LFP.Spectrum(:,:,qq)}, HHData.Events,parameters,HHData.Channels.sChannels(qq),HHData.Data.Intervals.Times,'% Change', [-500,500], fullfile(parameters.Directories.filePath,['Signal-Spectrum-Events'],['Channel' num2str(HHData.Channels.sChannels(qq))]),0);
-        end
+%        for qq = 1:size(HHData.Data.LFP.Spectrum,3)
+%         Signal_Spectrum_Events_Polygons({HHData.Data.LFP.LFP(qq,:),HHData.Data.LFP.Spectrum(:,:,qq)}, HHData.Events,parameters,HHData.Channels.sChannels(qq),HHData.Data.Intervals.Times,'% Change', [-500,500], fullfile(parameters.Directories.filePath,['Signal-Spectrum-Events'],['Channel' num2str(HHData.Channels.sChannels(qq))]),0);
+%         end
 
 
 

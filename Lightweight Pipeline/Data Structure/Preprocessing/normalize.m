@@ -40,6 +40,19 @@ norm = LFP_Signal_PctChange;
             
             norm = LFP_Spectrum_PctChange;
             
+            
+    case 'bandSpectrum'
+        processableData = squeeze(LFP_Data);
+        frequencyMu = squeeze(mean(processableData));
+        
+        [f,t,c] = size(LFP_Data);
+         
+                LFP_Spectrum_PctChange = zeros(f,t,c);
+                %frequencySigma = squeeze(std(LFP_Spectrum'));
+                LFP_Spectrum_PctChange(1:f,:,:) = 100*(processableData - frequencyMu)./frequencyMu;
+                %LFP_Spectrum_ZScore = ((LFP_Spectrum'-frequencyMu)./frequencySigma)';
+        
+        norm = LFP_Spectrum_PctChange;
 end       
 end
 end

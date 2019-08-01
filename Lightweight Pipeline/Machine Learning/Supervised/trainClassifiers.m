@@ -1,5 +1,5 @@
 
-function [collectMCC,usableAlgorithms,fieldLabels,caseNames] = trainClassifiers(dataML,mlAlgorithms,feature,collectMCC,pcaCoeff,bRes);
+function [collectMCC,usableAlgorithms,fieldLabels,caseNames] = trainClassifiers(dataML,mlAlgorithms,collectMCC,pcaCoeff,bRes);
 %% Train Classifiers
 % This function uses supervised methods to classify LFP data
 
@@ -28,7 +28,7 @@ caseNames = fieldnames(dataML.Data);
 numCases = length(caseNames);
 for featureCase = 1:numCases 
 
-currentCase = caseNames{featureCase}
+currentCase = caseNames{featureCase};
 currentData = dataML.Data.(currentCase);
 
 % Extract Correct Trials

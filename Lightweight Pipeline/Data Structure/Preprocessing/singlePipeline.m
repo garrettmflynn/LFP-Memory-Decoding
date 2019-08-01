@@ -31,36 +31,34 @@ LFP_Data = extractLFP(RawData,parameters);
 
 % Raw Voltage Information
 HHData.Data.Voltage = struct;
-HHData.Data.Voltage.Raw = RawData; % Original Raw Data 
-HHData.Data.Voltage.Sampled = RawData(:,1:parameters.Derived.samplingFreq/parameters.Choices.downSample:end); % Downsampled to 500 S/s
+HHData.Data.Voltage.Raw = RawData; % Original Raw Data
 clear RawData
 
 % LFP Data information
 HHData.Data.LFP = struct;
 HHData.Data.LFP.LFP = LFP_Data;
+
+if ~isempty(parameters.Choices.downSample)
 HHData.Data.LFP.Sampled = LFP_Data(:,1:parameters.Derived.samplingFreq/parameters.Choices.downSample:end); % Downsampled to 500 S/s
+end
 clear LFP_Data
 
 % 3. Create spectrograms for full session
 fprintf('Now Creating Spectrograms\n');
 
-% Downsample to Make Morelet Feasible
+% Morelet using Sampled LFP
 if strncmp(parameters.Optional.methods,'Morlet',4) 
 [LFP_Spectrum, time, freq] = makeSpectrum(HHData.Data.LFP.Sampled,parameters);
-
-% Save LFP Data information
 HHData.Data.LFP.Spectrum = LFP_Spectrum;
 clear LFP_Spectrum
 
-% Or Do STFT Normally
+% Or STFT
 else 
 [LFP_Spectrum, time, freq] = makeSpectrum(HHData.Data.LFP.LFP,parameters);
 
 % Save LFP Data information
 HHData.Data.LFP.Spectrum = LFP_Spectrum;
 clear LFP_Spectrum
-
-
 end
 
 %% Save Parameters

@@ -1,19 +1,14 @@
-function [sampledData,intervalMatrix] = makeIntervals(data,centerEventVector,trialSegmentationWindow,sampling)
+function [sampledData,intervalMatrix] = makeIntervals(data,centerEventVector,trialSegmentationWindow,sampling,sigOrSpec)
 % This file is used to generate interval windows for data processing
 
 %% Extract Intervals from Supplied Data
 
-if ndims(data) == 3
-[freqs,~,channels] = size(data);
-else
+%% If Data is Time-Series
+if strcmp(sigOrSpec,'Signal')
     
-[freqs,~] = size(data);
-channels = 1;
-end
 
+[channels,~] = size(data);
 
-%% If Sampling is a Rate
-if isscalar(sampling)
 centerPoint = centerEventVector(1)*sampling;
     start = (centerEventVector(1)+trialSegmentationWindow(1))*sampling;
     aroundRange = centerPoint - start;
@@ -21,8 +16,7 @@ centerPoint = centerEventVector(1)*sampling;
 intervalSize = (stop - start)+1;
 numIntervals = length(centerEventVector);
 
-sampledData = NaN(freqs,intervalSize,channels,numIntervals);
-
+sampledData = NaN(1,intervalSize,channels,numIntervals);
 for q = 1:numIntervals
 centerPoint = round(centerEventVector(q)*sampling);
     start = centerPoint - aroundRange;
@@ -30,28 +24,29 @@ centerPoint = round(centerEventVector(q)*sampling);
     
     intervalMatrix(1,q) = round(start/sampling);
     intervalMatrix(2,q) = round(stop/sampling);
-    
-%% If Data is Time-Frequency
-if ndims(data) == 3
+
 if ~(start == stop)
-    for ii = 1:channels
-    sampledData(:,:,ii,q) = data(:,start:stop,ii);
-    end
+    sampledData(1,:,:,q) = data(:,start:stop)';
+end
 end
 
-%% If Data is Time-Series
-else
-if ~(start == stop)
-    sampledData(:,:,q) = data(:,start:stop);
-end
-end
-end
 
 %% Spectral Data (time sampling)
 
-elseif isvector(sampling)
-    numIntervals = length(centerEventVector);
+elseif strcmp(sigOrSpec,'Spectrum')
+    
+    
+% Subcases  
 if ndims(data) == 3
+[freqs,~,channels] = size(data);
+else  
+[freqs,~] = size(data);
+channels = 1;
+end
+
+    
+    
+    numIntervals = length(centerEventVector);
     centerPoint = closest(sampling,centerEventVector(1));
     start = closest(sampling,centerEventVector(1)+trialSegmentationWindow(1));
     aroundRange = centerPoint - start;
@@ -68,27 +63,12 @@ for q = 1:numIntervals
     intervalMatrix(1,q) = sampling(start);
     intervalMatrix(2,q) = sampling(stop);
     
-%% If Data is Time-Frequency
 if ~(start == stop)
     for ii = 1:channels
     sampledData(:,:,ii,q) = data(:,start:stop,ii);
     end
 end
 end
-end
-
-
-
-
-
-
-
-
-
-
-
-
-
 end
 end
 

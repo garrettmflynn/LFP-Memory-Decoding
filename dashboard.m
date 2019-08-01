@@ -13,28 +13,32 @@ addpath(genpath('C:\SuperUser\Documents\GitHub\LFP-Memory-Decoding'));
 addpath(genpath('E:\Useful MATLAB Scripts\NPMK'));
 
 %% Core Choices
-% Specifying multiple options will result in iteration over that parameter.
-
 dataChoices = {'ClipArt2'}; % ClipArt2 | Recording003 | Rat_Data | Other
-    % Additional data filepaths can be specified in loadFiles.m
+    % Additional data filepaths can be specified in HHDataStructure.m
+    % Many other parameters hardcoded in runPipeline.m
     
-dataFormat = {'Spectrum','Signal'};%,'thetaSignal','alphaSignal','betaSignal','lowGammaSignal','highGammaSignal'}; % [band]Signal/Spectrum 
-% Note: Spectrums AND Signals are Normalized to % Change (hardcoded in runPipeline.m)
+dataFormat = {'Spectrum','thetaSignal'}; %,'thetaSignal','alphaSignal','betaSignal','lowGammaSignal','highGammaSignal'}; 
 
-bspline = 1;
-    BSOrder = 2;
-    resChoice = 50:150;
+mlScope = {'MCA'}; 
+% MCA | CA1 | CA3
 
-mlScope = {'MCA'}; % MCA | CA1 | CA3
-
-mlAlgorithms = {'LassoGLM','naiveBayes','SVM'}; % | kMeans | LassoGLM | naiveBayes | 
-% | SVM | linear | kernel | knn | tree | RUSBoost | CNN_SVM
+mlAlgorithms = {'LassoGLM','naiveBayes','SVM'}; 
+%| kMeans | LassoGLM | naiveBayes | SVM | linear | kernel | knn | tree | RUSBoost | CNN_SVM
 
 saveHHData = 0; 
-quickDebug = 0;
+quickDebug = 1;
 
+% Methods Parameters
+reduceChannels = 1;
+bspline = 1;
+    BSOrder = 2;
+    resChoice = 50:55;
+    
+bandAveragedPower = 1; % Currently only when bands are specified
+
+% Data Processing Parameters
 notchOn = 0;
-bandAveragedPower = 1;
+downSample = []; %Samples/s (500 is ideal for our frequency range)
 
 
 %% PIPELINE BEGINS HERE

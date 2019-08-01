@@ -73,9 +73,10 @@ parameters.Choices.freqBin = fB(1); % Frequency Bin Width (Hz)
 parameters.Choices.timeBin = tB(1)/2000;  % Time Bin Width (s)
 parameters.Choices.trialWindow = [-range range]; % Trial Interval Window
 parameters.Filters.lowPass = 250; % Low Pass Filter Frequency (Hz)
-parameters.Choices.downSample = 500; % Samples/s
+parameters.Choices.downSample = downSample; % Samples/s
 
 parameters.Choices.bandAveragedPower = bandAveragedPower;
+parameters.Choices.reduceChannels = reduceChannels;
 
 % Quick Debug Shortcuts
 if quickDebug
