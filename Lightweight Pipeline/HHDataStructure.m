@@ -75,6 +75,8 @@ parameters.Choices.trialWindow = [-range range]; % Trial Interval Window
 parameters.Filters.lowPass = 250; % Low Pass Filter Frequency (Hz)
 parameters.Choices.downSample = 500; % Samples/s
 
+parameters.Choices.bandAveragedPower = bandAveragedPower;
+
 % Quick Debug Shortcuts
 if quickDebug
 parameters.Channels.CA1_Channels = [parameters.Channels.CA1_Channels(1) parameters.Channels.CA1_Channels(end)];
@@ -116,10 +118,12 @@ else
     error('No Sampling Frequency Found in Neural Data Structure');
 end
 
-
+if notchOn
 parameters.Filters.notchFilter = designfilt('bandstopiir','FilterOrder',2, ...
     'HalfPowerFrequency1',59,'HalfPowerFrequency2',61, ...
     'DesignMethod','butter','SampleRate',parameters.Derived.samplingFreq); % Notch Filter to Remove Powerline Noise (Hz)
+end
+
 parameters.Derived.freq = linspace(parameters.Choices.freqMin, parameters.Choices.freqMax, ((parameters.Choices.freqMax-parameters.Choices.freqMin)+1)/parameters.Choices.freqBin);
 parameters.Derived.overlap = round((parameters.Choices.timeBin * parameters.Derived.samplingFreq)/1.5);
 

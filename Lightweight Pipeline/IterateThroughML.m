@@ -8,19 +8,14 @@
                                                                             % Date: July 26th, 2019
 
 if exist('dataML', 'var')
-for chosenFormat = 1:length(dataFormat)
-    format = dataFormat{chosenFormat};
-    
- currentData = dataML.(format);
 
- 
- % Choose Correct Methods
+ % Choose ML Methods
  kMeans = ~isempty(cell2mat(regexpi(mlAlgorithms,{'kMeans'})));
  supervisedMethods = zeros(1,length(mlAlgorithms));
  for algIter = 1:length(mlAlgorithms)
      match = cell2mat(regexpi(mlAlgorithms{algIter},{'lassoGLM','naiveBayes','SVM','linear','kernel','knn','tree','RUSBoost'}));
      if ~isempty(match)
- supervisedMethods(algIter) =  cell2mat(regexpi(mlAlgorithms{algIter},{'lassoGLM','naiveBayes','SVM','linear','kernel','knn','tree','RUSBoost'}));
+ supervisedMethods(algIter) =  match;
      end
      end
  supervisedMethods = (sum(supervisedMethods)) > 0;
@@ -29,7 +24,7 @@ for chosenFormat = 1:length(dataFormat)
  
  % Initialize Save Directories and Other Parameters
         if supervisedMethods
-            resultsDir = fullfile(parameters.Directories.filePath,['Classifier Results [-',num2str(range),' ',num2str(range),']'],format);
+            resultsDir = fullfile(parameters.Directories.filePath,['Classifier Results [-',num2str(range),' ',num2str(range),']']);
             collectMCC = [];
         end
         
@@ -45,18 +40,21 @@ for chosenFormat = 1:length(dataFormat)
         
         channelStandard = dataML.Channels.sChannels;
         
-        
-% Unfold Time & Frequency Components into Vectors (or leave as is)
+for chosenFormat = 1:length(dataFormat)
+    format = dataFormat{chosenFormat};
+    currentData = dataML.(format);
+if ndims(currentData) == 4
+%% Method One: Unfold Time & Frequency Components into Vectors (or leave as is)
         temp = permute(currentData,[4,3,2,1]);
         dataPermute = temp(:,:,:);
-        dataPermute = permute(dataPermute,[1,3,2]);
+        featureMatrix.Data.dataPermute =  permute(dataPermute,[1,3,2]);
         [t,d,c] = size(dataPermute);
         clear temp
         
         % Use the following code to reverse a given trial/electrode
         %reshaped = reshape(dataML.Data(1,1,:),size(temp,3),size(temp,4))';
         
-% Compress Each Interval-Channel Combination into its First PC
+%% Method Two: Compress Each Interval-Channel Combination into its First PC
 pcaParsed = zeros(size(currentData, 2), size(currentData, 3), size(currentData, 4));
         for channel = 1:size(currentData, 3)
             for trial = 1:size(currentData, 4)
@@ -66,20 +64,28 @@ pcaParsed = zeros(size(currentData, 2), size(currentData, 3), size(currentData, 
             end
         end
         
-       pcaParsed = permute(pcaParsed, [3, 1, 2]); % Set the dimension order as Trial * Time(Feature) * Neuron for the B-Spline input
+       featureMatrix.Data.pcaParsed = permute(pcaParsed, [3, 1, 2]); % Set the dimension order as Trial * Time(Feature) * Neuron for the B-Spline input
        clear tempFreqTime
        clear scoreTemp
-
+       
+elseif ndims(currentData) == 3     
+%% Method Three: Signals Only
+featureMatrix.Data.(format) = dataML.(format);
 
 % Visualization of Signal Data
     % if ndims(dataML.Data) == 3
     %     TrialChannelData_Visualization(dataML.Data,dataML.Labels,{channelStandard,iCA1,dataML.Channels.CA3_Channels},fullfile(parameters.Directories.filePath,'Region Signal Responses',chosenFormat)
     % end
+end
+
+%% Begin Iterations
+ % Populate Feature Matrix with Other DataML Info      
+                   featureMatrix.Channels = dataML.Channels;
+                   featureMatrix.Directory = dataML.Directory;
+                   featureMatrix.Labels = dataML.Labels;
+                   featureMatrix.WrongResponse = dataML.WrongResponse;
+                   featureMatrix.Times = dataML.Times;
     
-for featureIter = 1:length(featureMethod)
-    feature = featureMethod{featureIter};
-            fprintf(['Conducting ', feature ,' Classification\n']);
-            
             for method = 1:length(mlScope)
                 name = mlScope{method};
                 
@@ -94,77 +100,42 @@ for featureIter = 1:length(featureMethod)
                     channelChoices = dataML.Channels.CA3_Channels;      
                     end
                 
+                    
+                resCount = 1;    
                 for resolutions_to_retain = resChoice
-                    
-                    % If Bspline, Include all PCA Components
-                    % Else, Iterate Through All Component Rankings
-                    if ~bspline
-                        switch feature
-                            case 'PCA'
-                        coeffIter = 1:length(channelChoices)-1;
-                            otherwise
-                                coeffIter = 1;
-                        end
-                    else
-                        switch feature
-                            case 'PCA'
-                        coeffIter = length(channelChoices)-1;
-                            otherwise
-                           coeffIter = 1;
-                        end
-                    end
-                    
-                    
+                    coeffIter = 1;
+                    coeffCount = 1;
                      for coeffRanks_to_retain = coeffIter
-                         switch feature
-                            case 'PCA'
-                        retained = coeffRanks_to_retain;
-                        retainCache(coeffRanks_to_retain) = retained;
-                            otherwise
                            retained = [];
-                           retainCache = 1;
-                         end
-                         
-                         
-                   featureMatrix.Data.dataPermute = dataPermute;
-                   featureMatrix.Data.pcaParsed = pcaParsed;
-                   if isfield(dataML,'Signal')
-                   featureMatrix.Data.Signal = dataML.Signal;
-                   else
-                       featureMatrix.Data.Signal = [];
-                   end
-                   featureMatrix.Channels = dataML.Channels;
-                   featureMatrix.Directory = dataML.Directory;
-                   featureMatrix.Labels = dataML.Labels;
-                   featureMatrix.WrongResponse = dataML.WrongResponse;
-                   featureMatrix.Times = dataML.Times;
+                           retainCache = length(channelChoices)-1; % Amount of PCA Components Available
+                        
                    
-                   %% Original Features: Concatenated Channel Features
-                   % Run when PCA is active OR when Bspline is not active
-                    if  ~bspline
-                        if ~strcmp(feature,'PCA')
-                    featureMatrix.Data  = zeros(t, d*length(channelChoices));
-                    channelIndices = find(ismember(channelStandard,channelChoices));
-                    for channels = 1:length(channelChoices)
-                        featureMatrix.Data(:,((channels-1)*d)+1:(channels)*d) =  squeeze(dataML.Data(:,:,channelIndices(channels)));
-                    end
-                    indVar = 'PCA Coefficients (per channel)';
-                        end
-                    end
+%                    %% Original Features: Concatenated Channel Features
+%                    % Run when PCA is active OR when Bspline is not active
+%                     if  ~bspline
+%                         if ~strcmp(feature,'PCA')
+%                     featureMatrix.Data  = zeros(t, d*length(channelChoices));
+%                     channelIndices = find(ismember(channelStandard,channelChoices));
+%                     for channels = 1:length(channelChoices)
+%                         featureMatrix.Data(:,((channels-1)*d)+1:(channels)*d) =  squeeze(dataML.Data(:,:,channelIndices(channels)));
+%                     end
+%                     indVar = 'PCA Coefficients (per channel)';
+%                         end
+%                     end
                    %% PCA Features 
-                if strcmp(feature,'PCA')
-                    channelScore = zeros(t,length(channelChoices),length(channelChoices)-1);
-                for trials = 1:t
-                    temp = squeeze(featureMatrix.Data(trials,:,:));
-                    [~,channelScore(trials,:,:)] = pca(temp');
-                end
-                    clear temp
-
-                    toPermute = channelScore(:,:,1:coeffRanks_to_retain);
-                        rPCA = permute(toPermute,[1,3,2]);
-                    
-                   featureMatrix.Data = rPCA;
-                    end
+%                 if strcmp(feature,'PCA')
+%                     channelScore = zeros(t,length(channelChoices),length(channelChoices)-1);
+%                 for trials = 1:t
+%                     temp = squeeze(featureMatrix.Data(trials,:,:));
+%                     [~,channelScore(trials,:,:)] = pca(temp');
+%                 end
+%                     clear temp
+% 
+%                     toPermute = channelScore(:,:,1:coeffRanks_to_retain);
+%                         rPCA = permute(toPermute,[1,3,2]);
+%                     
+%                    featureMatrix.Data = rPCA;
+%                     end
                    %% BSpline Features
                     if bspline
                         
@@ -190,24 +161,10 @@ for featureIter = 1:length(featureMethod)
                             indVar = 'BSpline Resolution';
 
                         
-                    elseif ~bspline && strcmp(feature,'PCA')
-                        % Resultant Matrix is organized by PC importance
-                        toReplace = permute(featureMatrix.Data,[1,3,2]);
-                        featureMatrix.Data = toReplace(:,:);
                     end
 
                     
                     %% Classification Section
-                    % Count the Number of Feature Permutations
-                     if bspline && isempty(retained)
-                        featureCounter = [feature,'_',num2str(resolutions_to_retain),'Resolution'];
-                        retained = 1;
-                        elseif bspline && ~isempty(retained)
-                            featureCounter = [feature,'_',num2str(retained),'Components_',num2str(resolutions_to_retain),'Resolution'];
-                        else
-                            featureCounter = [feature,'_',num2str(retained),'Components'];
-                     end
-                    
                     
                     % Run K-Means
                     if kMeans
@@ -220,10 +177,14 @@ for featureIter = 1:length(featureMethod)
                     
                   % Run Supervised Classifiers
                     if supervisedMethods
-                        [collectMCC,learners, categories,features] = trainClassifiers(featureMatrix,mlAlgorithms,feature,collectMCC,retained,resolutions_to_retain);
+                        [collectMCC,learners, categories,features] = trainClassifiers(featureMatrix,mlAlgorithms,feature,collectMCC,coeffCount,resCount);
                     
                     end
-                    end
+                    
+                    coeffCount = coeffCount + 1;
+                     end
+                     
+                    resCount =resCount + 1;
                 end
                 if supervisedMethods
                 cResults.(name) = collectMCC;
@@ -292,6 +253,3 @@ end
 %             save(fullfile(supervisedDir,[parameters.Directories.dataName, 'Results.mat']),'results');
 %         end
 %     end
-
-
-end

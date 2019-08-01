@@ -35,7 +35,6 @@ iterateThroughML
 
 % Visualize MD Modeling Results
 processingLFPMDModelingResults
-performanceComparison
 
 
 % Cleanup Before Next Data Choice

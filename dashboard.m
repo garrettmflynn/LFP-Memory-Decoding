@@ -18,22 +18,23 @@ addpath(genpath('E:\Useful MATLAB Scripts\NPMK'));
 dataChoices = {'ClipArt2'}; % ClipArt2 | Recording003 | Rat_Data | Other
     % Additional data filepaths can be specified in loadFiles.m
     
-dataFormat = {'Spectrum','Signal'};%{'Signal','thetaSignal','alphaSignal','betaSignal','lowGammaSignal','highGammaSignal'}; % [band]Signal/Spectrum 
-    % Note: Spectrums AND Signals are Normalized to % Change (hardcoded in runPipeline.m)
-
-featureMethod = {'Raw'}; % Raw | PCA
+dataFormat = {'Spectrum','Signal'};%,'thetaSignal','alphaSignal','betaSignal','lowGammaSignal','highGammaSignal'}; % [band]Signal/Spectrum 
+% Note: Spectrums AND Signals are Normalized to % Change (hardcoded in runPipeline.m)
 
 bspline = 1;
     BSOrder = 2;
-    resChoice = 50:55;
+    resChoice = 50:150;
 
 mlScope = {'MCA'}; % MCA | CA1 | CA3
 
-mlAlgorithms = {'LassoGLM','naiveBayes'}%,'SVM'}; % | kMeans | LassoGLM | naiveBayes | 
+mlAlgorithms = {'LassoGLM','naiveBayes','SVM'}; % | kMeans | LassoGLM | naiveBayes | 
 % | SVM | linear | kernel | knn | tree | RUSBoost | CNN_SVM
 
 saveHHData = 0; 
-quickDebug = 1;
+quickDebug = 0;
+
+notchOn = 0;
+bandAveragedPower = 1;
 
 
 %% PIPELINE BEGINS HERE

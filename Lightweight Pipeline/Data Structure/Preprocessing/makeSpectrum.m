@@ -9,7 +9,9 @@ winSize = parameters.Choices.timeBin * parameters.Derived.samplingFreq;
 overlap = (parameters.Derived.overlap);
 %method = 'Hanning';
 
-for channels = 1:size(inputData,1)
+numChannels = size(inputData,1);
+
+for channels = 1:numChannels
 switch tf_method
 %     case 'Hamming'
 %             [~,~,t, PSDs, ~, ~] = spectrogram(inputData(channels,:),hamming(winSize),overlap,freq, parameters.Derived.samplingFreq,'yaxis');
@@ -20,7 +22,7 @@ switch tf_method
 %              clear t
         
      case 'Hanning'
-            [~,~,t, PSDs, ~, ~] = spectrogram(inputData(channels,:),hann(winSize),overlap,freq, parameters.Derived.samplingFreq,'yaxis');
+            [~,~,t, PSDs, ~, ~] = spectrogram(inputData(1,:),hann(winSize),overlap,freq, parameters.Derived.samplingFreq,'yaxis');
             spectrum(:,:,channels) = PSDs;
             clear PSDs
             if channels == 1 
@@ -43,6 +45,9 @@ switch tf_method
 %             time = t;
 %             end
 %              clear t
+
+
+inputData = inputData(2:end,:);
 end
 end
 

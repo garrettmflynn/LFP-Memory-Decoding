@@ -4,10 +4,21 @@ if isempty(Events)
     % Rat Data Does Not Contain Events
 else
 behaviors = fieldnames(Events);
-colors = parula(5);
+initB = length(behaviors);
+eventPool = zeros(1,initB);
+for bIter = 1:initB
+match = cell2mat(regexpi(behaviors{bIter},{'FOCUS_ON','SAMPLE_ON','SAMPLE_RESPONSE','MATCH_ON','MATCH_RESPONSE'}));
+     if ~isempty(match)
+ eventPool(bIter) =  match;
+     end
+end
 
-for behavior = 1:(length(behaviors)-1)
-    Y = Events.(behaviors{behavior});
+chosenBehaviors = find(eventPool);
+numB = length(chosenBehaviors);
+colors = parula(numB);
+
+for behavior = 1:numB
+    Y = Events.(behaviors{chosenBehaviors(behavior)});
 %% Raster plot
 t = find(Y(:));
 nEvents = numel(t);

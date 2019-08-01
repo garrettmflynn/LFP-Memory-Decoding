@@ -12,9 +12,7 @@
                                                                             % Author: Garrett Flynn
                                                                             % Date: July 26th, 2019
 
-
-% if parameters.isHuman
-    
+  %% Extract Images if Desired
 for ii = 1:length(dataFormat)
     choiceFull = dataFormat{ii};
 if ~isempty(regexpi(choiceFull,'Spectrum','ONCE'))
@@ -23,7 +21,7 @@ if ~isempty(regexpi(choiceFull,'Spectrum','ONCE'))
     if ~isempty(cell2mat(regexpi(choiceFull,{'theta','alpha','beta','lowGamma','highGamma'})))
         bandType = erase(choiceFull,'Spectrum');
         spectrumFrequencies = HHData.Data.Parameters.SpectrumFrequencies;
-        [HHData] = bandSpectrum(HHData,spectrumFrequencies,bandType);
+        [HHData] = bandSpectrum(HHData,spectrumFrequencies,bandType,parameters.Choices.bandAveragedPower);
         if norm(iter) 
             dataToInterval = normalize(HHData.ML.(choiceFull),'STFT',form);
         else
@@ -71,15 +69,15 @@ if ~isempty(regexpi(choiceFull,'Signal','ONCE'))
     clear dataToInterval
 dataML.(choiceFull) = permute(dataSignal,[3,2,1,4]);
 end
+end
 
-%  %% Extract Images if Desired
-%   dC = dataML.(choiceFull);
-%       for qq = 1:size(dC,3)
-%           for jj = 1:size(dC,4)
-%        standardImage(dC(:,:,qq,jj), [],parameters, parameters.Derived.samplingFreq, ['downInterval ' num2str(jj)], HHData.Channels.sChannels(qq),jj,HHData.Data.Intervals.Times(:,jj),'% Change', [-500 500], fullfile(parameters.Directories.filePath,['Rat Interval Images'],['Channel' num2str(qq)]), 'Spectrum',0);
-%            end
-%        end
-  end
+  
+
+       for qq = 1:size(HHData.Data.LFP.Spectrum,3)
+        Signal_Spectrum_Events_Polygons({HHData.Data.LFP.LFP(qq,:),HHData.Data.LFP.Spectrum(:,:,qq)}, HHData.Events,parameters,HHData.Channels.sChannels(qq),HHData.Data.Intervals.Times,'% Change', [-500,500], fullfile(parameters.Directories.filePath,['Signal-Spectrum-Events'],['Channel' num2str(HHData.Channels.sChannels(qq))]),0);
+        end
+
+
 
 %% Only Keep a Small Sampling of Additional Parameters
 dataML.Channels = HHData.Channels;

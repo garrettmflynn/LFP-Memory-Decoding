@@ -31,19 +31,10 @@ for featureCase = 1:numCases
 currentCase = caseNames{featureCase}
 currentData = dataML.Data.(currentCase);
 
-switch feature
-    case 'PCA' % Need to modified latter, only focus on raw case for now
-        pcaFlag = 1;
-        allVec = 1:size(dataML.Data,1);
-        dataML.Data = permute(dataML.Data,[1,3,2]);
-        matrixToProcess = dataML.Data(allVec~=wrong,:);
-        
-    case 'Raw'
-        pcaFlag = 0;
-        allVec = 1:size(currentData,1);
-        matrixToProcess = currentData(allVec~=wrong,:);
-        
-end
+% Extract Correct Trials
+allVec = 1:size(currentData,1);
+matrixToProcess = currentData(allVec~=wrong,:);
+
 
 %% Begin Label Loop
 fields = fieldnames(dataML.Labels);
@@ -74,7 +65,6 @@ for learner = 1:length(usableAlgorithms)
         %               crossEntropy = @(~,S,~,~)mean(min(-S,[],2));
         
         %% Begin Model Testing
-        done = 0;
             if ~strcmpi(usableAlgorithms{learner},'LassoGLM')
                 % Linear Lasso
                 if strcmpi(usableAlgorithms{learner},'linear')

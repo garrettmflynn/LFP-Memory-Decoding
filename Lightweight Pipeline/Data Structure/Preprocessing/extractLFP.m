@@ -1,8 +1,14 @@
 function LFP = extractLFP(rawData, parameters)
 % This file is used to extract LFP from raw NSx recordings
 
+notchOn = isfield(parameters.Filters,'notchFilter');
+
+
 filterLP = parameters.Filters.lowPass;
+
+if notchOn
 filterNotch = parameters.Filters.notchFilter;
+end
 
 %% Extract LFP
 % IF ONE SESSION IN THE FILE
@@ -13,9 +19,16 @@ if (size(rawData,2) > 5)
     
     processedData = lowpass(toProcess,filterLP,2000);
         clear toProcess
+        
+    if notchOn    
     for ii = 1:size(processedData,2)
     % Added Notch Filter to get rid of line noise
     LFP(:,ii) = filtfilt(filterNotch,processedData(:,ii));
+    end
+    
+    else
+        
+        LFP = processedData;
     end
     
 % IF MANY SESSIONS IN THE FILE
@@ -25,8 +38,16 @@ elseif ~(size(rawData,2) > 5)
     rawData{1,1} = [];
     processedData = lowpass(toProcess,filterLP,2000);
     clear toProcess
+    
+    if notchOn
+    
         for ii = 1:size(processedData,2)
     LFP(:,ii) = filtfilt(filterNotch,processedData(:,ii));
+        end
+    
+    else
+        
+        LFP = processedData
     end
     
     % Process subsequent sessions & append to initial array
@@ -34,9 +55,16 @@ elseif ~(size(rawData,2) > 5)
         tempData = double(rawData{1,i})';
         rawData{1,i} = [];
         tempData = lowpass(tempData,filterLP,2000);
+        
+        if notchOn
             for ii = 1:size(processedData,2)
     tempDataEnd(:,ii) = filtfilt(filterNotch,tempData(:,ii));
             end
+            
+        else
+            tempDataEnd = tempData;
+        end
+        
         LFP = [LFP; tempDataEnd];
     end    
 end
