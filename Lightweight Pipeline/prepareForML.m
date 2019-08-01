@@ -72,13 +72,13 @@ if ~isempty(regexpi(choiceFull,'Signal','ONCE'))
 dataML.(choiceFull) = permute(dataSignal,[3,2,1,4]);
 end
 
- %% Extract Images if Desired
-  dC = dataML.(choiceFull);
-      for qq = 1:size(dC,3)
-          for jj = 1:size(dC,4)
-       standardImage(dC(:,:,qq,jj), [],parameters, parameters.Derived.samplingFreq, ['downInterval ' num2str(jj)], HHData.Channels.sChannels(qq),jj,HHData.Data.Intervals.Times(:,jj),'% Change', [-500 500], fullfile(parameters.Directories.filePath,['Rat Interval Images'],['Channel' num2str(qq)]), 'Spectrum',0);
-           end
-       end
+%  %% Extract Images if Desired
+%   dC = dataML.(choiceFull);
+%       for qq = 1:size(dC,3)
+%           for jj = 1:size(dC,4)
+%        standardImage(dC(:,:,qq,jj), [],parameters, parameters.Derived.samplingFreq, ['downInterval ' num2str(jj)], HHData.Channels.sChannels(qq),jj,HHData.Data.Intervals.Times(:,jj),'% Change', [-500 500], fullfile(parameters.Directories.filePath,['Rat Interval Images'],['Channel' num2str(qq)]), 'Spectrum',0);
+%            end
+%        end
   end
 
 %% Only Keep a Small Sampling of Additional Parameters

@@ -64,7 +64,6 @@ end
 end
 
 if exist('parameters','var')
-
 %% HHDataStructure Primary Section
 % Processing | Binning & Windows
 parameters.Optional.methods = tf_method{1}; % Either Morlet or STFT Window (such as Hanning)
@@ -76,8 +75,17 @@ parameters.Choices.trialWindow = [-range range]; % Trial Interval Window
 parameters.Filters.lowPass = 250; % Low Pass Filter Frequency (Hz)
 parameters.Choices.downSample = 500; % Samples/s
 
-% Load Data
+% Quick Debug Shortcuts
+if quickDebug
+parameters.Channels.CA1_Channels = [parameters.Channels.CA1_Channels(1) parameters.Channels.CA1_Channels(end)];
+parameters.Channels.CA3_Channels = [parameters.Channels.CA3_Channels(1) parameters.Channels.CA3_Channels(end)];
+parameters.Channels.sChannels = [parameters.Channels.CA3_Channels parameters.Channels.CA1_Channels];
+parameters.Channels.quickDebug = 1;
+else
+parameters.Channels.quickDebug = 0;
+end
 
+% Load Data
 if parameters.isHuman
 % Neural Data collected from BlackRock Microsystem
 neuralData = extractNSx(parameters.Directories.filePath,parameters.Directories.dataName); % Fixed for all .nsX files
@@ -90,6 +98,9 @@ parameters.Channels.sChannels = 1:neuralData.MetaTags.ChannelCount
 parameters.Times.(centerEvent) = [1:2:neuralData.MetaTags.DataDurationSec-1]
 end
 
+
+
+% Catch Odd Formats
 if ~isstruct(neuralData)
     neuralData = load('E:\LFP\Data2_Recording\NS4.mat');
 end

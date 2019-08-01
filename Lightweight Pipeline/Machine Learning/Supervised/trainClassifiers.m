@@ -1,5 +1,5 @@
 
-function [outMCCs] = trainClassifiers(dataML,mlAlgorithms,resultsDir,typeML,feature,pcaIter,resIter)
+function [collectMCC,usableAlgorithms,fieldLabels,caseNames] = trainClassifiers(dataML,mlAlgorithms,feature,collectMCC,pcaCoeff,bRes);
 %% Train Classifiers
 % This function uses supervised methods to classify LFP data
 
@@ -24,10 +24,15 @@ else
     usableAlgorithms = mlAlgorithms;
 end
     
-    
+caseNames = fieldnames(dataML.Data);
+numCases = length(caseNames);
+for featureCase = 1:numCases 
+
+currentCase = caseNames{featureCase}
+currentData = dataML.Data.(currentCase);
 
 switch feature
-    case 'PCA'
+    case 'PCA' % Need to modified latter, only focus on raw case for now
         pcaFlag = 1;
         allVec = 1:size(dataML.Data,1);
         dataML.Data = permute(dataML.Data,[1,3,2]);
@@ -35,8 +40,8 @@ switch feature
         
     case 'Raw'
         pcaFlag = 0;
-        allVec = 1:size(dataML.Data,1);
-        matrixToProcess = dataML.Data(allVec~=wrong,:);
+        allVec = 1:size(currentData,1);
+        matrixToProcess = currentData(allVec~=wrong,:);
         
 end
 
@@ -70,7 +75,6 @@ for learner = 1:length(usableAlgorithms)
         
         %% Begin Model Testing
         done = 0;
-        if ~strcmpi(usableAlgorithms{learner},'kernel') && ~strcmpi(usableAlgorithms{learner},'naivebayes')
             if ~strcmpi(usableAlgorithms{learner},'LassoGLM')
                 % Linear Lasso
                 if strcmpi(usableAlgorithms{learner},'linear')
@@ -92,7 +96,7 @@ for learner = 1:length(usableAlgorithms)
                         'NumLearningCycles',1000,'Learners',t,'LearnRate',0.1,'nprint',100,'KFold',10);
                     clear t
                 else
-                    % SVM or Trees
+                    % SVM, Trees, Kernel, or Bayes
                     classifier = fitcecoc(matrixToProcess', labelCacheCat, ...
                         'Learners', usableAlgorithms{learner},'ObservationsIn', 'columns','Kfold',10);
                 end
@@ -102,53 +106,21 @@ for learner = 1:length(usableAlgorithms)
                 
                 % Confusion Matrix Results
                 [confMat,~] = confusionmat(testLabels, predictedLabels);
-                conf = confusionchart(testLabels,predictedLabels);
+                %conf = confusionchart(testLabels,predictedLabels);
+                currentMCC  = ML_MCC(confMat);
+                
+                 disp([currentCase,'Case | Confusion matrix: ']);
+                disp(confMat);
+                disp([currentCase, 'Case | MCC = ', mat2str(currentMCC)]);
                 
                 % Lasso GLM
             else
                 binaryLabels = ismember(labelCacheCat,currentField);
                 [Coefficients, FitInfo] = lassoglm(matrixToProcess, binaryLabels, 'binomial','MaxIter',25,'CV', 10,'Lambda',power(10,0:-.1:-2));
                 legend('show') % Show legend
-                lp = lassoPlot(Coefficients,FitInfo,'plottype','CV');
+                %lp = lassoPlot(Coefficients,FitInfo,'plottype','CV');
                 
-                %% Save  Lasso Plot
-                if nargin > 4 && pcaFlag == 1
-                    if ~isempty(resIter)
-                        lassoDir = fullfile(resultsDir,'Lasso Plots',typeML,['PCA' ,num2str(pcaIter)],['Resolution' ,num2str(resIter)]);
-                    else
-                        lassoDir = fullfile(resultsDir,'Lasso Plots',typeML,['PCA' num2str(pcaIter)]);
-                    end
-                elseif nargin > 4 && pcaFlag == 0 && ~isempty(resIter)
-                    lassoDir = fullfile(resultsDir,'Lasso Plots',typeML,['Resolution' num2str(resIter)]);
-                else
-                    lassoDir = fullfile(resultsDir,'Lasso Plots',typeML);
-                end
-                
-                if ~exist(lassoDir,'dir')
-                    mkdir(lassoDir);
-                end
-                
-                if nargin > 4 && pcaFlag == 1
-                    if ~isempty(resIter)
-                        title(['PCA',num2str(pcaIter),'Resolution',num2str(resIter),' ',usableAlgorithms{learner},' ',typeML,' ',currentField]);
-                        saveas(lp,fullfile(lassoDir,['PCA',num2str(pcaIter),'Resolution',num2str(resIter),'_',usableAlgorithms{learner},'_',typeML,'_',currentField,'.png']));
-                        close all
-                    else
-                        title(['PCA',num2str(pcaIter),' ',usableAlgorithms{learner},' ',typeML,' ',currentField]);
-                        saveas(lp,fullfile(lassoDir,['PCA',num2str(pcaIter),'_',usableAlgorithms{learner},'_',typeML,'_',currentField,'.png']));
-                        close all
-                    end
-                elseif nargin > 4 && pcaFlag == 0 && ~isempty(resIter)
-                    title(['Raw Resolution',num2str(resIter),' ',usableAlgorithms{learner},' ',typeML,' ',currentField]);
-                    saveas(lp,fullfile(lassoDir,['Raw_Resolution',num2str(resIter),'_',usableAlgorithms{learner},'_',typeML,'_',currentField,'.png']));
-                    close all
-                else
-                    title(['Raw ',usableAlgorithms{learner},' ',typeML,' ',currentField]);
-                    saveas(lp,fullfile(lassoDir,['Raw_',usableAlgorithms{learner},'_',typeML,'_',currentField,'.png']));
-                    close all
-                end
-                
-                % Continue with Lasso Prediction
+                % Predict
                 indx = FitInfo.IndexMinDeviance;
                 cnst = FitInfo.Intercept(indx);
                 B0 = Coefficients(:,indx);
@@ -166,79 +138,106 @@ for learner = 1:length(usableAlgorithms)
                     end
                 end
                 [confMat,~] = confusionmat(labelCache, realPredicts);
-                conf = confusionchart(labelCache,realPredicts);
-            end
-            done = 1;
-            %% Incorporate Models with Long Execution on Raw Data
-            %  Due to the Size of our Inputs, Naive Bayes and Gaussian Are Not Feasible for Raw Data Analyses
-        else
-            if size(matrixToProcess,2) < 5000
-                % Naive Bayes or Gaussian
-                classifier = fitcecoc(matrixToProcess', labelCache, ...
-                    'Learners', usableAlgorithms{learner},'ObservationsIn', 'columns','Kfold',10);
-                predictedLabels = kfoldPredict(classifier);
-                testLabels =  labelCache;
-                [confMat,~] = confusionmat(testLabels, predictedLabels);
-                conf = confusionchart(testLabels,predictedLabels);
-                saveMCC.(fieldLabels{categoriesToTrain}) = ML_MCC(confMat);
-                done = 1;
+                currentMCC  = ML_MCC(confMat);
+                
+                 disp([currentCase,'Case | Confusion matrix: ']);
+                disp(confMat);
+                disp([currentCase, 'Case | MCC = ', mat2str(currentMCC)]);
+                
+                %conf = confusionchart(labelCache,realPredicts);
             end
         end
-        
-        
-        
-        
-        %% Confusion Save
-        if ~done
-            fprintf('Not Done\n');
-        else
-            if nargin > 4 && pcaFlag == 1
-                if ~isempty(resIter)
-                    confusionDir = fullfile(resultsDir,'Confusion Matrices',typeML,['PCA' ,num2str(pcaIter)],['Resolution' ,num2str(resIter)]);
-                else
-                    confusionDir = fullfile(resultsDir,'Confusion Matrices',typeML,['PCA' num2str(pcaIter)]);
-                end
-            elseif nargin > 4 && pcaFlag == 0 && ~isempty(resIter)
-                confusionDir = fullfile(resultsDir,'Confusion Matrices',typeML,['Resolution' num2str(resIter)]);
-            else
-                confusionDir = fullfile(resultsDir,'Confusion Matrices',typeML);
-            end
+
+        %% Save MCC
+% outMCCs STRUCTURE
+%   1D = Learners;
+%   2D = Labels;
+%   3D = Input Feature Type;
+%   4D = Current PCA Coefficient
+%   5D = Current Bspline Resolution
+
+            collectMCC(learner,categoriesToTrain,featureCase,pcaCoeff,bRes) = currentMCC;
             
-            if ~exist(confusionDir,'dir')
-                mkdir(confusionDir);
-            end
-            
-            if nargin > 4 && pcaFlag == 1
-                if ~isempty(resIter)
-                    title(['PCA',num2str(pcaIter),'Resolution',num2str(resIter),' ',usableAlgorithms{learner},' ',typeML,' ',currentField]);
-                    saveas(conf,fullfile(confusionDir,['PCA',num2str(pcaIter),'Resolution',num2str(resIter),'_',usableAlgorithms{learner},'_',typeML,'_',currentField,'.png']));
-                    close all
-                else
-                    title(['PCA',num2str(pcaIter),' ',usableAlgorithms{learner},' ',typeML,' ',currentField]);
-                    saveas(conf,fullfile(confusionDir,['PCA',num2str(pcaIter),'_',usableAlgorithms{learner},'_',typeML,'_',currentField,'.png']));
-                    close all
-                end
-            elseif nargin > 4 && pcaFlag == 0 && ~isempty(resIter)
-                title(['Raw Resolution',num2str(resIter),' ',usableAlgorithms{learner},' ',typeML,' ',currentField]);
-                saveas(conf,fullfile(confusionDir,['Raw_Resolution',num2str(resIter),'_',usableAlgorithms{learner},'_',typeML,'_',currentField,'.png']));
-                close all
-            else
-                title(['Raw ',usableAlgorithms{learner},' ',typeML,' ',currentField]);
-                saveas(conf,fullfile(confusionDir,['Raw_',usableAlgorithms{learner},'_',typeML,'_',currentField,'.png']));
-                close all
-            end
-            saveMCC.(fieldLabels{categoriesToTrain}) = ML_MCC(confMat);
-        end
-        
-        
-    end
-    if ~strcmpi(usableAlgorithms{learner},'kernel') && ~strcmpi(usableAlgorithms{learner},'naivebayes')
-        outMCCs.(usableAlgorithms{learner}) = saveMCC;
-    else
-        if size(matrixToProcess,2) < 5000
-            outMCCs.(usableAlgorithms{learner}) = saveMCC;
-        end
     end
 end
 end
 
+
+%% Lasso Visualization
+%                 if nargin > 4 && pcaFlag == 1
+%                     if ~isempty(resIter)
+%                         lassoDir = fullfile(resultsDir,'Lasso Plots',typeML,['PCA' ,num2str(pcaIter)],['Resolution' ,num2str(resIter)]);
+%                     else
+%                         lassoDir = fullfile(resultsDir,'Lasso Plots',typeML,['PCA' num2str(pcaIter)]);
+%                     end
+%                 elseif nargin > 4 && pcaFlag == 0 && ~isempty(resIter)
+%                     lassoDir = fullfile(resultsDir,'Lasso Plots',typeML,['Resolution' num2str(resIter)]);
+%                 else
+%                     lassoDir = fullfile(resultsDir,'Lasso Plots',typeML);
+%                 end
+%                 
+%                 if ~exist(lassoDir,'dir')
+%                     mkdir(lassoDir);
+%                 end
+%                 
+%                 if nargin > 4 && pcaFlag == 1
+%                     if ~isempty(resIter)
+%                         title(['PCA',num2str(pcaIter),'Resolution',num2str(resIter),' ',usableAlgorithms{learner},' ',typeML,' ',currentField]);
+%                         saveas(lp,fullfile(lassoDir,['PCA',num2str(pcaIter),'Resolution',num2str(resIter),'_',usableAlgorithms{learner},'_',typeML,'_',currentField,'.png']));
+%                         close all
+%                     else
+%                         title(['PCA',num2str(pcaIter),' ',usableAlgorithms{learner},' ',typeML,' ',currentField]);
+%                         saveas(lp,fullfile(lassoDir,['PCA',num2str(pcaIter),'_',usableAlgorithms{learner},'_',typeML,'_',currentField,'.png']));
+%                         close all
+%                     end
+%                 elseif nargin > 4 && pcaFlag == 0 && ~isempty(resIter)
+%                     title(['Raw Resolution',num2str(resIter),' ',usableAlgorithms{learner},' ',typeML,' ',currentField]);
+%                     saveas(lp,fullfile(lassoDir,['Raw_Resolution',num2str(resIter),'_',usableAlgorithms{learner},'_',typeML,'_',currentField,'.png']));
+%                     close all
+%                 else
+%                     title(['Raw ',usableAlgorithms{learner},' ',typeML,' ',currentField]);
+%                     saveas(lp,fullfile(lassoDir,['Raw_',usableAlgorithms{learner},'_',typeML,'_',currentField,'.png']));
+%                     close all
+%                 end
+%                 
+
+
+
+
+
+%% Confusion Matrix Visualization
+%             if nargin > 4 && pcaFlag == 1
+%                 if ~isempty(resIter)
+%                     confusionDir = fullfile(resultsDir,'Confusion Matrices',typeML,['PCA' ,num2str(pcaIter)],['Resolution' ,num2str(resIter)]);
+%                 else
+%                     confusionDir = fullfile(resultsDir,'Confusion Matrices',typeML,['PCA' num2str(pcaIter)]);
+%                 end
+%             elseif nargin > 4 && pcaFlag == 0 && ~isempty(resIter)
+%                 confusionDir = fullfile(resultsDir,'Confusion Matrices',typeML,['Resolution' num2str(resIter)]);
+%             else
+%                 confusionDir = fullfile(resultsDir,'Confusion Matrices',typeML);
+%             end
+%             
+%             if ~exist(confusionDir,'dir')
+%                 mkdir(confusionDir);
+%             end
+%             
+%             if nargin > 4 && pcaFlag == 1
+%                 if ~isempty(resIter)
+%                     title(['PCA',num2str(pcaIter),'Resolution',num2str(resIter),' ',usableAlgorithms{learner},' ',typeML,' ',currentField]);
+%                     saveas(conf,fullfile(confusionDir,['PCA',num2str(pcaIter),'Resolution',num2str(resIter),'_',usableAlgorithms{learner},'_',typeML,'_',currentField,'.png']));
+%                     close all
+%                 else
+%                     title(['PCA',num2str(pcaIter),' ',usableAlgorithms{learner},' ',typeML,' ',currentField]);
+%                     saveas(conf,fullfile(confusionDir,['PCA',num2str(pcaIter),'_',usableAlgorithms{learner},'_',typeML,'_',currentField,'.png']));
+%                     close all
+%                 end
+%             elseif nargin > 4 && pcaFlag == 0 && ~isempty(resIter)
+%                 title(['Raw Resolution',num2str(resIter),' ',usableAlgorithms{learner},' ',typeML,' ',currentField]);
+%                 saveas(conf,fullfile(confusionDir,['Raw_Resolution',num2str(resIter),'_',usableAlgorithms{learner},'_',typeML,'_',currentField,'.png']));
+%                 close all
+%             else
+%                 title(['Raw ',usableAlgorithms{learner},' ',typeML,' ',currentField]);
+%                 saveas(conf,fullfile(confusionDir,['Raw_',usableAlgorithms{learner},'_',typeML,'_',currentField,'.png']));
+%                 close all
+%             end

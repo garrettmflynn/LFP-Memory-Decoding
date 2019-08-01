@@ -24,25 +24,25 @@ numIntervals = length(centerEventVector);
 sampledData = NaN(freqs,intervalSize,channels,numIntervals);
 
 for q = 1:numIntervals
-centerPoint = centerEventVector(q)*sampling;
+centerPoint = round(centerEventVector(q)*sampling);
     start = centerPoint - aroundRange;
     stop = centerPoint + aroundRange;
     
     intervalMatrix(1,q) = round(start/sampling);
-    intervalMatrix(2,q) = round(stop/samping);
+    intervalMatrix(2,q) = round(stop/sampling);
     
 %% If Data is Time-Frequency
 if ndims(data) == 3
 if ~(start == stop)
     for ii = 1:channels
-    sampledData(:,:,ii,q) = data(:,start:stop-1,ii);
+    sampledData(:,:,ii,q) = data(:,start:stop,ii);
     end
 end
 
 %% If Data is Time-Series
 else
 if ~(start == stop)
-    sampledData(:,:,q) = data(:,start:(stop-1));
+    sampledData(:,:,q) = data(:,start:stop);
 end
 end
 end
