@@ -8,7 +8,7 @@
                                                                             % Date: July 26th, 2019
 
                                                                             
-% Hardcoded Iterators                                                                            
+%% Hardcoded Iterators                                                                            
 norm = 1;
 if ~bspline
    resChoice = 1;
@@ -23,6 +23,8 @@ for iter = 1:length(norm)
     windowOfInterest = 1; % Hardcoded for now
     centerEvent = 'SAMPLE_RESPONSE';
 for range = windowOfInterest 
+    
+%% Core Scripts to Execute    
 % Creates Core Data Structure
 HHDataStructure
 

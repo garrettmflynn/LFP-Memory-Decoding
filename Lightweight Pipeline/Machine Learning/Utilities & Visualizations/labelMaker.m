@@ -4,7 +4,7 @@ fprintf('Making Labels\n');
 % labels = cell(size(dataML.Labels.(fields{1}),1),1);
 % numTrials = size(dataML.Labels.(fields{1}),1);
 for jj = 1:length(fields)
-    currentField = dataML.Labels.(fields{jj});
+    currentField = featureMatrix.Labels.(fields{jj});
     for qq = 1:size(currentField,1)
         if currentField(qq) == 1
             if ~isempty(labels{qq})

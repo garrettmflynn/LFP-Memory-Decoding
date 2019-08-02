@@ -1,5 +1,5 @@
 
-function [collectMCC,usableAlgorithms,fieldLabels,caseNames] = trainClassifiers(dataML,mlAlgorithms,collectMCC,pcaCoeff,bRes);
+function [collectMCC,usableAlgorithms,fieldLabels,caseNames] = trainClassifiers(featureMatrix,mlAlgorithms,collectMCC,pcaCoeff,bRes);
 %% Train Classifiers
 % This function uses supervised methods to classify LFP data
 
@@ -10,7 +10,7 @@ function [collectMCC,usableAlgorithms,fieldLabels,caseNames] = trainClassifiers(
 
 close all;
 
-wrong = dataML.WrongResponse;
+wrong = featureMatrix.WrongResponse;
 
 % Remove K-Means from Algorithm Choices
 notK = find(~ismember(mlAlgorithms,'kMeans'));
@@ -24,12 +24,12 @@ else
     usableAlgorithms = mlAlgorithms;
 end
     
-caseNames = fieldnames(dataML.Data);
+caseNames = fieldnames(featureMatrix.Data);
 numCases = length(caseNames);
 for featureCase = 1:numCases 
 
 currentCase = caseNames{featureCase};
-currentData = dataML.Data.(currentCase);
+currentData = featureMatrix.Data.(currentCase);
 
 % Extract Correct Trials
 allVec = 1:size(currentData,1);
@@ -37,10 +37,10 @@ matrixToProcess = currentData(allVec~=wrong,:);
 
 
 %% Begin Label Loop
-fields = fieldnames(dataML.Labels);
+fields = fieldnames(featureMatrix.Labels);
 fieldLabels = erase(fields,'Label_');
-labels = cell(size(dataML.Labels.(fields{1}),1),1);
-numTrials = size(dataML.Labels.(fields{1}),1);
+labels = cell(size(featureMatrix.Labels.(fields{1}),1),1);
+numTrials = size(featureMatrix.Labels.(fields{1}),1);
 labelMaker;
 
 for learner = 1:length(usableAlgorithms)

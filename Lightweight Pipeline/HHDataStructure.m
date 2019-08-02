@@ -23,7 +23,7 @@ else
 if strcmp(dataChoices{chosenData},'Recording003')
 
 % Define data path here for extracting LFP data
-parameters.Directories.filePath = strcat('C:\Users\shires\OneDrive - University of Southern California\Decoding Stats\Data2_Recording'); %('E:\LFP\Data2_Recording'); %'/media/gflynn/Seagate Backup Plus Drive/LFP Decoding/ClipArt_2');
+parameters.Directories.filePath = strcat('C:\Users\flynn\OneDrive - University of Southern California\Office\LFP Decoding\Data2_Recording'); %('E:\LFP\Data2_Recording'); %'/media/gflynn/Seagate Backup Plus Drive/LFP Decoding/ClipArt_2');
 addpath(genpath(parameters.Directories.filePath));
 
 % Choose the testing data
@@ -39,7 +39,7 @@ parameters.isHuman = 1;
 elseif strcmp(dataChoices{chosenData},'ClipArt2')
 
 % Define data path here for extracting LFP data
-parameters.Directories.filePath = strcat('C:\Users\shires\OneDrive - University of Southern California\Decoding Stats\ClipArt_2');
+parameters.Directories.filePath = strcat('C:\Users\flynn\OneDrive - University of Southern California\Office\LFP Decoding\ClipArt_2');
 
 % Choose the testing data
 parameters.Directories.dataName = 'ClipArt_2';
@@ -54,7 +54,7 @@ parameters.isHuman = 1;
 elseif strcmp(dataChoices{chosenData},'Rat_Data')
     
     % Define data path here for extracting LFP data
-parameters.Directories.filePath = strcat('C:\Users\shires\OneDrive - University of Southern California\Decoding Stats\Rat_Data');
+parameters.Directories.filePath = strcat('C:\Users\flynn\OneDrive - University of Southern California\Office\LFP Decoding\Rat_Data');
 
 % Choose the testing data
 parameters.Directories.dataName = 'Rat_Data';
@@ -105,7 +105,7 @@ end
 
 % Catch Odd Formats
 if ~isstruct(neuralData)
-    neuralData = load('E:\LFP\Data2_Recording\NS4.mat');
+    neuralData = load('C:\Users\flynn\OneDrive - University of Southern California\Office\LFP Decoding\Data2_Recording\NS4.mat');
 end
 
 

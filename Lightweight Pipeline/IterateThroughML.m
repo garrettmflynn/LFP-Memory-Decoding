@@ -11,6 +11,12 @@ if exist('dataML', 'var')
 
  % Choose ML Methods
  kMeans = ~isempty(cell2mat(regexpi(mlAlgorithms,{'kMeans'})));
+ if kMeans 
+     
+ warning('kMeans is not supported for new featureset. Please recode this section if you wish to conduct unsupervised classification.');    
+ 
+ end
+ 
  supervisedMethods = zeros(1,length(mlAlgorithms));
  for algIter = 1:length(mlAlgorithms)
      match = cell2mat(regexpi(mlAlgorithms{algIter},{'lassoGLM','naiveBayes','SVM','linear','kernel','knn','tree','RUSBoost'}));
@@ -46,11 +52,28 @@ for chosenFormat = 1:length(dataFormat)
         [f,t,c,tr] = size(currentData);
     d = f*t;
   
+    if ~isempty(regexpi(format,'Signal'))
+    typeIn = 'Signal';
+    elseif ~isempty(regexpi(format,'Spectrum'))
+        typeIn = 'Spectrum';
+    else
+        error('Input not supported');
+    end
+    
 %% PCA Channel Reduction
-if parameters.Choices.reduceChannels    
+if parameters.Choices.reduceChannels   
 channelPCA = zeros(f, t, 2,tr);
 
+numPreviousSaved = 0;
 for CA1vsCA3 = 1:2
+    if CA1vsCA3 == 1
+        currentChans = dataML.Channels.CA1_Channels;
+    elseif CA1vsCA3 == 2
+        currentChans = dataML.Channels.CA3_Channels;
+    end
+    disc = sum(diff(currentChans)>1)+1; % Find the number of channel clusters
+    cSave = 1:disc; % Pull out that many components from PCA
+    
      if CA1vsCA3 == 1
          cChoice = find(ismember(channelStandard,dataML.Channels.CA1_Channels));
      elseif CA1vsCA3 == 2
@@ -61,11 +84,13 @@ for trial = 1:tr
     for freq = 1:f
            tempTimeChannel = squeeze(currentData(freq,:,cChoice,trial));
            [~, scoreTemp, ~,~,explained(:,trial*freq),~] = pca(tempTimeChannel);
-           channelPCA(freq,:, CA1vsCA3,trial) = scoreTemp(:, 1); % Only pick the first PC due to the dimension limit   
+           channelPCA(freq,:,numPreviousSaved+cSave,trial) = scoreTemp(:, cSave); % Only pick the first 3 PCs due to channel spacing   
     end
 end
-figure;
-histogram(explained(1,:))
+
+numPreviousSaved = numPreviousSaved + length(cSave);
+% figure;
+% histogram(explained(1,:))
 clear explained
 clear scoreTemp
 clear tempTimeChannel
@@ -79,11 +104,11 @@ end
     
     
 signalOn = 0; % Assume Signal is Off   
-if ndims(currentData) == 4
+if strcmp(typeIn,'Spectrum')
 %% Method One: Unfold Time & Frequency Components into Vectors (or leave as is)
         temp = permute(currentData,[4,3,2,1]);
         dataPermute = temp(:,:,:);
-        featureMatrix.dataPermute =  permute(dataPermute,[1,3,2]);
+        featureMatrix.dataPermute.(format) =  permute(dataPermute,[1,3,2]);
         clear temp
         
         % Use the following code to reverse a given trial/electrode
@@ -98,12 +123,13 @@ pcaParsed = zeros(size(currentData, 2), size(currentData, 3), size(currentData, 
                 pcaParsed(:, channel, trial) = scoreTemp(:, 1); % Only pick the first PC due to the dimension limit
             end
         end
-        
-       featureMatrix.pcaParsed = permute(pcaParsed, [3, 1, 2]); % Set the dimension order as Trial * Time(Feature) * Neuron for the B-Spline input
+       
+       featureMatrix.pcaParsed.(format) = permute(pcaParsed, [3, 1, 2]); % Set the dimension order as Trial * Time(Feature) * Neuron for the B-Spline input
+       
        clear tempFreqTime
        clear scoreTemp
        
-elseif ndims(currentData) == 3     
+elseif strcmp(typeIn,'Signal')    
 %% Method Four: Signals Only
 featureMatrix.Signals.(format) = dataML.(format);
 
@@ -152,21 +178,27 @@ end
                    %% BSpline Features
                     if bspline
                         
+                        specFields = fieldnames(featureMatrix.pcaParsed); % Check fields in pcaParsed as a proxy for all spectral featuresets
+                        
+                        for specIter = 1:length(specFields)
+                            
                          % Permute (concatenate) data
-                            BSplineInput1 = featureMatrix.dataPermute;
+                         saveCase = [specFields{specIter},'_dataPermute'];
+                            BSplineInput1 = featureMatrix.dataPermute.(specFields{specIter});
                             MCA_BSFeatures_Permute = InputTensor2BSplineFeatureMatrix(BSplineInput1,resolutions_to_retain,BSOrder);
-                            featureMatrix.Data.dataPermute = MCA_BSFeatures_Permute;
+                            featureMatrix.Data.(saveCase) = MCA_BSFeatures_Permute;
                             clear MCA_BSFeatures_Permute
                             
                             % PCA parsed data
-                            BSplineInput2 = featureMatrix.pcaParsed;
+                            saveCase = [specFields{specIter},'_pcaParsed'];
+                            BSplineInput2 = featureMatrix.pcaParsed.(specFields{specIter});
                             MCA_BSFeatures_PCA = InputTensor2BSplineFeatureMatrix(BSplineInput2,resolutions_to_retain,BSOrder);
-                            featureMatrix.Data.pcaParsed = MCA_BSFeatures_PCA;
+                            featureMatrix.Data.(saveCase) = MCA_BSFeatures_PCA;
                             clear MCA_BSFeatures_PCA
-                            
-                            % Permute (concatenate) data
+                        end   
+                            % Bspline on Pure Signals
                             if signalOn
-                                sigFields = fieldnames(featureMatrix.Signals)
+                                sigFields = fieldnames(featureMatrix.Signals);
                                 
                                 for sigIter = 1:length(sigFields)
                             BSplineInput3 = featureMatrix.Signals.(sigFields{sigIter});
@@ -196,19 +228,12 @@ end
                     
                   % Run Supervised Classifiers
                     if supervisedMethods
-                        [collectMCC,learners, categories,features] = trainClassifiers(featureMatrix,mlAlgorithms,collectMCC,coeffCount,resCount);
-                    end
-                    
-                    coeffCount = coeffCount + 1;
-                     end
-                     
-                    resCount =resCount + 1;
-                end
-                if supervisedMethods
-                cResults.(name) = collectMCC;
+                        [collectMCC,learners, categories,featureCases] = trainClassifiers(featureMatrix,mlAlgorithms,collectMCC,coeffCount,resCount);
+                        cResults.(name) = collectMCC;
+                        
                 cResults.MetaData.usedLearners = learners;
                 cResults.MetaData.usedCategories = categories;
-                cResults.MetaData.caseNames = features;
+                cResults.MetaData.caseNames = featureCases;
                 cResults.MetaData.Resolutions = resChoice;
                 cResults.MetaData.pcaCoefficients = retainCache;
                 saveNameTemp = dataFormat(chosenFormat);
@@ -217,8 +242,13 @@ end
                 mkdir(resultsDir);
                 end
 
-                save(fullfile(resultsDir,['singleTestResult_', saveNameTemp{1},'.mat']), 'cResults', '-v7.3');
-                %plotMCCvsFeatures(cResults.(name),resChoice,norm(iter),resultsDir,[name,' ',feature],indVar);
+                save(fullfile(resultsDir,['singleTestResult_',datestr(now,'mm-dd-yyyy HH-MM'),'.mat']), 'cResults', '-v7.3');
+                end
+                    
+                    coeffCount = coeffCount + 1;
+                     end
+                     
+                    resCount =resCount + 1;
                 end
             end
             

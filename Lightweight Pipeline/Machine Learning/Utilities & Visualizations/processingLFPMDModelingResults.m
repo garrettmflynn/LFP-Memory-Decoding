@@ -15,29 +15,27 @@ rPattern = fullfile(resultsDir, 'singleTestResult_*.mat');
 rMatch = dir(rPattern);
 rNames = {rMatch.name};
 if ~isempty(rMatch)
-for formatChoice = 1:length(rMatch)
-currentTestResult = rNames{formatChoice};
+if length(rMatch) > 1
+    error('Please only leave one results structure in the specified directory');
+else
+currentTestResult = rNames{1};
+end
 
 %% Load modeling result
 % New Structure:
- %    1D = Input Format ([band]Signal/Spectrum)
- %    2D = Learner
- %    3D = Category
- %    4D = FeatureType
- %    5D = PCA Coefficient
- %    6D = BSpline Resolution
+ %    1D = Learner
+ %    2D = Category
+ %    3D = Feature Types
+ %    4D = PCA Coefficient
+ %    5D = BSpline Resolution
 load(fullfile(resultsDir, currentTestResult));
-formats(formatChoice) = extractBetween(currentTestResult,'_','.');
+dateTime = extractBetween(currentTestResult,'_','.');
 
 % Only Extract MCA
-choiceMethod = cResults.MCA;
-
-% Collect All Bands in One Structure
-results(formatChoice,:,:,:,:,:) = choiceMethod;
-end
+results = cResults.MCA;
 
 % Unpack Dimensions
-[numFormats,numLearners,numCategories,numFeatures,numCoeffs,numRes] = size(results);
+[numLearners,numCategories,numFeatures,numCoeffs,numRes] = size(results);
 learners = cResults.MetaData.usedLearners;
 categories = cResults.MetaData.usedCategories;
 features = cResults.MetaData.caseNames;
@@ -53,43 +51,41 @@ else
 end
 
 for cChoice = 1:numCategories
-for fChoice = 1:numFeatures
 f1 = figure('Position', [10 10 900 1200],'visible','off');
 
 
-numSpots = numFormats*2;
-subplotIndices = 1:numSpots/numFormats:numSpots+1;
-titleSpace = round(numFormats/4);
+numSpots = numFeatures*2;
+subplotIndices = 1:numSpots/numFeatures:numSpots+1;
+titleSpace = round(numFeatures/4);
 
-for formatChoice = 1:numFormats
-    currentFormat = formats{formatChoice};
+for featureChoice = 1:numFeatures
+    currentFeature = features{featureChoice};
 
 %% MCC vs. Resolution Plots
 % Learners by Features
-dataChoice = squeeze(results(formatChoice,:,cChoice,fChoice,:,:));
+dataChoice = squeeze(results(:,cChoice,featureChoice,:,:));
 
 
-first = subplotIndices(formatChoice) + titleSpace;
-last = subplotIndices(formatChoice+1) -1 + titleSpace;
+first = subplotIndices(featureChoice) + titleSpace;
+last = subplotIndices(featureChoice+1) -1 + titleSpace;
 range = first:last;
 
 ax = subplot(numSpots+titleSpace,1,first:last);
 plot(x,dataChoice'); hold on;
 xlim([x(1) x(end)]); 
 ylim([-1 1]);
-title([currentFormat, ' LFP MD performance']);
+title([features{featureChoice}]);
 
-if formatChoice == 1
+if featureChoice == 1
 originalSize1 = get(gca, 'Position');
 legend(learners,'Location','northoutside');
 set(ax, 'Position', originalSize1);
 end
 end
-sgtitle([categories{cChoice},' | ', features{fChoice}],'fontweight','bold','FontSize',20);
+sgtitle([categories{cChoice},' LFP MD performance'],'fontweight','bold','FontSize',20);
 
-saveas(f1,fullfile(figDir,[features{fChoice},'_',categories{cChoice},'.png']));
+saveas(f1,fullfile(figDir,[dateTime{1},'_',categories{cChoice},'.png']));
 close all;
-end
 end
 
 
@@ -101,46 +97,73 @@ end
 
 %% MCC Bar Plots
 
-for fChoice = 1:numFeatures
+
 f2 = figure('Position', [10 10 900 1200],'visible','off');
-for formatChoice = 1:numFormats
-    currentFormat = formats{formatChoice};
+for featureChoice = 1:numFeatures
+    currentFeature = features{featureChoice};
     
 % Learners by Features
-dataChoice = squeeze(results(formatChoice,:,:,fChoice,:,:));
-dataMax = squeeze(max(permute(dataChoice,[3,1,2])));
+% Each row becomes a separate bar (within the same group)
+dataChoice = squeeze(results(:,:,featureChoice,:,:));
+if ndims(dataChoice) == 4
+     dataChoice = permute(dataChoice,[4,3,1,2]);
+[dataMax,maxLoc] = max(max(abs(dataChoice),[],1,'linear'));
+dataMax = squeeze(dataMax);
+maxLoc = squeeze(maxLoc);
 
-% Each row is a separate category
-if size(dataMax,2) > 1
-    dataMax = dataMax(:);
+for r = 1:rows
+    for c = 1:cols
+    if dataChoice(maxLoc(r,c)) < 0
+        dataMax(r,c) = dataMax(r,c)*-1;
+    end
+    end
 end
 
-first = subplotIndices(formatChoice) + titleSpace;
-last = subplotIndices(formatChoice+1) -1 + titleSpace;
+elseif ndims(dataChoice) == 3
+    dataChoice = permute(dataChoice,[3,1,2]);
+[dataMax,maxLoc] = max(abs(dataChoice),[],1,'linear');
+%absmax = dataChoice(sub2ind(size(dataChoice),index,1:size(dataChoice,2)));
+
+[useless rows cols] = size(maxLoc);
+dataMax = squeeze(dataMax);
+maxLoc = squeeze(maxLoc);
+
+for r = 1:rows
+    for c = 1:cols
+    if dataChoice(maxLoc(r,c)) < 0
+        dataMax(r,c) = dataMax(r,c)*-1;
+    end
+    end
+end
+
+else
+    error('Incorrect Results Format');
+end
+
+first = subplotIndices(featureChoice) + titleSpace;
+last = subplotIndices(featureChoice+1) -1 + titleSpace;
 range = first:last;
 
-ax = subplot(numSpots+2,1,first:last);
+ax = subplot(numSpots+titleSpace,1,first:last);
 bar(dataMax', 'FaceColor', 'flat'); hold on;
 xticklabels(categories); ylim([-1 1]);
-title([' Bar Plot for LFP MD Model | ', currentFormat]);
+title(currentFeature);
 
-if formatChoice == 1
+if featureChoice == 1
 originalSize1 = get(gca, 'Position');
 legend(learners,'Location','northoutside');
 set(ax, 'Position', originalSize1);
 end
 end
 
-sgtitle(features{fChoice},'fontweight','bold','FontSize',20)
+sgtitle('Bar Plot for LFP MD Model','fontweight','bold','FontSize',20)
 
-saveas(f2,fullfile(figDir2,[features{fChoice},'.png']));
+saveas(f2,fullfile(figDir2,['Bar Plot_',dateTime{1},'.png']));
 close all;
-end
 
 else
     error('No Results Found');
 end
-
 
 
 

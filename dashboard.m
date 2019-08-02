@@ -7,17 +7,14 @@
 clear; clc; close all;
 
 %% Function Path
-addpath(genpath('C:\SuperUser\Documents\GitHub\LFP-Memory-Decoding'));
-
-%% NPMK Path
-addpath(genpath('E:\Useful MATLAB Scripts\NPMK'));
+addpath(genpath('C:\Users\flynn\Documents\Github\LFP-Memory-Decoding'));
 
 %% Core Choices
 dataChoices = {'ClipArt2'}; % ClipArt2 | Recording003 | Rat_Data | Other
     % Additional data filepaths can be specified in HHDataStructure.m
     % Many other parameters hardcoded in runPipeline.m
     
-dataFormat = {'thetaSignal','alphaSignal','betaSignal','lowGammaSignal','highGammaSignal'}; 
+dataFormat = {'Spectrum','Signal','thetaSpectrum','alphaSpectrum','betaSpectrum','lowGammaSpectrum','highGammaSpectrum','thetaSignal','alphaSignal','betaSignal','lowGammaSignal','highGammaSignal'}; 
 
 mlScope = {'MCA'}; 
 % MCA | CA1 | CA3
