@@ -27,7 +27,16 @@ if ~isempty(regexpi(choiceFull,'Spectrum','ONCE'))
         else
             dataToInterval = HHData.ML.(choiceFull);
         end
-[dataML.(choiceFull), HHData.Data.Intervals.Times] = makeIntervals(dataToInterval,HHData.Events.(centerEvent),HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SpectrumTime,'Spectrum'); 
+        centers = HHData.Events.(centerEvent);
+        
+        if parameters.Channels.quickDebug
+            numIntervals = 3;
+        else
+        numIntervals = length(centers);
+        end
+        
+        
+[dataML.(choiceFull), HHData.Data.Intervals.Times] = makeIntervals(dataToInterval,centers(1:numIntervals),HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SpectrumTime,'Spectrum'); 
 %% Just Spectrum  
     else
         form = 'Spectrum';
@@ -36,7 +45,15 @@ if ~isempty(regexpi(choiceFull,'Spectrum','ONCE'))
         else
             dataToInterval = HHData.Data.LFP.Spectrum;
        end
-[dataML.(choiceFull), HHData.Data.Intervals.Times] = makeIntervals(dataToInterval,HHData.Events.(centerEvent),HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SpectrumTime,'Spectrum'); 
+centers = HHData.Events.(centerEvent);
+
+        if parameters.Channels.quickDebug
+            numIntervals = 3;
+        else
+        numIntervals = length(centers);
+        end
+        
+[dataML.(choiceFull), HHData.Data.Intervals.Times] = makeIntervals(dataToInterval,centers(1:numIntervals),HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SpectrumTime,'Spectrum'); 
     end
 end
 
@@ -55,7 +72,15 @@ if ~isempty(regexpi(choiceFull,'Signal','ONCE'))
         else
             dataToInterval = HHData.ML.(choiceFull);
         end
-        [dataML.(choiceFull),HHData.Data.Intervals.Times] = makeIntervals(dataToInterval,HHData.Events.(centerEvent),HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SamplingFrequency,'Signal'); 
+        centers = HHData.Events.(centerEvent);
+        
+                if parameters.Channels.quickDebug
+            numIntervals = 3;
+        else
+        numIntervals = length(centers);
+                end
+        
+        [dataML.(choiceFull),HHData.Data.Intervals.Times] = makeIntervals(dataToInterval,centers(1:numIntervals),HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SamplingFrequency,'Signal'); 
 
         
 %% Just Signal
@@ -64,8 +89,16 @@ if ~isempty(regexpi(choiceFull,'Signal','ONCE'))
             dataToInterval = normalize(HHData.Data.LFP.LFP,'STFT',form);
         else
             dataToInterval = HHData.Data.LFP.LFP;
-        end
-[dataML.(choiceFull),HHData.Data.Intervals.Times] = makeIntervals(dataToInterval,HHData.Events.(centerEvent),HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SamplingFrequency,'Signal'); 
+       end
+        centers = HHData.Events.(centerEvent);
+        
+                if parameters.Channels.quickDebug
+            numIntervals = 3;
+        else
+        numIntervals = length(centers);
+                end
+        
+[dataML.(choiceFull),HHData.Data.Intervals.Times] = makeIntervals(dataToInterval,centers(1:numIntervals),HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SamplingFrequency,'Signal'); 
      end
     clear dataToInterval
 end

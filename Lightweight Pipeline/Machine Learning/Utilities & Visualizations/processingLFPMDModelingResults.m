@@ -131,7 +131,7 @@ set(ax, 'Position', originalSize1);
 end
 end
 
-sgtitle(features{fChoice},'fontweight','bold','FontSize','20')
+sgtitle(features{fChoice},'fontweight','bold','FontSize',20)
 
 saveas(f2,fullfile(figDir2,[features{fChoice},'.png']));
 close all;
