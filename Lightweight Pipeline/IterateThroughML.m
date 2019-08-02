@@ -241,7 +241,7 @@ end
                 if ~exist(resultsDir,'dir')
                 mkdir(resultsDir);
                 end
-
+                 delete(fullfile(resultsDi,'singleTestResult_*.mat')); 
                 save(fullfile(resultsDir,['singleTestResult_',datestr(now,'mm-dd-yyyy HH-MM'),'.mat']), 'cResults', '-v7.3');
                 end
                     
