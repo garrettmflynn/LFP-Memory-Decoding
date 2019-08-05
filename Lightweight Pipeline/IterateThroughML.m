@@ -23,7 +23,7 @@ if exist('dataML', 'var')
      if ~isempty(match)
  supervisedMethods(algIter) =  match;
      end
-     end
+end
  supervisedMethods = (sum(supervisedMethods)) > 0;
  imageMethods = ~isempty(cell2mat(regexpi(mlAlgorithms,{'CNN_SVM'})));
  
@@ -34,13 +34,13 @@ if exist('dataML', 'var')
             collectMCC = [];
         end
         
-        if kMeans
-            kResultsDir =  fullfile(parameters.Directories.filePath,['kMeans Results [-',num2str(range),' ',num2str(range),']']);
-            saveBars = fullfile(parameters.Directories.filePath,'MCC Bar Plots');
-            
-            realClust = realClusters(dataML.Labels);
-            savePCAViz = fullfile(parameters.Directories.filePath,'PCA Scatter Plots');
-        end
+%         if kMeans
+%             kResultsDir =  fullfile(parameters.Directories.filePath,['kMeans Results [-',num2str(range),' ',num2str(range),']']);
+%             saveBars = fullfile(parameters.Directories.filePath,'MCC Bar Plots');
+%             
+%             realClust = realClusters(dataML.Labels);
+%             savePCAViz = fullfile(parameters.Directories.filePath,'PCA Scatter Plots');
+%         end
         
         count = 1;
         
@@ -241,7 +241,7 @@ end
                 if ~exist(resultsDir,'dir')
                 mkdir(resultsDir);
                 end
-                 delete(fullfile(resultsDi,'singleTestResult_*.mat')); 
+                 delete(fullfile(resultsDir,'singleTestResult_*.mat')); 
                 save(fullfile(resultsDir,['singleTestResult_',datestr(now,'mm-dd-yyyy HH-MM'),'.mat']), 'cResults', '-v7.3');
                 end
                     
@@ -255,10 +255,6 @@ end
             %% Organize Results
             if kMeans 
                 %kSave
-            end
-            if supervisedMethods
-                %classSave;
-                %visualizeClassifierPerformance(cResults,norm(iter),fullfile(resultsDir,['MCCs for ',feature]));
             end
     clear cResults
     clear kResults

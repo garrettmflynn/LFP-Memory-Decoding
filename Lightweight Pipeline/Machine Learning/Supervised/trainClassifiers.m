@@ -136,9 +136,7 @@ for learner = 1:length(usableAlgorithms)
                 
                 %conf = confusionchart(labelCache,realPredicts);
             end
-        end
-
-        %% Save MCC
+%% Save MCC
 % outMCCs STRUCTURE
 %   1D = Learners;
 %   2D = Labels;
@@ -147,6 +145,8 @@ for learner = 1:length(usableAlgorithms)
 %   5D = Current Bspline Resolution
 
             collectMCC(learner,categoriesToTrain,featureCase,pcaCoeff,bRes) = currentMCC;
+        end
+
             
     end
 end

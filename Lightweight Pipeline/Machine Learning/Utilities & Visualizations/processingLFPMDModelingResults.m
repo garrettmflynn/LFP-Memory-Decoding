@@ -5,6 +5,9 @@
 % Date: 29/07/2019
 
 
+if ~exist('resultsDir', 'var')
+    resultsDir = 'C:\Users\flynn\OneDrive - University of Southern California\Office\LFP Decoding\ClipArt_2\Classifier Results [-1 1]';
+end
 
 figDir = fullfile(resultsDir,'MCC Figures','Resolutions');
 if ~exist(figDir,'dir')
