@@ -34,14 +34,6 @@ end
             collectMCC = [];
         end
         
-%         if kMeans
-%             kResultsDir =  fullfile(parameters.Directories.filePath,['kMeans Results [-',num2str(range),' ',num2str(range),']']);
-%             saveBars = fullfile(parameters.Directories.filePath,'MCC Bar Plots');
-%             
-%             realClust = realClusters(dataML.Labels);
-%             savePCAViz = fullfile(parameters.Directories.filePath,'PCA Scatter Plots');
-%         end
-        
         count = 1;
         
         channelStandard = dataML.Channels.sChannels;
@@ -216,17 +208,6 @@ end
 
                     
                     %% Classification Section
-                    
-                    % Run K-Means: Does not work with new feature set
-%                     if kMeans
-%                         quickSNE
-%                         [kResults.(name).(featureCounter).clusterIndices] = kMeansClustering(featureMatrix,name);
-%                         saveBarsFull = fullfile(saveBars,name,featureCounter);
-%                         [kResults.(name).(featureCounter).MCC,kResults.(name).(featureCounter).MCC_Categories,~,~] = parseClusterAssignments(featureMatrix,kResults.(name).(featureCounter).clusterIndices, name,{featureMatrix.Labels,retained,name,norm(iter),saveBarsFull});
-%                         count = count + 1;
-%                     end
-                    
-                  % Run Supervised Classifiers
                     if supervisedMethods
                         [collectMCC,learners, categories,featureCases] = trainClassifiers(featureMatrix,mlAlgorithms,collectMCC,coeffCount,resCount);
                         cResults.(name) = collectMCC;
@@ -252,47 +233,280 @@ end
                 end
             end
             
-            %% Organize Results
-            if kMeans 
-                %kSave
-            end
     clear cResults
     clear kResults
             
 end
 
-%% PCA 2D/3D Visualizations
+%% Bspline Utilities
+function b = bspline(dp, i, L)% dp- order, i- knots, L- length
+t = linspace(0,1,L+1); % range of data
+t = t(2:end);
 
-%[kResults.(name).(featureCounter).MCC,kResults.(name).(featureCounter).MCC_Categories,collectedClusterings(:,count),excluded{count}] = parseClusterAssignments(featureMatrix,kResults.(name).(featureCounter).clusterIndices, name,{featureMatrix.Labels,retained,name,norm(iter),saveBarsFull});
-%                             if coeffRanks_to_retain ==  2
-%                                 PCA2CountMCA = count;
-%                             elseif coeffRanks_to_retain ==  3
-%                                 for len = 1:size(collectedClusterings,1)
-%                                     orderedClustersMCA_PCA = [collectedClusterings(len,PCA2CountMCA) , collectedClusterings(len,count)];
-%                                     excludedMCA_PCA = {excluded{PCA2CountMCA} , excluded{count}};
-%                                     label = 'All Above';
-%                                     createPCAVisualizations(scoreMCA,orderedClustersMCA_PCA,['MCA ' ,label,' ', num2str(nIters-(len-1))],norm(iter),fullfile(savePCAViz,['MCA_' label]),excludedMCA_PCA);
-%                                     createPCAVisualizations_RealClusters(scoreMCA,realClust,'MCA Correct Cluster',norm(iter),fullfile(savePCAViz,['CorrectMCA_' label]),fieldnames(dataML.Labels));
-%                                     
-%                                 end
-%                             end
-%                             count = count + 1;
-            
-            
+s = linspace(0,1,i);% knot sequence
+nknots = length(s); % number of knots
+
+knots=augknt(s,dp); % knot points
+colmat=spcol(knots,dp,brk2knt(t,3));
+b=colmat(1:3:end,:); % B-spline basis functions
+end
+
+function P = InputTensor2BSplineFeatureMatrix(inputTensor,m,d)
+% Convert input tensor to B-spline feature matrix
+% inputTensor: # of trials * time interval window * # of neurons
+% m: # of B-Spline knots, resolution
+% d: B-Spline order, default 2 or 3
+% Author: Xiwei She
+
+% Get tensor dimension
+[NP,L,N] = size(inputTensor);
+
+% Generate B-splines
+b = bspline(d+1,m+2,L);
+Nb = m+d+1;
+
+P = zeros(NP,Nb*N);
+
+for i = 1:NP
+    PSpike = squeeze(inputTensor(i,:,:))';
+    PSplineM = PSpike*b;
+    PSplineV = reshape(PSplineM',Nb*N,1)';
+    P(i,:) = PSplineV;
+end
+end
+
+function b =spl(dp,i)% dp- order, i- knots
+t = linspace(0,1,2001); % range of data
+t = t(2:end);
+
+s = linspace(0,1,i);% knot sequence
+nknots = length(s); % number of knots
+
+knots=augknt(s,dp); % knot points
+colmat=spcol(knots,dp,brk2knt(t,3));
+b=colmat(1:3:end,:); % B-spline basis functions
+end
+
+function P = Train2Tensor(X, E, L)
+% X: spike trains with 2ms resolution
+% E: event timings in sec
+% L: number of bins in pattern tensor
+
+[Len, N] = size(X);
+NumTrial = length(E);
+
+P = zeros(NumTrial,L+1,N); % spike tensor % NumTrial - # of trials(Sample_response); L+1 - Length of bin window; N - # of Channels(CA3+CA1)
+
+for i = 1:NumTrial
+    t = round(E(i)*500);
+    tmin = t - L/2;
+    tmax = t + L/2;
+    a = X(tmin:tmax,:);
+    P(i,:,:) = a;
+end
+end
+
+
+%% Supervised Classification Functions
+function [collectMCC,usableAlgorithms,fieldLabels,caseNames] = trainClassifiers(featureMatrix,mlAlgorithms,collectMCC,pcaCoeff,bRes);
+% This function uses supervised methods to classify LFP data
+
+                                                                            % Project: USC RAM
+                                                                            % Author: Garrett Flynn
+                                                                            % Date: July 26th, 2019
+
+
+close all;
+
+wrong = featureMatrix.WrongResponse;
+
+% Remove K-Means from Algorithm Choices
+notK = find(~ismember(mlAlgorithms,'kMeans'));
+sizeDiff = length(mlAlgorithms) - length(notK);
+if sizeDiff > 0
+    usableAlgorithms = cell(1,sizeDiff);
+for ii = 1:length(notK)
+usableAlgorithms{ii} = mlAlgorithms{notK(ii)};
+end
+else
+    usableAlgorithms = mlAlgorithms;
+end
     
-    
-%% CNN For Feature Selection (on hiatus)
-%     if CNN_SVM
-%         CNN_Pipeline;
-%         processAllClassestoResults(results,'CNN_SVM');
-%         supervisedDir = fullfile(parameters.Directories.filePath,'CNN Results');
-%         
-%         if ~exist(supervisedDir,'dir')
-%             mkdir(supervisedDir);
-%         end
-%         if norm(iter) == 1
-%             save(fullfile(supervisedDir,[parameters.Directories.dataName, 'ResultsNorm.mat']),'results');
-%         else
-%             save(fullfile(supervisedDir,[parameters.Directories.dataName, 'Results.mat']),'results');
-%         end
-%     end
+caseNames = fieldnames(featureMatrix.Data);
+numCases = length(caseNames);
+for featureCase = 1:numCases 
+
+currentCase = caseNames{featureCase};
+currentData = featureMatrix.Data.(currentCase);
+
+% Extract Correct Trials
+allVec = 1:size(currentData,1);
+matrixToProcess = currentData(allVec~=wrong,:);
+
+
+%% Begin Label Loop
+fields = fieldnames(featureMatrix.Labels);
+fieldLabels = erase(fields,'Label_');
+labels = cell(size(featureMatrix.Labels.(fields{1}),1),1);
+numTrials = size(featureMatrix.Labels.(fields{1}),1);
+labels = labelMaker(fields);
+
+for learner = 1:length(usableAlgorithms)
+    fprintf(['Learner: ',usableAlgorithms{learner},'\n']);
+    for categoriesToTrain = 1:length(fieldLabels)
+        fprintf(['\t',fields{categoriesToTrain},'\n']);
+        labelCache = cell(numTrials,1);
+        currentField = fieldLabels{categoriesToTrain};
+        for qq = 1:numTrials
+            if strfind(labels{qq},currentField)
+                labelCache{qq} = currentField;
+            else
+                labelCache{qq} = ['~',currentField];
+            end
+        end
+        
+        labelCache = labelCache(allVec~=wrong);
+        labelCacheCat = categorical(labelCache);
+        clear classifier
+        %% Custom Loss Function
+        %         binaryLabels = ismember(labelCache,currentField);
+        %               crossEntropy = @(~,S,~,~)mean(min(-S,[],2));
+        
+        %% Begin Model Testing
+            if ~strcmpi(usableAlgorithms{learner},'LassoGLM')
+                % Linear Lasso
+                if strcmpi(usableAlgorithms{learner},'linear')
+                    ourLinear = templateLinear('Learner','svm','Regularization','lasso');
+                    classifier = fitcecoc(matrixToProcess', labelCacheCat, ...
+                        'Learners', ourLinear,'ObservationsIn', 'columns','Kfold',10);
+                    clear ourLinear
+                    % KNN
+                elseif strcmpi(usableAlgorithms{learner},'knn')
+                    ourKNN = templateKNN('NSMethod','exhaustive','Distance','cosine');
+                    classifier = fitcecoc(matrixToProcess', labelCacheCat, ...
+                        'Learners', ourKNN,'ObservationsIn', 'columns','Kfold',10);
+                    clear ourKNN
+                    % RusBoost (unbalanced classes)
+                elseif strcmpi(usableAlgorithms{learner},'RUSBoost')
+                    N = ceil(length(labelCacheCat)/10);         % Number of observations in training samples
+                    t = templateTree('MaxNumSplits',N);
+                    classifier = fitcensemble(matrixToProcess,labelCacheCat,'Method',usableAlgorithms{learner}, ...
+                        'NumLearningCycles',1000,'Learners',t,'LearnRate',0.1,'nprint',100,'KFold',10);
+                    clear t
+                else
+                    % SVM, Trees, Kernel, or Bayes
+                    classifier = fitcecoc(matrixToProcess', labelCacheCat, ...
+                        'Learners', usableAlgorithms{learner},'ObservationsIn', 'columns','Kfold',10);
+                end
+
+                predictedLabels = kfoldPredict(classifier);
+                testLabels =  labelCacheCat;
+                
+                % Confusion Matrix Results
+                [confMat,~] = confusionmat(testLabels, predictedLabels);
+                %conf = confusionchart(testLabels,predictedLabels);
+                currentMCC  = ML_MCC(confMat);
+                
+                 disp([currentCase,'Case | Confusion matrix: ']);
+                disp(confMat);
+                disp([currentCase, 'Case | MCC = ', mat2str(currentMCC)]);
+                
+                % Lasso GLM
+            else
+                binaryLabels = ismember(labelCacheCat,currentField);
+                [Coefficients, FitInfo] = lassoglm(matrixToProcess, binaryLabels, 'binomial','MaxIter',25,'CV', 10,'Lambda',power(10,0:-.1:-2));
+                legend('show') % Show legend
+                %lp = lassoPlot(Coefficients,FitInfo,'plottype','CV');
+                
+                % Predict
+                indx = FitInfo.IndexMinDeviance;
+                cnst = FitInfo.Intercept(indx);
+                B0 = Coefficients(:,indx);
+                B1 = [cnst;B0];
+                predictions = glmval(B1,matrixToProcess,'logit');
+                
+                lassoPredictions = (predictions >= .5);
+                predSize = length(predictions);
+                realPredicts = cell(1,predSize);
+                for ii = 1:predSize
+                    if lassoPredictions(ii)
+                        realPredicts{ii} = currentField;
+                    else
+                        realPredicts{ii} = ['~',currentField];
+                    end
+                end
+                [confMat,~] = confusionmat(labelCache, realPredicts);
+                currentMCC  = ML_MCC(confMat);
+                
+                 disp([currentCase,'Case | Confusion matrix: ']);
+                disp(confMat);
+                disp([currentCase, 'Case | MCC = ', mat2str(currentMCC)]);
+                
+                %conf = confusionchart(labelCache,realPredicts);
+            end
+%% Save MCC
+% outMCCs STRUCTURE
+%   1D = Learners;
+%   2D = Labels;
+%   3D = Input Feature Type;
+%   4D = Current PCA Coefficient
+%   5D = Current Bspline Resolution
+
+            collectMCC(learner,categoriesToTrain,featureCase,pcaCoeff,bRes) = currentMCC;
+        end
+
+            
+    end
+end
+end
+
+function [labels] = labelMaker(fields)
+fprintf('Making Labels\n');
+%fields = fieldnames(dataML.Labels);
+% fieldLabels = erase(fields,'Label_');
+% labels = cell(size(dataML.Labels.(fields{1}),1),1);
+% numTrials = size(dataML.Labels.(fields{1}),1);
+for jj = 1:length(fields)
+    currentField = featureMatrix.Labels.(fields{jj});
+    for qq = 1:size(currentField,1)
+        if currentField(qq) == 1
+            if ~isempty(labels{qq})
+                labels{qq} = [labels{qq} '_' fieldLabels{jj}] ;
+            else
+                labels{qq} = fieldLabels{jj};
+            end
+        end    
+    end
+end
+
+for qq = 1:size(currentField,1)
+if isempty(labels{qq});
+    zero = qq;
+    labels{zero} = 'None';
+end
+end
+end
+
+function [MCC] = ML_MCC(confMat)
+% Determine MCCs from ML Confusion Matrix Outputs
+
+topLeft = confMat(1,1);
+bottomLeft = confMat(2,1);
+topRight = confMat(1,2);
+bottomRight = confMat(2,2);
+
+true1 = topLeft;
+true2 = bottomRight;
+false1 = bottomLeft;
+false2 = topRight;
+
+denominator = sqrt((true1+false1)*(true1+false2)*(true2+false1)*(true2+false2));
+
+if denominator ~= 0
+MCC = ((true1*true2)-(false1*false2))/denominator;
+else
+MCC = 0;
+end
+
+end
+   

@@ -1,2 +1,3 @@
-[submodule "Lightweight Pipeline/Data Structure/File Reading/NPMK"]
+[submodule "CoreUtilities/NPMK"]
+	path = CoreUtilities/NPMK
 	url = https://github.com/BlackrockMicrosystems/NPMK
