@@ -5,7 +5,7 @@
 
 % IT IS ESSENTIAL TO SPECIFY SIGNAL AND SPECTRUM INPUTS, AS WELL AS UNITS + RANGES
          for qq = 1:size(dataToInterval,3)
-          Signal_Spectrum_Events_Polygons({HHData.Data.LFP.LFP(qq,:),dataToInterval(:,:,qq)}, HHData.Events,parameters,HHData.Channels.sChannels(qq),HHData.Data.Intervals.Times,'Z-Scores', [-5,5], fullfile(parameters.Directories.filePath,['Signal-Spectrum-Events (NewColormap % from Log)'],['Channel' num2str(HHData.Channels.sChannels(qq))]));
+          Signal_Spectrum_Events_Polygons({HHData.Data.LFP.LFP(qq,:),dataToInterval(:,:,qq)}, HHData.Events,parameters,HHData.Channels.sChannels(qq),HHData.Data.Intervals.Times,'Z-Scores', [-5,5], fullfile(parameters.Directories.filePath,['Signal-Spectrum-Events (NewColormap z from log)'],['Channel' num2str(HHData.Channels.sChannels(qq))]));
          end
          
 

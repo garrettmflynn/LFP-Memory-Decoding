@@ -23,7 +23,7 @@ if ~isempty(regexpi(choiceFull,'Spectrum','ONCE'))
         spectrumFrequencies = HHData.Data.Parameters.SpectrumFrequencies;
         [HHData] = bandSpectrum(HHData,spectrumFrequencies,bandType,parameters.Choices.bandAveragedPower);
         if norm(iter) 
-            dataToInterval = normalize(HHData.ML.(choiceFull),'STFT',form);
+            dataToInterval = normalize(HHData.ML.(choiceFull),'STFT',form,output);
         else
             dataToInterval = HHData.ML.(choiceFull);
         end
@@ -88,7 +88,7 @@ if ~isempty(regexpi(choiceFull,'Signal','ONCE'))
 %% Just Signal
      else
        if norm(iter) 
-            dataToInterval = normalize(HHData.Data.LFP.LFP,'STFT',form);
+            dataToInterval = normalize(HHData.Data.LFP.LFP,'STFT',form,output);
         else
             dataToInterval = HHData.Data.LFP.LFP;
        end
