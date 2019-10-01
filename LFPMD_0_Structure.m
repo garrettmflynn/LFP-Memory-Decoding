@@ -70,7 +70,6 @@ parameters.Optional.methods = tf_method{1}; % Either Morlet or STFT Window (such
 parameters.Choices.freqMin = 1; % Minimum Frequency of Interest (Hz)
 parameters.Choices.freqMax = 150; % Maximum Frequency of Interest (Hz)
 parameters.Choices.freqBin = fB(1); % Frequency Bin Width (Hz)
-parameters.Choices.timeBin = tB(1)/2000;  % Time Bin Width (s)
 parameters.Choices.trialWindow = [-range range]; % Trial Interval Window
 parameters.Filters.lowPass = 250; % Low Pass Filter Frequency (Hz)
 parameters.Choices.downSample = downSample; % Samples/s
@@ -119,6 +118,8 @@ else
     error('No Sampling Frequency Found in Neural Data Structure');
 end
 
+parameters.Choices.timeBin = tB(1)/2000;  % Time Bin Width (s)
+
 if notchOn
 parameters.Filters.notchFilter = designfilt('bandstopiir','FilterOrder',2, ...
     'HalfPowerFrequency1',59,'HalfPowerFrequency2',61, ...
@@ -126,7 +127,7 @@ parameters.Filters.notchFilter = designfilt('bandstopiir','FilterOrder',2, ...
 end
 
 parameters.Derived.freq = linspace(parameters.Choices.freqMin, parameters.Choices.freqMax, ((parameters.Choices.freqMax-parameters.Choices.freqMin)+1)/parameters.Choices.freqBin);
-parameters.Derived.overlap = round((parameters.Choices.timeBin * parameters.Derived.samplingFreq)/1.5);
+%parameters.Derived.overlap = round((parameters.Choices.timeBin * parameters.Derived.samplingFreq))%/1.5);
 
 % (1) Multi-Session Configuration
 if size(neuralData.Data,1) == 1
@@ -465,14 +466,15 @@ function [spectrum,time,freq] = makeSpectrum(inputData,parameters)
 
 freq = parameters.Derived.freq;
 winSize = parameters.Choices.timeBin * parameters.Derived.samplingFreq;
-overlap = (parameters.Derived.overlap);
+%overlap = (parameters.Derived.overlap);
 
 numChannels = size(inputData,1);
 
 for channels = 1:numChannels
     % Hanning Window
-            [~,~,t, PSDs, ~, ~] = spectrogram(inputData(1,:),hann(winSize),overlap,freq, parameters.Derived.samplingFreq,'yaxis');
-            spectrum(:,:,channels) = PSDs;
+            [~,~,t, PSDs, ~, ~] = spectrogram(inputData(1,:),hann(winSize),[],freq, parameters.Derived.samplingFreq,'yaxis');
+            % Automatically convert PSD units to dB
+            spectrum(:,:,channels) = 10*log10(PSDs);
             clear PSDs
             if channels == 1 
             time = t;

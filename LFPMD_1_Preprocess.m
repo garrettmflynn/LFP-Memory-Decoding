@@ -41,7 +41,7 @@ if ~isempty(regexpi(choiceFull,'Spectrum','ONCE'))
     else
         form = 'Spectrum';
        if norm(iter) 
-            dataToInterval = normalize(HHData.Data.LFP.Spectrum,'STFT',form);
+            [dataToInterval] = normalize(HHData.Data.LFP.Spectrum,'STFT',form,output);
         else
             dataToInterval = HHData.Data.LFP.Spectrum;
        end
@@ -53,8 +53,10 @@ centers = HHData.Events.(centerEvent);
         numIntervals = length(centers);
         end
         
-[dataML.(choiceFull), HHData.Data.Intervals.Times] = makeIntervals(dataToInterval,centers(1:numIntervals),HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SpectrumTime,'Spectrum'); 
+        [dataML.(choiceFull), HHData.Data.Intervals.Times] = makeIntervals(dataToInterval,centers(1:numIntervals),HHData.Data.Parameters.Choices.trialWindow,HHData.Data.Parameters.SpectrumTime,'Spectrum');
     end
+    
+    
 end
 
 
@@ -206,7 +208,7 @@ end
 end
 
 %% Normalize
-function [norm] = normalize(LFP_Data,dataMethod,dataFormat)
+function [norm] = normalize(LFP_Data,dataMethod,dataFormat,outputFormat)
 if strncmp(dataMethod,'STFT',4)
 switch dataFormat
 
@@ -214,40 +216,67 @@ switch dataFormat
    case 'Signal'
 for channels = 1:size(LFP_Data,1)
     channelMu = mean(LFP_Data(channels,:));
+    freqSig = std(LFP_Data(channels,:));   
     inputToModify = LFP_Data(channels,:);
-    LFP_Signal_PctChange(channels,:) = 100*(inputToModify - channelMu)/channelMu;
+    if strcmp(outputFormat,'percentChange')
+    LFP_Signal(channels,:) = 100*(inputToModify - channelMu)/channelMu;
+    end
+    if strcmp(outputFormat,'zScore')
+       LFP_Signal(channels,:) = (inputToModify - channelMu)/freqSig;
+    end
 end
-norm = LFP_Signal_PctChange;
+norm = LFP_Signal;
     %% Spectrum | STFT | MultiChannel | Percent Change
     case 'Spectrum'
-            fprintf('Now Creating ZScore Data\n');
+            fprintf('Now Creating Normalized Data\n');
             if ndims(squeeze(LFP_Data)) == 3
                 
-                frequencyMu = squeeze(mean(permute(LFP_Data,[2,1,3])));                
+                frequencyMu = squeeze(mean(permute(LFP_Data,[2,1,3])));   
+                freqSig = squeeze(std(permute(LFP_Data,[2,1,3])));     
                 for channels = 1:size(LFP_Data,3)
                     
-                    LFP_Spectrum_PctChange(:,:,channels) = 100*(LFP_Data(:,:,channels) - frequencyMu(:,channels))./frequencyMu(:,channels);
+                    if strcmp(outputFormat,'percentChange')
+                    LFP_Spectrum(:,:,channels) = 100*(LFP_Data(:,:,channels) - frequencyMu(:,channels))./frequencyMu(:,channels);
+                    end
+                    if strcmp(outputFormat,'zScore')
+                    LFP_Spectrum(:,:,channels) = (LFP_Data(:,:,channels) - frequencyMu(:,channels))./freqSig(:,channels);
+                    end
                 end
                 
        %% Spectrum | STFT | Single Channel | Percent Change
             else
+                if strcmp(outputFormat,'percentChange')
                 frequencyMu = squeeze(mean(LFP_Data'));
-                                LFP_Spectrum_PctChange = 100*(LFP_Data' - frequencyMu)./frequencyMu;
+                freqSig = squeeze(std(LFP_Data'));     
+                  LFP_Spectrum = 100*(LFP_Data' - frequencyMu)./frequencyMu;
+                  end
+                if strcmp(outputFormat,'zScore')
+                     LFP_Spectrum = (LFP_Data' - frequencyMu)./freqSig;
+                end
+                    
             end
             
-            norm = LFP_Spectrum_PctChange;
+            norm = LFP_Spectrum;
+
             
             
     case 'bandSpectrum'
         processableData = squeeze(LFP_Data);
         frequencyMu = squeeze(mean(processableData));
+        freqSig = squeeze(std(processableData));
         
         [f,t,c] = size(LFP_Data);
+         if strcmp(outputFormat,'percentChange')
+                LFP_Spectrum = zeros(f,t,c);
+                LFP_Spectrum(1:f,:,:) = 100*(processableData - frequencyMu)./frequencyMu;
+         end
+         if strcmp(outputFormat,'zScore')
+                LFP_Spectrum = zeros(f,t,c);
+                LFP_Spectrum(1:f,:,:) = 100*(processableData - frequencyMu)./freqSig;
+                end
          
-                LFP_Spectrum_PctChange = zeros(f,t,c);
-                LFP_Spectrum_PctChange(1:f,:,:) = 100*(processableData - frequencyMu)./frequencyMu;
-        
-        norm = LFP_Spectrum_PctChange;
+         
+        norm = LFP_Spectrum;
 end       
 end
 end

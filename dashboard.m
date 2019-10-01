@@ -14,7 +14,7 @@ dataChoices = {'ClipArt2'}; % ClipArt2 | Recording003 | Rat_Data | Other
     % Additional data filepaths can be specified in HHDataStructure.m
     % Many other parameters hardcoded in runPipeline.m
     
-dataFormat = {'Spectrum','Signal','thetaSpectrum','alphaSpectrum','betaSpectrum','lowGammaSpectrum','highGammaSpectrum','thetaSignal','alphaSignal','betaSignal','lowGammaSignal','highGammaSignal'}; 
+dataFormat = {'Spectrum','Signal'};%,'thetaSpectrum','alphaSpectrum','betaSpectrum','lowGammaSpectrum','highGammaSpectrum','thetaSignal','alphaSignal','betaSignal','lowGammaSignal','highGammaSignal'}; 
 
 mlScope = {'MCA'}; 
 % MCA | CA1 | CA3
@@ -37,8 +37,9 @@ bandAveragedPower = 1; % Currently only when bands are specified
 notchOn = 0;
 downSample = []; %Samples/s (500 is ideal for our frequency range)
 norm = 1;
+output = 'zScore'; % Or 'percentChange'
 tf_method = {'Hanning'};
-tB = 100;
+tB = 200; % 100 ms
 fB = .5;
 
 if ~bspline

@@ -1,8 +1,12 @@
 
 %% Data Visualization (optional)
-%         for qq = 1:size(HHData.Data.LFP.Spectrum,3)
-%          Signal_Spectrum_Events_Polygons({HHData.Data.LFP.LFP(qq,:),HHData.Data.LFP.Spectrum(:,:,qq)}, HHData.Events,parameters,HHData.Channels.sChannels(qq),HHData.Data.Intervals.Times,'% Change', [-500,500], fullfile(parameters.Directories.filePath,['Signal-Spectrum-Events'],['Channel' num2str(HHData.Channels.sChannels(qq))]),0);
-%         end
+
+ typeViz = 'Spectrum';
+
+% IT IS ESSENTIAL TO SPECIFY SIGNAL AND SPECTRUM INPUTS, AS WELL AS UNITS + RANGES
+         for qq = 1:size(dataToInterval,3)
+          Signal_Spectrum_Events_Polygons({HHData.Data.LFP.LFP(qq,:),dataToInterval(:,:,qq)}, HHData.Events,parameters,HHData.Channels.sChannels(qq),HHData.Data.Intervals.Times,'Z-Scores', [-5,5], fullfile(parameters.Directories.filePath,['Signal-Spectrum-Events (NewColormap % from Log)'],['Channel' num2str(HHData.Channels.sChannels(qq))]));
+         end
          
 
 %% Results Visualization
@@ -239,19 +243,19 @@ fullRange = [allEvents.FOCUS_ON(1), allEvents.MATCH_RESPONSE(end)];
     
             originalSize1 = get(gca, 'Position');
             
-            % Convert to Decibels If Not Already Done
-            if ~logSignal
-                 imagesc([0 length(dataSignalLFP)],freq,spectralData);
-            else
-               imagesc([0 length(dataSignalLFP)],freq,(10*log10(spectralData)));
-            end
+            % Plot the Image
+            imagesc([0 length(dataSignalLFP)],freq,spectralData);
+
             set(gca,'ydir','normal');
             ytickskip = 20:40:length(freq);
             newTicks = (round(freq(ytickskip)));
             yticks(newTicks)
             yticklabels(cellstr(num2str(round((newTicks')))));
+            xticks(fs*[0:10:parameters.Derived.durationSeconds]);
+            xticklabels((xticks/fs))
+            xlabel('Time (s)');
             hcb2=colorbar;
-            colormap jet;
+            colormap(redblue);
             ylabel(hcb2,colorUnit);
             caxis(clims);
             ylabel('Frequency') ;
@@ -271,9 +275,6 @@ for iWin = 1:intervalWindows
    
 % Shift Signal
 
-
-
-
    set(figFull,'CurrentAxes',h(2));
    xlim([(allEvents.FOCUS_ON(start)-1)*fs, (allEvents.MATCH_RESPONSE(stop)+1)*fs]);
    originalSize2 = get(gca, 'Position');
@@ -282,7 +283,7 @@ for iWin = 1:intervalWindows
    patch('Faces',polyStructure.Blocks.polyF,'Vertices',polyStructure.Blocks.polyV,'FaceColor',[0 0 0], 'FaceAlpha',.1); hold on;
    fields = fieldnames(polyStructure.Events);
    numF = length(fields);
-   colors = parula(numF);
+   colors = winter(numF);
 
    for ii = 1:numF
        currentField = fields{ii};
@@ -384,5 +385,38 @@ rasterPolygons.Bounds.bottomY = bottomY;
 end
 end
 
-
-
+function c = redblue(m)
+%REDBLUE    Shades of red and blue color map
+%   REDBLUE(M), is an M-by-3 matrix that defines a colormap.
+%   The colors begin with bright blue, range through shades of
+%   blue to white, and then through shades of red to bright red.
+%   REDBLUE, by itself, is the same length as the current figure's
+%   colormap. If no figure exists, MATLAB creates one.
+%
+%   For example, to reset the colormap of the current figure:
+%
+%             colormap(redblue)
+%
+%   See also HSV, GRAY, HOT, BONE, COPPER, PINK, FLAG, 
+%   COLORMAP, RGBPLOT.
+%   Adam Auton, 9th October 2009
+if nargin < 1, m = size(get(gcf,'colormap'),1); end
+if (mod(m,2) == 0)
+    % From [0 0 1] to [1 1 1], then [1 1 1] to [1 0 0];
+    m1 = m*0.5;
+    r = (0:m1-1)'/max(m1-1,1);
+    g = r;
+    r = [r; ones(m1,1)];
+    g = [g; flipud(g)];
+    b = flipud(r);
+else
+    % From [0 0 1] to [1 1 1] to [1 0 0];
+    m1 = floor(m*0.5);
+    r = (0:m1-1)'/max(m1,1);
+    g = r;
+    r = [r; ones(m1+1,1)];
+    g = [g; 1; flipud(g)];
+    b = flipud(r);
+end
+c = [r g b]; 
+end
