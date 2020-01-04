@@ -18,7 +18,7 @@
 
 
 if ~exist('resultsDir', 'var')
-    resultsDir = 'C:\Users\flynn\OneDrive - University of Southern California\Office\LFP Decoding\ClipArt_2\Classifier Results [-1 1]';
+    resultsDir = 'C:\Users\flynn\Desktop\PiplineImages';
 end
 
 figDir = fullfile(resultsDir,'MCC Figures','Resolutions');
