@@ -1,4 +1,7 @@
-**LFP-Memory-Decoding** is a machine learning pipeline developed for the USC Restoring Active Memory (RAM) research conducted in Song Lab. 
+
+![Memory Decoding Cover Photo](Images/Cover.png)
+
+**LFP-Memory-Decoding** is a machine learning pipeline developed for Song Lab at the University of Southern California for the DARPA Restoring Active Memory (RAM) program. 
 
 
 ## Scripts
