@@ -3,12 +3,16 @@
 
 **LFP-Memory-Decoding** is a machine learning pipeline developed for Song Lab at the University of Southern California for the DARPA Restoring Active Memory (RAM) program. 
 
-LFP is derived through the use of a bandpass filter with cutoff frequencies .3 Hz and 250 Hz. 
+_Written by Garrett Flynn and Xiwei She_
+
+__Notes:__ 
+  * LFP is derived through the use of a bandpass filter with cutoff frequencies .3 Hz and 250 Hz.
+  * LFP processing was validated using the [dataset](https://gin.g-node.org/doi/multielectrode_grasp) of Brochier et al., ''Massively parallel multi-electrode recordings of macaque motor cortex during an instructed delayed reach-to-grasp task''
 
 ### Steps to Use
   
   0. Change all file paths from their defaults in Dashboard.m and LFPMD_0_Structure.m
-  1. Set data processing settings in Dashboard.m
+  1. Set pipeline settings in Dashboard.m
   2. Run Dashboard.m
 
 
