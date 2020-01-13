@@ -39,7 +39,7 @@ parameters.isHuman = 1;
 elseif strcmp(dataChoices{chosenData},'ClipArt2')
 
 % Define data path here for extracting LFP data
-parameters.Directories.filePath = strcat('C:\Users\flynn\OneDrive - University of Southern California\Office\LFP Decoding\ClipArt_2');
+parameters.Directories.filePath = strcat('/Users/garrettflynn/Desktop/LFP');
 
 % Choose the testing data
 parameters.Directories.dataName = 'ClipArt_2';
@@ -71,7 +71,7 @@ parameters.Choices.freqMin = 1; % Minimum Frequency of Interest (Hz)
 parameters.Choices.freqMax = 150; % Maximum Frequency of Interest (Hz)
 parameters.Choices.freqBin = fB(1); % Frequency Bin Width (Hz)
 parameters.Choices.trialWindow = [-range range]; % Trial Interval Window
-parameters.Filters.lowPass = 250; % Low Pass Filter Frequency (Hz)
+parameters.Filters.LFPFilter = [.3 250]; % Low Pass Filter Frequency (Hz)
 parameters.Choices.downSample = downSample; % Samples/s
 
 parameters.Choices.bandAveragedPower = bandAveragedPower;
@@ -118,7 +118,7 @@ else
     error('No Sampling Frequency Found in Neural Data Structure');
 end
 
-parameters.Choices.timeBin = tB(1)/2000;  % Time Bin Width (s)
+parameters.Choices.timeBin = tB(1)/parameters.Derived.samplingFreq;  % Time Bin Width (s)
 
 if notchOn
 parameters.Filters.notchFilter = designfilt('bandstopiir','FilterOrder',2, ...
@@ -394,7 +394,7 @@ function LFP = extractLFP(rawData, parameters)
 notchOn = isfield(parameters.Filters,'notchFilter');
 
 
-filterLP = parameters.Filters.lowPass;
+LFPFilter = parameters.Filters.LFPFilter;
 
 if notchOn
 filterNotch = parameters.Filters.notchFilter;
@@ -406,7 +406,7 @@ if (size(rawData,2) > 5)
     toProcess = (double(rawData))';
     clear rawData
     
-    processedData = lowpass(toProcess,filterLP,2000);
+    processedData = bandpass(toProcess,LFPFilter,parameters.Derived.samplingFreq);
         clear toProcess
         
     if notchOn    
@@ -425,7 +425,7 @@ elseif ~(size(rawData,2) > 5)
     % Process initial session
     toProcess = (double(rawData))';
     rawData{1,1} = [];
-    processedData = lowpass(toProcess,filterLP,2000);
+    processedData = bandpass(toProcess,LFPFilter,parameters.Derived.samplingFreq);
     clear toProcess
     
     if notchOn
@@ -443,7 +443,7 @@ elseif ~(size(rawData,2) > 5)
     for i = 2:size(rawData,2)
         tempData = double(rawData{1,i})';
         rawData{1,i} = [];
-        tempData = lowpass(tempData,filterLP,2000);
+        tempData = bandpass(tempData,LFPFilter,parameters.Derived.samplingFreq);
         
         if notchOn
             for ii = 1:size(processedData,2)
@@ -498,7 +498,7 @@ neuralData.MetaTags.ChannelCount = size(nexFileData.contvars,1);
 
 % Sampling
 realSampling = nexFileData.freq;
-downSample = 2000;
+downSample = 2000; % Hardcoded downsample frequency
 sRatio = downSample/realSampling;
 sIter = realSampling/downSample;
 

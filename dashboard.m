@@ -19,10 +19,10 @@ dataFormat = {'Spectrum','Signal'};%,'thetaSpectrum','alphaSpectrum','betaSpectr
 mlScope = {'MCA'}; 
 % MCA | CA1 | CA3
 
-mlAlgorithms = {'LassoGLM','naiveBayes','SVM'}; 
+mlAlgorithms = {} % {'LassoGLM','naiveBayes','SVM'}; 
 %| kMeans | LassoGLM | naiveBayes | SVM | linear | kernel | knn | tree | RUSBoost | CNN_SVM
 
-saveHHData = 0;  
+saveHHData = 1;  
 quickDebug = 0;
 
 % Methods Parameters
