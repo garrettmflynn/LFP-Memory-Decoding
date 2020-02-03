@@ -121,8 +121,8 @@ dataML.Times = HHData.Data.Intervals.Times;
 
 % Visualize as needed
 for qq = 1:size(HHData.Data.LFP.Spectrum,3)
-    Signal_Spectrum_Events_Polygons({HHData.Data.Voltage.Raw(qq,:),normed.LFP(qq,:),normed.Spectrum(:,:,qq)}, HHData.Events,parameters,HHData.Channels.sChannels(qq),HHData.Data.Intervals.Times,'Z-Score', 'norm', fullfile(parameters.Directories.filePath,'Signal-Spectrum-Events (LFP Validation)',['Channel' num2str(HHData.Channels.sChannels(qq))]),'Event',centerEvent);
-    %Signal_Spectrum_Events_Polygons({HHData.Data.Voltage.Raw(qq,:),HHData.Data.LFP.LFP(qq,:),HHData.Data.LFP.Spectrum(:,:,qq)}, HHData.Events,parameters,HHData.Channels.sChannels(qq),HHData.Data.Intervals.Times,'dB', 'raw', fullfile(parameters.Directories.filePath,'Signal-Spectrum-Events (LFP Validation)',['Channel' num2str(HHData.Channels.sChannels(qq))]),'Event',centerEvent);
+    Signal_Spectrum_Events_Polygons({HHData.Data.Voltage.Raw(qq,:),normed.LFP(qq,:),normed.Spectrum(:,:,qq)}, HHData.Events,parameters,HHData.Channels.sChannels(qq),HHData.Data.Intervals.Times,'Z-Score', 'norm', fullfile(parameters.Directories.filePath,'Signal-Spectrum-Events (LFP Validation)',['Channel' num2str(HHData.Channels.sChannels(qq))]),'Event',centerEvent);%'Trial',10);
+    Signal_Spectrum_Events_Polygons({HHData.Data.Voltage.Raw(qq,:),HHData.Data.LFP.LFP(qq,:),HHData.Data.LFP.Spectrum(:,:,qq)}, HHData.Events,parameters,HHData.Channels.sChannels(qq),HHData.Data.Intervals.Times,'dB', 'raw', fullfile(parameters.Directories.filePath,'Signal-Spectrum-Events (LFP Validation)',['Channel' num2str(HHData.Channels.sChannels(qq))]),'Event',centerEvent);%'Trial',10);
 end
 
 %% Function Repository
@@ -443,7 +443,7 @@ function [] = Signal_Spectrum_Events_Polygons(data, allEvents,parameters, channe
 % Input 7: Limit Type (norm or raw)
 % Input 8: Save Directory
 % Input 9: Apply log to values (Set as 1 if not normalized) or not (as 0 if normalized) 
-window = [-.5,.6];
+window = [-.5,.5];
 if nargin < 9
     TrialOrEventCenter = 'Event';
     windowing = 'SAMPLE_RESPONSE';
@@ -451,11 +451,19 @@ end
 if nargin < 10
     if (strcmp(TrialOrEventCenter,'Event'))
         windowing = 'SAMPLE_RESPONSE';
+        intSelection = 51;
     else
         windowing = 10;
+        intSelection = 5;
     end
 end
 
+if (strcmp(TrialOrEventCenter,'Event'))
+        intSelection = 51;
+else
+        intSelection = 5;
+end
+    
 fs = parameters.Derived.samplingFreq;
 % Parameters to Load and/or Derive
     dataSignalRaw = data{1};
@@ -481,11 +489,11 @@ end
     numRows = 30;
     numCols = 8;
     templateSub = [2:numCols];
-    numPlots = 3
+    numPlots = 3;
     
     firstThird = templateSub;
     height = floor(((numRows)/4))
-    w = numCols - 1
+    w = numCols - 1;
     remainder = numRows-(numPlots*height);
     for ii = 1:height
     firstThird = [firstThird, templateSub + ii*numCols];
@@ -495,10 +503,10 @@ end
     thirdThird = secondThird+((numCols)*floor((remainder/2)))+(height*numCols)
     
     specThirds= zeros(2,length(secondThird))
-    specThirds(1,:) = [secondThird]
+    specThirds(1,:) = [secondThird];
     specThirds(2,:) = [thirdThird];
     
-     figFull = figure('Position',[50 50 1700 800],'visible','on');
+     figFull = figure('Position',[50 50 1700 800],'visible','off');
     h(2) = subplot(numRows,8,firstThird);
     if strcmp(limitTypes,'norm')
         %plot((dataSignalRaw(:,:)')),'c'); hold on;
@@ -528,7 +536,7 @@ end
             xticklabels((xticks/fs))
             xlabel('Time (s)');
             hcb2=colorbar;
-            colormap(parula);
+            colormap(jet);
             ylabel(hcb2,colorUnit);
             caxis(clims);
             ylabel('Frequency') ;
@@ -545,7 +553,7 @@ end
              xticklabels((xticks/fs))
             xlabel('Time (s)');
             hcb2=colorbar;
-            colormap(parula);
+            colormap(jet);
             ylabel(hcb2,colorUnit);
             caxis(clims);
             ylabel('Frequency') ;
@@ -562,7 +570,7 @@ else
     intervalWindows = size(intervalTimes,2)/windowing;         
 end
 
-for iWin = 1:intervalWindows
+for iWin = intSelection % 1:intervalWindows
     if (strcmp(TrialOrEventCenter,'Event'))
         start =  allEvents.(windowing)(iWin)+window(1);
         stop = allEvents.(windowing)(iWin)+window(2);
@@ -633,12 +641,12 @@ for iWin = 1:intervalWindows
    if (strcmp(TrialOrEventCenter,'Event'))
    sText = text( -.275,1.5+.5,['Trial ', num2str(iWin)],'Units','Normalized','FontSize',20);
    eText = text( -.275,1.5+.25,['Event: ',replace(windowing,'_',' ')],'Units','Normalized','FontSize',10);
-   saveas(figFull,fullfile(saveDir,['Trial_', num2str(iWin),'_Event_',windowing, '.png']));
+   saveas(figFull,fullfile(saveDir,[limitTypes,'Trial_', num2str(iWin),'_Event_',windowing, '.png']));
    delete(sText);
    delete(eText);
    else
    sText = text( -.275,.75+1.5+ .5,['Trials ', num2str(start), ' - ',num2str(stop)],'Units','Normalized','FontSize',20);
-   saveas(figFull,fullfile(saveDir,['Trials ', num2str(start), ' - ',num2str(stop), '.png']));
+   saveas(figFull,fullfile(saveDir,[limitTypes,'_Trials ', num2str(start), ' - ',num2str(stop), '.png']));
    delete(sText);
    end
    

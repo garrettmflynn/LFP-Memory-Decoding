@@ -512,23 +512,15 @@ numChannels = size(inputData,1);
 
 for channels = 1:numChannels
     fprintf('Calculating Morlet Wavelets')
-    toProcess = inputData(1,1:1000);
-            [cfs,frq] = cwt(toProcess,'amor',parameters.Derived.samplingFreq);
+    toProcess = inputData(1,:);
+            [cfs,freq] = cwt(toProcess,'amor',parameters.Derived.samplingFreq);
             tmp1 = abs(cfs); % Convert to real numbers
             t = 0:length(toProcess)-1;
             pcolor(t,frq,tmp2);
-shading interp
-ylabel('Frequency')
-title('Scalogram Scaled By Level')
-colormap(pink(240))
-            % Automatically convert PSD units to dB
             spectrum(:,:,channels) = 10*log10(tmp1);
-            clear PSDs
-            if channels == 1 
-                if (t(1) ~= 0)
-                    t = t - t(1);
-                end
-            time = t;
+            clear tmp1
+            if channels == 1  
+            time = linspace(0,(length(inputData)-1)/parameters.Derived.samplingFreq,length(tmp1));
             end
             clear t
             

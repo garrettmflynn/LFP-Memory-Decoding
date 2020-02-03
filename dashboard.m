@@ -38,7 +38,7 @@ notchOn = 0;
 downSample = []; %Samples/s (500 is ideal for our frequency range)
 norm = 1;
 output = 'zScore'; % Or 'percentChange'
-tf_method = {'Hanning'};%{'Morlet'}
+tf_method = {'Morlet'};%{'Hanning'}
 tB = 200; % 100 ms
 fB = .5;
 
