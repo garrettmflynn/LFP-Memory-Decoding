@@ -39,18 +39,17 @@ parameters.isHuman = 1;
 elseif strcmp(dataChoices{chosenData},'ClipArt2')
 
 % Define data path here for extracting LFP data
-parameters.Directories.filePath = strcat('/Users/garrettflynn/Desktop/LFP');
+parameters.Directories.filePath = strcat('G:\LFP Decoding\ClipArt_2');
 
 % Choose the testing data
 parameters.Directories.dataName = 'ClipArt_2';
 
 % Channel Parameters
-parameters.Channels.sChannels = [1:10, 17:26, 33:42];
-parameters.Channels.CA1_Channels = [7:10, 23:26, 39:42];
-parameters.Channels.CA3_Channels = [1:6, 17:22, 33:38];
+parameters.Channels.sChannels = [7:8];%[1:10, 17:26, 33:42];
+parameters.Channels.CA1_Channels =  [];%[7:10, 23:26, 39:42];
+parameters.Channels.CA3_Channels =  [7:8];%[1:6, 17:22, 33:38];
 
 parameters.isHuman = 1;
-
 elseif strcmp(dataChoices{chosenData},'Rat_Data')
     
     % Define data path here for extracting LFP data
@@ -60,6 +59,19 @@ parameters.Directories.filePath = strcat('C:\Users\flynn\OneDrive - University o
 parameters.Directories.dataName = 'Rat_Data';
 
 parameters.isHuman = 0;
+
+elseif strcmp(dataChoices{chosenData},'Validation_Data')
+    
+% Define data path here for extracting LFP data
+parameters.Directories.filePath = strcat('C:\Users\flynn\Documents\Downloads\multielectrode_grasp\datasets');
+
+% Choose the testing data
+parameters.Directories.dataName = 'i140703-001';
+
+% Channel Parameters
+parameters.Channels.sChannels = [1:3];
+
+parameters.isHuman = 1;
 end
 end
 
@@ -67,11 +79,11 @@ if exist('parameters','var')
 %% HHDataStructure Primary Section
 % Processing | Binning & Windows
 parameters.Optional.methods = tf_method{1}; % Either Morlet or STFT Window (such as Hanning)
-parameters.Choices.freqMin = 1; % Minimum Frequency of Interest (Hz)
+parameters.Choices.freqMin = band_low; % Minimum Frequency of Interest (Hz)
 parameters.Choices.freqMax = 150; % Maximum Frequency of Interest (Hz)
 parameters.Choices.freqBin = fB(1); % Frequency Bin Width (Hz)
 parameters.Choices.trialWindow = [-range range]; % Trial Interval Window
-parameters.Filters.LFPFilter = [.3 250]; % Low Pass Filter Frequency (Hz)
+parameters.Filters.LFPFilter = [band_low band_high]; % Low Pass Filter Frequency (Hz)
 parameters.Choices.downSample = downSample; % Samples/s
 
 parameters.Choices.bandAveragedPower = bandAveragedPower;
@@ -126,7 +138,7 @@ parameters.Filters.notchFilter = designfilt('bandstopiir','FilterOrder',2, ...
     'DesignMethod','butter','SampleRate',parameters.Derived.samplingFreq); % Notch Filter to Remove Powerline Noise (Hz)
 end
 
-parameters.Derived.freq = linspace(parameters.Choices.freqMin, parameters.Choices.freqMax, ((parameters.Choices.freqMax-parameters.Choices.freqMin)+1)/parameters.Choices.freqBin);
+parameters.Derived.freq = parameters.Choices.freqMin:parameters.Choices.freqBin:parameters.Choices.freqMax;
 %parameters.Derived.overlap = round((parameters.Choices.timeBin * parameters.Derived.samplingFreq))%/1.5);
 
 % (1) Multi-Session Configuration
@@ -196,11 +208,14 @@ parameters = humanDataSpikeProcessing(nexFileData,parameters);
 
 %% Raw data
 if nargin == 4
-RawData = nData{1,sessionLoop}(parameters.Channels.sChannels, :);
+RawData = double(nData{1,sessionLoop}(parameters.Channels.sChannels, :));
 else
-RawData = nData(parameters.Channels.sChannels, :);
+RawData = double(nData(parameters.Channels.sChannels, :));
 end
 clear nData
+
+%% Convert Raw Data from uV to V 
+RawData = RawData/(10^6);
 
 %% LFP Data
 fprintf('Now Extracting LFP\n');
@@ -208,7 +223,7 @@ LFP_Data = extractLFP(RawData,parameters);
 
 % Raw Voltage Information
 HHData.Data.Voltage = struct;
-HHData.Data.Voltage.Raw = RawData; % Original Raw Data
+HHData.Data.Voltage.Raw = RawData;
 clear RawData
 
 % LFP Data information
@@ -223,9 +238,9 @@ clear LFP_Data
 % 3. Create spectrograms for full session
 fprintf('Now Creating Spectrograms\n');
 
-% Morelet using Sampled LFP
+% Morlet using Sampled LFP
 if strncmp(parameters.Optional.methods,'Morlet',4) 
-[LFP_Spectrum, time, freq] = makeSpectrum(HHData.Data.LFP.Sampled,parameters);
+[LFP_Spectrum, time, freq] = makeWavelet(HHData.Data.LFP.LFP,parameters);
 HHData.Data.LFP.Spectrum = LFP_Spectrum;
 clear LFP_Spectrum
 
@@ -477,6 +492,9 @@ for channels = 1:numChannels
             spectrum(:,:,channels) = 10*log10(PSDs);
             clear PSDs
             if channels == 1 
+                if (t(1) ~= 0)
+                    t = t - t(1);
+                end
             time = t;
             end
             clear t
@@ -485,6 +503,40 @@ inputData = inputData(2:end,:);
 end
 
 end
+
+%% Make Wavelet
+function [spectrum,time,freq] = makeWavelet(inputData,parameters)
+
+freq = parameters.Derived.freq;
+numChannels = size(inputData,1);
+
+for channels = 1:numChannels
+    fprintf('Calculating Morlet Wavelets')
+    toProcess = inputData(1,1:1000);
+            [cfs,frq] = cwt(toProcess,'amor',parameters.Derived.samplingFreq);
+            tmp1 = abs(cfs); % Convert to real numbers
+            t = 0:length(toProcess)-1;
+            pcolor(t,frq,tmp2);
+shading interp
+ylabel('Frequency')
+title('Scalogram Scaled By Level')
+colormap(pink(240))
+            % Automatically convert PSD units to dB
+            spectrum(:,:,channels) = 10*log10(tmp1);
+            clear PSDs
+            if channels == 1 
+                if (t(1) ~= 0)
+                    t = t - t(1);
+                end
+            time = t;
+            end
+            clear t
+            
+inputData = inputData(2:end,:);
+end
+
+end
+
 
 %% Replace Human with Rat
 function [neuralData,nexFileData] = replaceHumanWithRat(nexFileData)

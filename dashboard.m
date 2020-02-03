@@ -10,7 +10,7 @@ clear; clc; close all;
 addpath(genpath('C:\Users\flynn\Documents\Github\LFP-Memory-Decoding'));
 
 %% SETTINGS
-dataChoices = {'ClipArt2'}; % ClipArt2 | Recording003 | Rat_Data | Other
+dataChoices = {'ClipArt2'}; % ClipArt2 | Recording003 | Rat_Data | Validation_Data | Other
     % Additional data filepaths can be specified in HHDataStructure.m
     % Many other parameters hardcoded in runPipeline.m
     
@@ -19,7 +19,7 @@ dataFormat = {'Spectrum','Signal'};%,'thetaSpectrum','alphaSpectrum','betaSpectr
 mlScope = {'MCA'}; 
 % MCA | CA1 | CA3
 
-mlAlgorithms = {} % {'LassoGLM','naiveBayes','SVM'}; 
+mlAlgorithms = {}; % {'LassoGLM','naiveBayes','SVM'}; 
 %| kMeans | LassoGLM | naiveBayes | SVM | linear | kernel | knn | tree | RUSBoost | CNN_SVM
 
 saveHHData = 1;  
@@ -38,9 +38,13 @@ notchOn = 0;
 downSample = []; %Samples/s (500 is ideal for our frequency range)
 norm = 1;
 output = 'zScore'; % Or 'percentChange'
-tf_method = {'Hanning'};
+tf_method = {'Hanning'};%{'Morlet'}
 tB = 200; % 100 ms
 fB = .5;
+
+% Filter Settings
+band_high = 250;
+band_low = .5;
 
 if ~bspline
    resChoice = 1;
