@@ -122,8 +122,8 @@ dataML.Times = HHData.Data.Intervals.Times;
 % Visualize as needed
 if qualityViz
 for qq = 1:size(HHData.Data.LFP.Spectrum,3)
+    Signal_Spectrum_Events_Polygons({HHData.Data.Voltage.Raw(qq,:),HHData.Data.LFP.LFP(qq,:),HHData.Data.LFP.Spectrum(:,:,qq)}, HHData.Events,parameters,HHData.Channels.sChannels(qq),HHData.Data.Intervals.Times,'Power (((mV)^2)/Hz', 'raw', fullfile(parameters.Directories.filePath,'Signal-Spectrum-Events (LFP Validation)',['Channel' num2str(HHData.Channels.sChannels(qq))]),'Event',centerEvent);%'Trial',10);
     Signal_Spectrum_Events_Polygons({HHData.Data.Voltage.Raw(qq,:),normed.LFP(qq,:),normed.Spectrum(:,:,qq)}, HHData.Events,parameters,HHData.Channels.sChannels(qq),HHData.Data.Intervals.Times,'Z-Score', 'norm', fullfile(parameters.Directories.filePath,'Signal-Spectrum-Events (LFP Validation)',['Channel' num2str(HHData.Channels.sChannels(qq))]),'Event',centerEvent);%'Trial',10);
-    Signal_Spectrum_Events_Polygons({HHData.Data.Voltage.Raw(qq,:),HHData.Data.LFP.LFP(qq,:),HHData.Data.LFP.Spectrum(:,:,qq)}, HHData.Events,parameters,HHData.Channels.sChannels(qq),HHData.Data.Intervals.Times,'Power', 'raw', fullfile(parameters.Directories.filePath,'Signal-Spectrum-Events (LFP Validation)',['Channel' num2str(HHData.Channels.sChannels(qq))]),'Event',centerEvent);%'Trial',10);
 end
 end
 
@@ -486,8 +486,9 @@ end
          clims = [-5,5];
     elseif strcmp(limitTypes,'raw')
         %vBound = max(abs([min(dataSignalLFP) max(dataSignalLFP)]));
-         vBound = 1000 %vBound*1.2;
-         clims = [-130,-50];
+         vBound = 1000; %vBound*1.2;
+         %clims = [-130,-50]; %% Log transformed
+         clims = [0 250];
     end
     % Subplot Pattern
     numRows = 30;
@@ -496,7 +497,7 @@ end
     numPlots = 3;
     
     firstThird = templateSub;
-    height = floor(((numRows)/4))
+    height = floor(((numRows)/4));
     w = numCols - 1;
     remainder = numRows-(numPlots*height);
     for ii = 1:height
@@ -638,7 +639,11 @@ for iWin = intSelection % 1:intervalWindows
           xlim([start, stop]); 
        end
    else
-   xlim([(allEvents.FOCUS_ON(start)-1)*fs, (allEvents.MATCH_RESPONSE(stop)+1)*fs]);
+       if specPlot ==1
+           xlim([(allEvents.FOCUS_ON(start)-1)*fs, (allEvents.MATCH_RESPONSE(stop)+1)*fs]);
+       else
+          xlim([(allEvents.FOCUS_ON(start)-1), (allEvents.MATCH_RESPONSE(stop)+1)*fs]); 
+       end
    end
    end
    

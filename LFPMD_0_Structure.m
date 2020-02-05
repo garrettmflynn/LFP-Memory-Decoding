@@ -487,7 +487,7 @@ numChannels = size(inputData,1);
 
 for channels = 1:numChannels
     % Hanning Window
-            [~,~,t, PSDs, ~, ~] = spectrogram(inputData(1,:),hann(winSize),[],freq, parameters.Derived.samplingFreq,'yaxis');
+            [~,~,t, PSDs, ~, ~] = spectrogram(inputData(1,:)*1000,hann(winSize),[],freq, parameters.Derived.samplingFreq,'yaxis');
             % Automatically convert PSD units to dB
             %spectrum(:,:,channels) = 10*log10(PSDs);
             spectrum(:,:,channels) = PSDs;
