@@ -444,7 +444,9 @@ function [] = Signal_Spectrum_Events_Polygons(data, allEvents,parameters, channe
 % Input 6: Colorbar Axis Label ('e.g. Percent Change')
 % Input 7: Limit Type (norm or raw)
 % Input 8: Save Directory
-% Input 9: Apply log to values (Set as 1 if not normalized) or not (as 0 if normalized) 
+% Input 9: Specify figure type ('Event' or 'Trial')
+% Input 10: Specify which event to center around OR how many trials to fit
+% into one figure
 window = [-.5,.5];
 if nargin < 9
     TrialOrEventCenter = 'Event';
