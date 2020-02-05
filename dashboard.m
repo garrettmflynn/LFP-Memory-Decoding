@@ -23,6 +23,7 @@ mlAlgorithms = {}; % {'LassoGLM','naiveBayes','SVM'};
 %| kMeans | LassoGLM | naiveBayes | SVM | linear | kernel | knn | tree | RUSBoost | CNN_SVM
 
 saveHHData = 1;  
+qualityViz = 1;
 quickDebug = 0;
 
 % Methods Parameters
@@ -38,7 +39,7 @@ notchOn = 0;
 downSample = []; %Samples/s (500 is ideal for our frequency range)
 norm = 1;
 output = 'zScore'; % Or 'percentChange'
-tf_method = {'Morlet'};%{'Hanning'}
+tf_method = {'Hanning'};%{'Morlet'}
 tB = 200; % 100 ms
 fB = .5;
 
@@ -56,7 +57,6 @@ for iter = 1:length(norm)
     windowOfInterest = 1; % Hardcoded for now
     centerEvent = 'SAMPLE_RESPONSE';
 for range = windowOfInterest 
-        
 % Creates Core Data Structure
 LFPMD_0_Structure
 
@@ -75,5 +75,4 @@ clear dataML
 clear results
 end
 end
-
 end

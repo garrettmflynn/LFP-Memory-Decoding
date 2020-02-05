@@ -45,9 +45,9 @@ parameters.Directories.filePath = strcat('G:\LFP Decoding\ClipArt_2');
 parameters.Directories.dataName = 'ClipArt_2';
 
 % Channel Parameters
-parameters.Channels.sChannels = [7:8];%[1:10, 17:26, 33:42];
-parameters.Channels.CA1_Channels =  [];%[7:10, 23:26, 39:42];
-parameters.Channels.CA3_Channels =  [7:8];%[1:6, 17:22, 33:38];
+parameters.Channels.sChannels = [1:10, 17:26, 33:42];
+parameters.Channels.CA1_Channels =  [7:10, 23:26, 39:42];
+parameters.Channels.CA3_Channels =  [1:6, 17:22, 33:38];
 
 parameters.isHuman = 1;
 elseif strcmp(dataChoices{chosenData},'Rat_Data')
@@ -489,7 +489,8 @@ for channels = 1:numChannels
     % Hanning Window
             [~,~,t, PSDs, ~, ~] = spectrogram(inputData(1,:),hann(winSize),[],freq, parameters.Derived.samplingFreq,'yaxis');
             % Automatically convert PSD units to dB
-            spectrum(:,:,channels) = 10*log10(PSDs);
+            %spectrum(:,:,channels) = 10*log10(PSDs);
+            spectrum(:,:,channels) = PSDs;
             clear PSDs
             if channels == 1 
                 if (t(1) ~= 0)
@@ -516,12 +517,11 @@ for channels = 1:numChannels
             [cfs,freq] = cwt(toProcess,'amor',parameters.Derived.samplingFreq);
             tmp1 = abs(cfs); % Convert to real numbers
             t = 0:length(toProcess)-1;
-            pcolor(t,frq,tmp2);
             spectrum(:,:,channels) = 10*log10(tmp1);
-            clear tmp1
             if channels == 1  
             time = linspace(0,(length(inputData)-1)/parameters.Derived.samplingFreq,length(tmp1));
             end
+            clear tmp1
             clear t
             
 inputData = inputData(2:end,:);

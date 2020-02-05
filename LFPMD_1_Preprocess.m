@@ -120,9 +120,11 @@ end
 dataML.Times = HHData.Data.Intervals.Times;
 
 % Visualize as needed
+if qualityViz
 for qq = 1:size(HHData.Data.LFP.Spectrum,3)
     Signal_Spectrum_Events_Polygons({HHData.Data.Voltage.Raw(qq,:),normed.LFP(qq,:),normed.Spectrum(:,:,qq)}, HHData.Events,parameters,HHData.Channels.sChannels(qq),HHData.Data.Intervals.Times,'Z-Score', 'norm', fullfile(parameters.Directories.filePath,'Signal-Spectrum-Events (LFP Validation)',['Channel' num2str(HHData.Channels.sChannels(qq))]),'Event',centerEvent);%'Trial',10);
-    Signal_Spectrum_Events_Polygons({HHData.Data.Voltage.Raw(qq,:),HHData.Data.LFP.LFP(qq,:),HHData.Data.LFP.Spectrum(:,:,qq)}, HHData.Events,parameters,HHData.Channels.sChannels(qq),HHData.Data.Intervals.Times,'dB', 'raw', fullfile(parameters.Directories.filePath,'Signal-Spectrum-Events (LFP Validation)',['Channel' num2str(HHData.Channels.sChannels(qq))]),'Event',centerEvent);%'Trial',10);
+    Signal_Spectrum_Events_Polygons({HHData.Data.Voltage.Raw(qq,:),HHData.Data.LFP.LFP(qq,:),HHData.Data.LFP.Spectrum(:,:,qq)}, HHData.Events,parameters,HHData.Channels.sChannels(qq),HHData.Data.Intervals.Times,'Power', 'raw', fullfile(parameters.Directories.filePath,'Signal-Spectrum-Events (LFP Validation)',['Channel' num2str(HHData.Channels.sChannels(qq))]),'Event',centerEvent);%'Trial',10);
+end
 end
 
 %% Function Repository
@@ -499,10 +501,10 @@ end
     firstThird = [firstThird, templateSub + ii*numCols];
     end
     
-    secondThird = firstThird+((numCols)*floor((remainder/2)))+(height*numCols)
-    thirdThird = secondThird+((numCols)*floor((remainder/2)))+(height*numCols)
+    secondThird = firstThird+((numCols)*floor((remainder/2)))+(height*numCols);
+    thirdThird = secondThird+((numCols)*floor((remainder/2)))+(height*numCols);
     
-    specThirds= zeros(2,length(secondThird))
+    specThirds= zeros(2,length(secondThird));
     specThirds(1,:) = [secondThird];
     specThirds(2,:) = [thirdThird];
     
@@ -641,12 +643,12 @@ for iWin = intSelection % 1:intervalWindows
    if (strcmp(TrialOrEventCenter,'Event'))
    sText = text( -.275,1.5+.5,['Trial ', num2str(iWin)],'Units','Normalized','FontSize',20);
    eText = text( -.275,1.5+.25,['Event: ',replace(windowing,'_',' ')],'Units','Normalized','FontSize',10);
-   saveas(figFull,fullfile(saveDir,[limitTypes,'Trial_', num2str(iWin),'_Event_',windowing, '.png']));
+   saveas(figFull,fullfile(saveDir,[limitTypes,'Trial_', num2str(iWin),'_Event_',windowing,'_',parameters.Optional.methods, '.png']));
    delete(sText);
    delete(eText);
    else
    sText = text( -.275,.75+1.5+ .5,['Trials ', num2str(start), ' - ',num2str(stop)],'Units','Normalized','FontSize',20);
-   saveas(figFull,fullfile(saveDir,[limitTypes,'_Trials ', num2str(start), ' - ',num2str(stop), '.png']));
+   saveas(figFull,fullfile(saveDir,[limitTypes,'_Trials ', num2str(start), ' - ',num2str(stop),parameters.Optional.methods, '.png']));
    delete(sText);
    end
    
