@@ -121,9 +121,9 @@ dataML.Times = HHData.Data.Intervals.Times;
 
 % Visualize as needed
 if qualityViz
-for qq = 1:size(HHData.Data.LFP.Spectrum,3)
-    Signal_Spectrum_Events_Polygons({HHData.Data.Voltage.Raw(qq,:),HHData.Data.LFP.LFP(qq,:),HHData.Data.LFP.Spectrum(:,:,qq)}, HHData.Events,parameters,HHData.Channels.sChannels(qq),HHData.Data.Intervals.Times,'Power (((mV)^2)/Hz', 'raw', fullfile(parameters.Directories.filePath,'Signal-Spectrum-Events (LFP Validation)',['Channel' num2str(HHData.Channels.sChannels(qq))]),'Event',centerEvent);%'Trial',10);
-    Signal_Spectrum_Events_Polygons({HHData.Data.Voltage.Raw(qq,:),normed.LFP(qq,:),normed.Spectrum(:,:,qq)}, HHData.Events,parameters,HHData.Channels.sChannels(qq),HHData.Data.Intervals.Times,'Z-Score', 'norm', fullfile(parameters.Directories.filePath,'Signal-Spectrum-Events (LFP Validation)',['Channel' num2str(HHData.Channels.sChannels(qq))]),'Event',centerEvent);%'Trial',10);
+for qq = 1:1%size(HHData.Data.LFP.Spectrum,3)
+    %Signal_Spectrum_Events_Polygons({HHData.Data.Voltage.Raw(qq,:),HHData.Data.LFP.LFP(qq,:),HHData.Data.LFP.Spectrum(:,:,qq)}, HHData.Events,parameters,HHData.Channels.sChannels(qq),HHData.Data.Intervals.Times,'Power (((uV)^2)/Hz', 'raw', fullfile(parameters.Directories.filePath,'Signal-Spectrum-Events (LFP Validation)',['Channel' num2str(HHData.Channels.sChannels(qq))]),'Trial',1);%'Event',centerEvent);
+    Signal_Spectrum_Events_Polygons({HHData.Data.Voltage.Raw(qq,:),normed.LFP(qq,:),normed.Spectrum(:,:,qq)}, HHData.Events,parameters,HHData.Channels.sChannels(qq),HHData.Data.Intervals.Times,'Z-Score', 'norm', fullfile(parameters.Directories.filePath,'Signal-Spectrum-Events (LFP Validation)',['Channel' num2str(HHData.Channels.sChannels(qq))]),'Trial',1);%,'Event',centerEvent);
 end
 end
 
@@ -232,7 +232,7 @@ norm = LFP_Signal;
     case 'Spectrum'
             fprintf('Now Creating Normalized Data\n');
             if ndims(squeeze(LFP_Data)) == 3
-                
+                LFP_Data = 10*log10(LFP_Data);
                 frequencyMu = squeeze(mean(permute(LFP_Data,[2,1,3])));   
                 freqSig = squeeze(std(permute(LFP_Data,[2,1,3])));     
                 for channels = 1:size(LFP_Data,3)
@@ -486,7 +486,7 @@ end
          clims = [-5,5];
     elseif strcmp(limitTypes,'raw')
         %vBound = max(abs([min(dataSignalLFP) max(dataSignalLFP)]));
-         vBound = 1000; %vBound*1.2;
+         vBound = 2; %vBound*1.2;
          %clims = [-130,-50]; %% Log transformed
          clims = [0 250];
     end
@@ -518,9 +518,9 @@ end
         plot((dataSignalLFP(:,:)'),'k');
         ylabel('Z-Score'); ylim([-vBound vBound])
     elseif strcmp(limitTypes,'raw')
-    plot((dataSignalRaw(:,:)')*(10^6),'c'); hold on;
-    plot((dataSignalLFP(:,:)')*(10^6),'k');
-            ylabel('uV'); ylim([-vBound vBound])
+    plot((dataSignalRaw(:,:)')*(10^3),'c'); hold on;
+    plot((dataSignalLFP(:,:)')*(10^3),'k');
+            ylabel('mV'); ylim([-vBound vBound])
     end
             xticks([]);
             xlim([0 length(dataSignalLFP)]);
@@ -537,7 +537,11 @@ end
             newTicks = (round(freq(ytickskip)));
             yticks(newTicks)
             yticklabels(cellstr(num2str(round((newTicks')))));
+            if (strcmp(TrialOrEventCenter,'Event'))
             xticks(fs*[0:0.1:parameters.Derived.durationSeconds]);
+            else
+            xticks(fs*[0:1:parameters.Derived.durationSeconds]);    
+            end
             xticklabels((xticks/fs))
             xlabel('Time (s)');
             hcb2=colorbar;
@@ -554,8 +558,11 @@ end
             newTicks = (round(freq(ytickskip)));
             yticks(newTicks)
             yticklabels(cellstr(num2str(round((newTicks')))));
+            if (strcmp(TrialOrEventCenter,'Event'))
              xticks(fs*[0:0.1:parameters.Derived.durationSeconds]);
-             xticklabels((xticks/fs))
+            else
+            xticks(fs*[0:1:parameters.Derived.durationSeconds]);  
+            end
             xlabel('Time (s)');
             hcb2=colorbar;
             colormap(jet);
@@ -575,7 +582,7 @@ else
     intervalWindows = size(intervalTimes,2)/windowing;         
 end
 
-for iWin = intSelection % 1:intervalWindows
+for iWin = 1:intervalWindows
     if (strcmp(TrialOrEventCenter,'Event'))
         start =  allEvents.(windowing)(iWin)+window(1);
         stop = allEvents.(windowing)(iWin)+window(2);
@@ -642,7 +649,7 @@ for iWin = intSelection % 1:intervalWindows
        if specPlot ==1
            xlim([(allEvents.FOCUS_ON(start)-1)*fs, (allEvents.MATCH_RESPONSE(stop)+1)*fs]);
        else
-          xlim([(allEvents.FOCUS_ON(start)-1), (allEvents.MATCH_RESPONSE(stop)+1)*fs]); 
+          xlim([(allEvents.FOCUS_ON(start)-1), (allEvents.MATCH_RESPONSE(stop)+1)]); 
        end
    end
    end
@@ -654,7 +661,11 @@ for iWin = intSelection % 1:intervalWindows
    delete(sText);
    delete(eText);
    else
+   if ((start-stop) ~= 0)
    sText = text( -.275,.75+1.5+ .5,['Trials ', num2str(start), ' - ',num2str(stop)],'Units','Normalized','FontSize',20);
+   else
+   sText = text( -.275,.75+1.5+ .5,['Trial ', num2str(start)],'Units','Normalized','FontSize',20);    
+   end
    saveas(figFull,fullfile(saveDir,[limitTypes,'_Trials ', num2str(start), ' - ',num2str(stop),parameters.Optional.methods, '.png']));
    delete(sText);
    end
