@@ -1,0 +1,711 @@
+%% Quality Visualization
+% This script allows for Memory Decoders to vizualize the quality of our
+% data processing methods
+
+                                                                            % Project: USC RAM
+                                                                            % Author: Garrett Flynn
+                                                                            % Date: February 8th, 2020
+if qualityViz % only as needed
+for qq = 1:size(HHData.Data.LFP.Spectrum,3)
+    %LFP_Quality(HHData,parameters,qq,'Power (((uV)^2)/Hz', 'raw', fullfile(parameters.Directories.filePath,'LFP_Quality',['Channel' num2str(HHData.Channels.sChannels(qq))]),'Trial',1);%'Event',centerEvent);
+    Band_Quality(HHData,parameters,qq,'Power (((uV)^2)/Hz', 'raw', fullfile(parameters.Directories.filePath,'Band_Quality',['Channel' num2str(HHData.Channels.sChannels(qq))]),'Trial',1); % 'Event',centerEvent);%
+
+end
+end
+
+%% VISUALIZATIONS
+
+%% Multi-Panel Visualization of Banded Signals and Spectrum
+% Written by Garrett Flynn in Fall 2019
+% Modified February, 7th 2020
+
+function [] = Band_Quality(HHData,parameters,channelIndex,colorUnit, limitTypes, saveDir,TrialOrEventCenter,windowing)
+% Input 1: HHData Structure
+% Input 2: parameters
+% Input 3: Channel Index (equivalent to loop iteration)
+% Input 4: Colorbar Axis Label ('e.g. Percent Change')
+% Input 5: Limit Type (norm or raw)
+% Input 6: Save Directory
+% Input 7: Specify figure type ('Event' or 'Trial')
+% Input 8: Specify which event to center around OR how many trials to fit
+% into one figure
+window = [-.5,.5];
+if nargin < 7
+    TrialOrEventCenter = 'Event';
+    windowing = 'SAMPLE_RESPONSE';
+end
+if nargin < 8
+    if (strcmp(TrialOrEventCenter,'Event'))
+        windowing = 'SAMPLE_RESPONSE';
+        intSelection = 51;
+    else
+        windowing = 10;
+        intSelection = 5;
+    end
+end
+
+fs = parameters.Derived.samplingFreq;
+
+% HHDATA OPTIONS
+allEvents = HHData.Events;
+channelNumber = HHData.Channels.sChannels(channelIndex);
+intervalTimes = HHData.Data.Intervals.Times;
+%     HHData.Data.Voltage.Raw;
+%     HHData.Data.LFP.LFP;
+%     HHData.Data.Normed.LFP;
+%     HHData.Data.Normed.Spectrum;
+%     HHData.ML.thetaSignal;
+%     HHData.ML.thetaSpectrum;
+%     HHData.ML.alphaSignal;
+%     HHData.ML.alphaSpectrum;
+%     HHData.ML.betaSignal;
+%     HHData.ML.betaSpectrum;
+%     HHData.ML.lowgammaSignal;
+%     HHData.ML.lowgammaSpectrum;
+%     HHData.ML.highgammaSignal;
+%     HHData.ML.highgammaSpectrum;
+    
+if ~exist(saveDir,'dir')
+mkdir(saveDir);
+end
+
+    %% Initialize Figures
+    % Bounds
+    vBound = 2; %vBound*1.2;
+    
+    % Subplot Pattern
+    numRows = 30;
+    numCols = 12;
+    templateSub1 = [2:numCols/2];
+    templateSub2 = [(numCols/2)+2:numCols];
+    numPlots = 3;
+    
+    firstTop = templateSub1;
+    secondTop = templateSub2;
+    height = ceil(((numRows)/(numPlots+1)));
+    w = numCols - 1;
+    remainder = numRows-(numPlots*height);
+    for ii = 1:height
+    firstTop = [firstTop, templateSub1 + ii*numCols];
+    secondTop = [secondTop, templateSub2 + ii*numCols];
+    end
+    
+    fullSpec = firstTop+(numCols*(height+1));
+    fullSpec = [fullSpec,firstTop+(numCols*2*(height+1))];
+    
+    numPlots = 5;
+    numRowsLeft = numRows - height;
+    height = floor(((numRowsLeft)/(numPlots)));
+    
+    fullSpec =  zeros(1,length(templateSub2)*height*numPlots);
+    bandSpecs = zeros(numPlots,length(templateSub2)*height);
+    bandTemplate = (secondTop(end)+(templateSub2));
+    specTemplate = (secondTop(end)+(templateSub1));
+    counter = 0;
+    for ii = 1:numPlots
+        for qq = 1:height
+        if qq ~= 1
+            temp_ = [temp_,bandTemplate+(numCols*(counter))];
+            temp2_ = [temp2_,specTemplate+(numCols*(counter))];
+        else
+            temp_ = [bandTemplate+(numCols*(counter))];
+            if (ii == 1)
+                temp2_ = [specTemplate+(numCols*(counter))];
+            else
+                temp2_ = [temp2_,specTemplate+(numCols*(counter))];
+            end
+        end
+        counter = counter + 1;
+        end
+        bandSpecs(ii,:) = temp_;
+        fullSpec = temp2_;
+    end
+    
+    
+    figFull = figure('Position',[50 50 1700 800],'visible','on');
+    
+    h(1) = subplot(numRows,numCols,firstTop);
+    plot(mapminmax(HHData.Data.LFP.LFP(channelIndex,:)),'k');
+    ylim([-1.5 1.5]);
+    xticks([]);
+    yticks([]);
+    xlim([0 length(HHData.Data.LFP.LFP)]);
+    text( -.02,.5,'LFP','Units','Normalized','FontSize',10,'horizontalAlignment', 'right','FontWeight','bold');
+    
+    h(2) = subplot(numRows,numCols,secondTop);
+    plot(8+mapminmax(HHData.ML.thetaSignal(channelIndex,:)),'k');hold on;
+    plot(6+mapminmax(HHData.ML.alphaSignal(channelIndex,:)),'k');
+    plot(4+mapminmax(HHData.ML.betaSignal(channelIndex,:)),'k');
+    plot(2+mapminmax(HHData.ML.lowGammaSignal(channelIndex,:)),'k');
+    plot(mapminmax(HHData.ML.highGammaSignal(channelIndex,:)),'k');
+    ylim([-2 10]);
+    xticks([]);
+    yticks([]);
+    xlim([0 length(HHData.Data.LFP.LFP)]);
+    text( -.02,.15+(.20*4),'Theta','Units','Normalized','FontSize',10,'horizontalAlignment', 'right','FontWeight','bold');
+    text( -.02,.15+((.20/2)*7),'4-8 Hz','Units','Normalized','FontSize',10,'horizontalAlignment', 'right')
+    text( -.02,.15+(.20*3),'Alpha','Units','Normalized','FontSize',10,'horizontalAlignment', 'right','FontWeight','bold');
+    text( -.02,.15+((.20/2)*5),'8-12 Hz','Units','Normalized','FontSize',10,'horizontalAlignment', 'right')
+    text( -.02,.15+(.20*2),'Beta','Units','Normalized','FontSize',10,'horizontalAlignment', 'right','FontWeight','bold');
+    text( -.02,.15+((.20/2)*3),'12-30 Hz','Units','Normalized','FontSize',10,'horizontalAlignment', 'right')
+    text( -.02,.15+(.20*1),'Low Gamma','Units','Normalized','FontSize',10,'horizontalAlignment', 'right','FontWeight','bold');
+    text( -.02,.15+((.20/2)*1),'30-55 Hz','Units','Normalized','FontSize',10,'horizontalAlignment', 'right')
+    text( -.02,.15,'High Gamma','Units','Normalized','FontSize',10,'horizontalAlignment', 'right','FontWeight','bold');
+    text( -.02,.15+((.20/2)*-1),'65-140 Hz','Units','Normalized','FontSize',10,'horizontalAlignment', 'right')
+    
+    for specPlot = 3:8 
+        if (specPlot-2 == 1)
+            h(specPlot) = subplot(numRows,numCols,fullSpec);
+        else
+            h(specPlot) = subplot(numRows,numCols,bandSpecs(specPlot-3,:));
+        end
+    
+    switch (specPlot-2)
+        case 6
+            chosenBand = 'thetaSpectrum';
+            freqRange = [4,8];
+             clims = [0 10000];
+        case 5
+            chosenBand = 'alphaSpectrum';
+            freqRange = [8,12];
+             clims = [0 10000];
+        case 4
+            chosenBand = 'betaSpectrum';
+            freqRange = [12,30];
+             clims = [0 1000];
+        case 3
+            chosenBand = 'lowGammaSpectrum';
+            freqRange = [25,55];
+             clims = [0 500];
+        case 2
+            chosenBand = 'highGammaSpectrum';
+            freqRange = [65,140];
+             clims = [0 100];
+    end
+    
+            originalSize1 = get(gca, 'Position');
+            if (specPlot-2 ~= 1)
+                dataToPlot = HHData.ML.(chosenBand);
+                freq = linspace(freqRange(1),freqRange(2),size(dataToPlot,1));% in Hz
+            else
+                dataToPlot = HHData.Data.LFP.Spectrum;
+                freq = parameters.Derived.freq;
+                clims = [0 10000];
+            end
+            dataToPlot = dataToPlot(:,:,channelIndex);
+            time = linspace(0,parameters.Derived.durationSeconds,size(dataToPlot,2));% in ms
+            pcolor(time,freq,dataToPlot);
+            shading interp
+            if (specPlot-2) == 2 || (specPlot-2) == 3 || (specPlot-2) == 1
+                ytickskip = 20:40:length(freq);
+                newTicks = (round(freq(ytickskip)));
+                yticks(newTicks)
+                yticklabels(cellstr(num2str(round((newTicks')))));
+            else
+                yticklabels(cellstr(num2str(round((yticks()')))));
+            end
+                
+            if (strcmp(TrialOrEventCenter,'Event'))
+                xticks(fs*[0:parameters.Choices.timeBin:parameters.Derived.durationSeconds]);
+            else
+                print([0:parameters.Choices.timeBin*10:parameters.Derived.durationSeconds])
+                print([0:parameters.Choices.timeBin*10:parameters.Derived.durationSeconds])
+                xticks(fs*[0:parameters.Choices.timeBin*10:parameters.Derived.durationSeconds]);  
+            end
+            xticklabels((xticks/fs))
+            if (specPlot-2) == 6 || (specPlot-2) == 1
+                xlabel('Time (s)');
+            else
+                xticks([]);
+            end
+            hcb2=colorbar;
+            colormap(jet);
+            ylabel(hcb2,colorUnit);
+            caxis(clims);
+            ylabel('Frequency') ;
+            set(gca, 'Position', originalSize1);
+    end      
+ 
+            
+%% Take Interval Snapshots
+if (strcmp(TrialOrEventCenter,'Event'))
+    intervalWindows = size(intervalTimes,2);
+else
+    intervalWindows = size(intervalTimes,2)/windowing;         
+end
+
+for iWin = 1:intervalWindows
+    if (strcmp(TrialOrEventCenter,'Event'))
+        start =  allEvents.(windowing)(iWin)+window(1);
+        stop = allEvents.(windowing)(iWin)+window(2);
+    else
+        start =  1+(windowing*(iWin-1));
+        stop = (windowing*iWin);
+    end
+   
+   [polyStructure] = polyEvents(allEvents,windowing,start,stop,vBound,fs,iWin);
+   
+% Shift Signal
+for signal = 1:2
+   set(figFull,'CurrentAxes',h(signal));
+   if (strcmp(TrialOrEventCenter,'Event'))
+       if start < 0
+           start = 0;
+       elseif stop > allEvents.MATCH_RESPONSE(end)
+           stop = allEvents.MATCH_RESPONSE(end);
+       end
+       xlim([(start*fs), (stop*fs)]);
+   else
+   xlim([(allEvents.FOCUS_ON(start)-1)*fs, (allEvents.MATCH_RESPONSE(stop)+1)*fs]);
+   end
+   originalSize2 = get(gca, 'Position');
+   
+   % Polygon Blocks
+   patch('Faces',polyStructure.Blocks.polyF,'Vertices',polyStructure.Blocks.polyV,'FaceColor',[0 0 0], 'FaceAlpha',.1); hold on;
+   fields = fieldnames(polyStructure.Events);
+   numF = length(fields);
+   colors = winter(numF);
+
+   for ii = 1:numF
+       currentField = fields{ii};
+       numEvents = length(polyStructure.Events.(currentField));
+       % Create Line Vertices
+       firstComp = [polyStructure.Events.(currentField);polyStructure.Events.(currentField)];
+       secondComp = zeros(2*numEvents,1);
+       secondComp(1:numEvents) = polyStructure.Bounds.bottomY;
+       secondComp(numEvents+1:end) = polyStructure.Bounds.topY;
+       lineVerts = [firstComp,secondComp];
+
+       faceTemplate = [1,numEvents + 1];
+       eventFaces = faceTemplate;
+       for jj = 1:numEvents-1
+       eventFaces = [eventFaces; faceTemplate + 1*(jj)];
+       end
+    
+   l(ii) = patch('Faces',eventFaces,'Vertices',lineVerts,'FaceColor', colors(ii,:), 'EdgeColor',colors(ii,:),'LineWidth',2);
+   name{ii} = currentField;
+   end
+   if (signal ==2)
+        legend(l,name,'location','northeastoutside');
+   end
+   set(gca, 'Position', originalSize2);
+end
+
+   % Shift Spectrum
+   for specPlot = 1:6
+   set(figFull,'CurrentAxes',h(2+specPlot))
+   if (strcmp(TrialOrEventCenter,'Event'))
+          xlim([start, stop]); 
+   else
+          xlim([(allEvents.FOCUS_ON(start)-1), (allEvents.MATCH_RESPONSE(stop)+1)]); 
+   end
+   end
+   
+   set(figFull,'CurrentAxes',h(3));
+   text(-.5,.9,['Channel ', num2str(channelNumber)],'Units','Normalized','FontSize',30,'FontWeight','bold');
+   if (strcmp(TrialOrEventCenter,'Event'))
+   sText = text( -.5,.9-.1,['Trial ', num2str(iWin)],'Units','Normalized','FontSize',20);
+   eText = text( -.5,.9-.15 -.05,['Event: ',replace(windowing,'_',' ')],'Units','Normalized','FontSize',10);
+   saveas(figFull,fullfile(saveDir,[limitTypes,'Trial_', num2str(iWin),'_Event_',windowing,'_',parameters.Optional.methods, '.png']));
+   delete(sText);
+   delete(eText);
+   else
+   if ((start-stop) ~= 0)
+   sText = text( -.5,.9-.1,['Trials ', num2str(start), ' - ',num2str(stop)],'Units','Normalized','FontSize',20);
+   else
+   sText = text( -.5,.9-.1,['Trial ', num2str(start)],'Units','Normalized','FontSize',20);    
+   end
+   saveas(figFull,fullfile(saveDir,[limitTypes,'_Trials ', num2str(start), ' - ',num2str(stop),parameters.Optional.methods, '.png']));
+   delete(sText);
+   end
+   
+end
+close all;
+end
+
+
+
+%% Three-Panel Visualization of LFP Signal and Spectrum
+% Written by Garrett Flynn in Fall 2019
+% Modified February, 7th 2020
+        
+function [] = LFP_Quality(HHData,parameters,channelIndex,colorUnit, limitTypes, saveDir,TrialOrEventCenter,windowing)
+% Input 1: HHData Structure
+% Input 2: parameters
+% Input 3: Channel Number (equivalent to loop iteration)
+% Input 4: Colorbar Axis Label ('e.g. Percent Change')
+% Input 5: Limit Type (norm or raw)
+% Input 6: Save Directory
+% Input 7: Specify figure type ('Event' or 'Trial')
+% Input 8: Specify which event to center around OR how many trials to fit
+% into one figure
+window = [-.5,.5];
+if nargin < 7
+    TrialOrEventCenter = 'Event';
+    windowing = 'SAMPLE_RESPONSE';
+end
+if nargin < 8
+    if (strcmp(TrialOrEventCenter,'Event'))
+        windowing = 'SAMPLE_RESPONSE';
+        intSelection = 51;
+    else
+        windowing = 10;
+        intSelection = 5;
+    end
+end
+
+fs = parameters.Derived.samplingFreq;
+
+% HHDATA OPTIONS
+allEvents = HHData.Events;
+channelNumber = HHData.Channels.sChannels(channelIndex);
+intervalTimes = HHData.Data.Intervals.Times;
+
+%     HHData.Data.Voltage.Raw;
+%     HHData.Data.LFP.LFP;
+%     HHData.Data.Normed.LFP;
+%     HHData.Data.Normed.Spectrum;
+%     HHData.ML.thetaSignal;
+%     HHData.ML.thetaSpectrum;
+%     HHData.ML.alphaSignal;
+%     HHData.ML.alphaSpectrum;
+%     HHData.ML.betaSignal;
+%     HHData.ML.betaSpectrum;
+%     HHData.ML.lowgammaSignal;
+%     HHData.ML.lowgammaSpectrum;
+%     HHData.ML.highgammaSignal;
+%     HHData.ML.highgammaSpectrum;
+
+dataSignalRaw = HHData.Data.Voltage.Raw;
+HHData.Data.LFP.LFP = HHData.Data.LFP.LFP;
+HHData.Data.LFP.Spectrum = HHData.Data.LFP.Spectrum;
+    
+    freq = linspace(parameters.Choices.freqMin,parameters.Choices.freqMax,size(HHData.Data.LFP.Spectrum,1));
+
+if ~exist(saveDir,'dir')
+mkdir(saveDir);
+end
+
+    %% Initialize Figures
+    % Bounds
+    if strcmp(limitTypes,'norm')
+         vBound = 5;
+         clims = [-5,5];
+         HHData.Data.LFP.LFP = HHData.Data.Normed.LFP;
+         HHData.Data.LFP.Spectrum = HHData.Data.Normed.Spectrum;         
+    elseif strcmp(limitTypes,'raw')
+         vBound = 2;
+         clims = [0 250];
+         dataSignalRaw = HHData.Data.Voltage.Raw;
+         HHData.Data.LFP.LFP = HHData.Data.LFP.LFP;
+         HHData.Data.LFP.Spectrum = HHData.Data.LFP.Spectrum;
+    end
+    
+    % Subplot Pattern
+    numRows = 30;
+    numCols = 8;
+    templateSub = [2:numCols];
+    numPlots = 3;
+    
+    firstThird = templateSub;
+    height = floor(((numRows)/4));
+    w = numCols - 1;
+    remainder = numRows-(numPlots*height);
+    for ii = 1:height
+    firstThird = [firstThird, templateSub + ii*numCols];
+    end
+    
+    secondThird = firstThird+((numCols)*floor((remainder/2)))+(height*numCols);
+    thirdThird = secondThird+((numCols)*floor((remainder/2)))+(height*numCols);
+    
+    specThirds= zeros(2,length(secondThird));
+    specThirds(1,:) = [secondThird];
+    specThirds(2,:) = [thirdThird];
+    
+     figFull = figure('Position',[50 50 1700 800],'visible','off');
+    h(2) = subplot(numRows,8,firstThird);
+    if strcmp(limitTypes,'norm')
+        plot((HHData.Data.LFP.LFP(:,:)'),'k');
+        ylabel('Z-Score'); ylim([-vBound vBound])
+    elseif strcmp(limitTypes,'raw')
+    plot((dataSignalRaw(:,:)')*(10^3),'c'); hold on;
+    plot((HHData.Data.LFP.LFP(:,:)')*(10^3),'k');
+            ylabel('mV'); ylim([-vBound vBound])
+    end
+            xticks([]);
+            xlim([0 length(HHData.Data.LFP.LFP)]);
+    for specPlot = 1:2        
+    h(2+specPlot) = subplot(numRows,8,specThirds(specPlot,:));
+    
+            originalSize1 = get(gca, 'Position');
+            
+            % Plot the Image
+           if specPlot == 1
+            imagesc([0 length(HHData.Data.LFP.LFP)-1],freq,HHData.Data.LFP.Spectrum);
+            set(gca,'ydir','normal');
+            ytickskip = 20:40:length(freq);
+            newTicks = (round(freq(ytickskip)));
+            yticks(newTicks)
+            yticklabels(cellstr(num2str(round((newTicks')))));
+            if (strcmp(TrialOrEventCenter,'Event'))
+            xticks(fs*[0:0.1:parameters.Derived.durationSeconds]);
+            else
+            xticks(fs*[0:1:parameters.Derived.durationSeconds]);    
+            end
+            xticklabels((xticks/fs))
+            xlabel('Time (s)');
+            hcb2=colorbar;
+            colormap(jet);
+            ylabel(hcb2,colorUnit);
+            caxis(clims);
+            ylabel('Frequency') ;
+            set(gca, 'Position', originalSize1);
+           elseif specPlot == 2
+            time = linspace(0,parameters.Derived.durationSeconds,length(HHData.Data.LFP.Spectrum));% in ms
+            pcolor(time,freq,HHData.Data.LFP.Spectrum);
+            shading interp
+            ytickskip = 20:40:length(freq);
+            newTicks = (round(freq(ytickskip)));
+            yticks(newTicks)
+            yticklabels(cellstr(num2str(round((newTicks')))));
+            if (strcmp(TrialOrEventCenter,'Event'))
+             xticks(fs*[0:0.1:parameters.Derived.durationSeconds]);
+            else
+            xticks(fs*[0:1:parameters.Derived.durationSeconds]);  
+            end
+            xlabel('Time (s)');
+            hcb2=colorbar;
+            colormap(jet);
+            ylabel(hcb2,colorUnit);
+            caxis(clims);
+            ylabel('Frequency') ;
+            set(gca, 'Position', originalSize1);
+           end
+    end      
+    text( -.275,.75+1.5,['Channel ', num2str(channelNumber)],'Units','Normalized','FontSize',30,'FontWeight','bold');
+ 
+            
+%% Take Interval Snapshots
+if (strcmp(TrialOrEventCenter,'Event'))
+    intervalWindows = size(intervalTimes,2);
+else
+    intervalWindows = size(intervalTimes,2)/windowing;         
+end
+
+for iWin = 1:intervalWindows
+    if (strcmp(TrialOrEventCenter,'Event'))
+        start =  allEvents.(windowing)(iWin)+window(1);
+        stop = allEvents.(windowing)(iWin)+window(2);
+    else
+        start =  1+(windowing*(iWin-1));
+        stop = (windowing*iWin);
+    end
+   
+   [polyStructure] = polyEvents(allEvents,windowing,start,stop,vBound,fs,iWin);
+   
+% Shift Signal
+
+   set(figFull,'CurrentAxes',h(2));
+   if (strcmp(TrialOrEventCenter,'Event'))
+       if start < 0
+           start = 0;
+       elseif stop > allEvents.MATCH_RESPONSE(end)
+           stop = allEvents.MATCH_RESPONSE(end);
+       end
+       xlim([(start*fs), (stop*fs)]);
+   else
+   xlim([(allEvents.FOCUS_ON(start)-1)*fs, (allEvents.MATCH_RESPONSE(stop)+1)*fs]);
+   end
+   originalSize2 = get(gca, 'Position');
+   
+   % Polygon Blocks
+   patch('Faces',polyStructure.Blocks.polyF,'Vertices',polyStructure.Blocks.polyV,'FaceColor',[0 0 0], 'FaceAlpha',.1); hold on;
+   fields = fieldnames(polyStructure.Events);
+   numF = length(fields);
+   colors = winter(numF);
+
+   for ii = 1:numF
+       currentField = fields{ii};
+       numEvents = length(polyStructure.Events.(currentField));
+       % Create Line Vertices
+       firstComp = [polyStructure.Events.(currentField);polyStructure.Events.(currentField)];
+       secondComp = zeros(2*numEvents,1);
+       secondComp(1:numEvents) = polyStructure.Bounds.bottomY;
+       secondComp(numEvents+1:end) = polyStructure.Bounds.topY;
+       lineVerts = [firstComp,secondComp];
+
+       faceTemplate = [1,numEvents + 1];
+       eventFaces = faceTemplate;
+       for jj = 1:numEvents-1
+       eventFaces = [eventFaces; faceTemplate + 1*(jj)];
+       end
+    
+   l(ii) = patch('Faces',eventFaces,'Vertices',lineVerts,'FaceColor', colors(ii,:), 'EdgeColor',colors(ii,:),'LineWidth',2);
+   name{ii} = currentField;
+   end
+   legend(l,name,'location','northeastoutside');
+   set(gca, 'Position', originalSize2);
+   
+   % Shift Spectrum
+   for specPlot = 1:2
+   set(figFull,'CurrentAxes',h(2+specPlot))
+   if (strcmp(TrialOrEventCenter,'Event'))
+       if specPlot ==1
+        xlim([start*fs, stop*fs]);
+       else
+          xlim([start, stop]); 
+       end
+   else
+       if specPlot ==1
+           xlim([(allEvents.FOCUS_ON(start)-1)*fs, (allEvents.MATCH_RESPONSE(stop)+1)*fs]);
+       else
+          xlim([(allEvents.FOCUS_ON(start)-1), (allEvents.MATCH_RESPONSE(stop)+1)]); 
+       end
+   end
+   end
+   
+   if (strcmp(TrialOrEventCenter,'Event'))
+   sText = text( -.275,1.5+.5,['Trial ', num2str(iWin)],'Units','Normalized','FontSize',20);
+   eText = text( -.275,1.5+.25,['Event: ',replace(windowing,'_',' ')],'Units','Normalized','FontSize',10);
+   saveas(figFull,fullfile(saveDir,[limitTypes,'Trial_', num2str(iWin),'_Event_',windowing,'_',parameters.Optional.methods, '.png']));
+   delete(sText);
+   delete(eText);
+   else
+   if ((start-stop) ~= 0)
+   sText = text( -.275,.75+1.5+ .5,['Trials ', num2str(start), ' - ',num2str(stop)],'Units','Normalized','FontSize',20);
+   else
+   sText = text( -.275,.75+1.5+ .5,['Trial ', num2str(start)],'Units','Normalized','FontSize',20);    
+   end
+   saveas(figFull,fullfile(saveDir,[limitTypes,'_Trials ', num2str(start), ' - ',num2str(stop),parameters.Optional.methods, '.png']));
+   delete(sText);
+   end
+   
+end
+close all;
+end
+
+
+function [rasterPolygons] = polyEvents(Events,windowing,start,stop,vBound,fs,trial)
+
+if isempty(Events)
+    % Rat Data Does Not Contain Events
+else
+    
+    
+ % Create Blocks
+   if isnumeric(windowing)
+       trialStarts = Events.FOCUS_ON(start:stop)*fs;
+       trialStops = Events.MATCH_RESPONSE(start:stop)*fs;
+   else
+       trialStarts = start*fs;
+       trialStops = stop*fs;
+   end
+
+   templateY = ones(1,length(trialStarts));
+   bottomY = -vBound*templateY';
+   topY = (-vBound + (vBound*.2))*templateY';
+   
+   firstInds = [trialStarts,bottomY];
+   secInds = [trialStarts,topY];
+  thirdInds = [trialStops,topY];
+   fourthInds = [trialStops,bottomY];
+   
+   rasterPolygons.Blocks.polyV = [firstInds;secInds;thirdInds;fourthInds];
+   faces = [1,length(firstInds)+1,2*length(firstInds)+1,3*length(firstInds)+1];
+   rasterPolygons.Blocks.polyF = faces;
+   
+   for ii = 1:windowing-1
+   rasterPolygons.Blocks.polyF = [rasterPolygons.Blocks.polyF; ii+faces];
+   end
+    
+   
+
+   % Find Relevant Behaviors
+behaviors = fieldnames(Events);
+initB = length(behaviors);
+eventPool = zeros(1,initB);
+for bIter = 1:initB
+match = cell2mat(regexpi(behaviors{bIter},{'FOCUS_ON','SAMPLE_ON','SAMPLE_RESPONSE','MATCH_ON','MATCH_RESPONSE'}));
+     if ~isempty(match)
+ eventPool(bIter) =  match;
+     end
+end
+
+chosenBehaviors = find(eventPool);
+numB = length(chosenBehaviors);
+
+
+for behavior = 1:numB
+    currentBehavior = behaviors{chosenBehaviors(behavior)};
+    Y = Events.(currentBehavior);
+%% Raster plot
+    if isnumeric(windowing)
+        switch currentBehavior
+            case 'FOCUS_ON'
+                 rasterPolygons.Events.FO = Y(start:stop)*fs;
+            case 'SAMPLE_ON'
+                 rasterPolygons.Events.SO = Y(start:stop)*fs;
+            case 'SAMPLE_RESPONSE'
+                 rasterPolygons.Events.SR = Y(start:stop)*fs;
+            case 'MATCH_ON'
+                 rasterPolygons.Events.MO = Y(start:stop)*fs;
+            case 'MATCH_RESPONSE'
+                 rasterPolygons.Events.MR = Y(start:stop)*fs;
+        end 
+    else
+        switch currentBehavior
+            case 'FOCUS_ON'
+                 rasterPolygons.Events.FO = Y(trial)*fs;
+            case 'SAMPLE_ON'
+                 rasterPolygons.Events.SO = Y(trial)*fs;
+            case 'SAMPLE_RESPONSE'
+                 rasterPolygons.Events.SR = Y(trial)*fs;
+            case 'MATCH_ON'
+                 rasterPolygons.Events.MO = Y(trial)*fs;
+            case 'MATCH_RESPONSE'
+                 rasterPolygons.Events.MR = Y(trial)*fs;
+        end 
+    end
+end
+
+rasterPolygons.Bounds.topY = topY;
+rasterPolygons.Bounds.bottomY = bottomY;
+end
+end
+
+function c = redblue(m)
+%REDBLUE    Shades of red and blue color map
+%   REDBLUE(M), is an M-by-3 matrix that defines a colormap.
+%   The colors begin with bright blue, range through shades of
+%   blue to white, and then through shades of red to bright red.
+%   REDBLUE, by itself, is the same length as the current figure's
+%   colormap. If no figure exists, MATLAB creates one.
+%
+%   For example, to reset the colormap of the current figure:
+%
+%             colormap(redblue)
+%
+%   See also HSV, GRAY, HOT, BONE, COPPER, PINK, FLAG, 
+%   COLORMAP, RGBPLOT.
+%   Adam Auton, 9th October 2009
+if nargin < 1, m = size(get(gcf,'colormap'),1); end
+if (mod(m,2) == 0)
+    % From [0 0 1] to [1 1 1], then [1 1 1] to [1 0 0];
+    m1 = m*0.5;
+    r = (0:m1-1)'/max(m1-1,1);
+    g = r;
+    r = [r; ones(m1,1)];
+    g = [g; flipud(g)];
+    b = flipud(r);
+else
+    % From [0 0 1] to [1 1 1] to [1 0 0];
+    m1 = floor(m*0.5);
+    r = (0:m1-1)'/max(m1,1);
+    g = r;
+    r = [r; ones(m1+1,1)];
+    g = [g; 1; flipud(g)];
+    b = flipud(r);
+end
+c = [r g b]; 
+end
+

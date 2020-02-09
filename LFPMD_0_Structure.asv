@@ -130,8 +130,7 @@ else
     error('No Sampling Frequency Found in Neural Data Structure');
 end
 
-parameters.Choices.timeBin = .1;  % Time Bin Width (s) is hardcoded for 100ms
-fprintf('Time Bin Width is hardcoded as 100ms');
+parameters.Choices.timeBin = .1;  % Time Bin Width (s)
 
 if notchOn
 parameters.Filters.notchFilter = designfilt('bandstopiir','FilterOrder',2, ...

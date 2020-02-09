@@ -1,14 +1,4 @@
 
-%% Data Visualization (optional)
-
- typeViz = 'Spectrum';
-
-% IT IS ESSENTIAL TO SPECIFY SIGNAL AND SPECTRUM INPUTS, AS WELL AS UNITS + RANGES
-%          for qq = 1:size(HHData.Data.LFP.Spectrum,3)
-%           Signal_Spectrum_Events_Polygons({HHData.Data.LFP.LFP(qq,:),HHData.Data.LFP.Spectrum(:,:,qq)}, HHData.Events,parameters,HHData.Channels.sChannels(qq),HHData.Data.Intervals.Times,'dB', [-5,5], fullfile(parameters.Directories.filePath,['Signal-Spectrum-Events (LFP Validation)'],['Channel' num2str(HHData.Channels.sChannels(qq))]));
-%          end
-%          
-
 %% Results Visualization
 % This script is used to process the modeling results of the LFP MD model
 % between Permute-based vs. PCA-based vs. Raw Signal based cases

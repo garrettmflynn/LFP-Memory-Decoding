@@ -18,7 +18,7 @@ for ii = 1:length(dataFormat)
 if ~isempty(regexpi(choiceFull,'Spectrum','ONCE'))
 %% All Bands
     if ~isempty(cell2mat(regexpi(choiceFull,{'theta','alpha','beta','lowGamma','highGamma'})))
-        form = 'Spectrum';
+        form = 'bandSpectrum';
         bandType = erase(choiceFull,'Spectrum');
         spectrumFrequencies = HHData.Data.Parameters.SpectrumFrequencies;
         [HHData] = bandSpectrum(HHData,spectrumFrequencies,bandType,parameters.Choices.bandAveragedPower);
@@ -128,7 +128,6 @@ save(fullfile(parameters.Directories.filePath,[parameters.Directories.dataName, 
 fprintf('Now Saving HHData. This may take a while...');
 save(fullfile(parameters.Directories.filePath,[parameters.Directories.dataName, 'HHData.mat']),'HHData','-v7.3');
     end
-    save(fullfile(parameters.Directories.filePath,[parameters.Directories.dataName, 'Parameters.mat']),'parameters','-v7.3');
 end
 
 %% Function Repository
@@ -160,11 +159,6 @@ centerPoint = round(centerEventVector(q)*sampling);
     intervalMatrix(2,q) = round(stop/sampling);
 
 if ~(start == stop)
-    if (start == 0)
-        start = 1;
-        stop = stop+1
-        fprintf('Might be an issue\n')
-    end
     sampledData(1,:,:,q) = data(:,start:stop)';
 end
 end
@@ -259,6 +253,8 @@ norm = LFP_Signal;
                 frequencyMu = squeeze(mean(LFP_Data'));
                 freqSig = squeeze(std(LFP_Data'));     
                 if strcmp(outputFormat,'percentChange')
+                frequencyMu = squeeze(mean(LFP_Data'));
+                freqSig = squeeze(std(LFP_Data'));     
                   LFP_Spectrum = 100*(LFP_Data' - frequencyMu)./frequencyMu;
                   end
                 if strcmp(outputFormat,'zScore')
@@ -268,6 +264,26 @@ norm = LFP_Signal;
             end
             
             norm = LFP_Spectrum;
+
+            
+            
+    case 'bandSpectrum'
+        processableData = squeeze(LFP_Data);
+        frequencyMu = squeeze(mean(processableData'));
+        freqSig = squeeze(std(processableData'));
+        
+        [f,t,c] = size(LFP_Data);
+         if strcmp(outputFormat,'percentChange')
+                LFP_Spectrum = zeros(f,t,c);
+                LFP_Spectrum(1:f,:,:) = 100*(processableData' - frequencyMu)./frequencyMu;
+         end
+         if strcmp(outputFormat,'zScore')
+                LFP_Spectrum = zeros(f,t,c);
+                LFP_Spectrum(1:f,:,:) = (processableData' - frequencyMu)./freqSig;
+         end
+         
+         
+        norm = LFP_Spectrum;
 end       
 end
 end
@@ -396,7 +412,7 @@ function [SpectralAnalysis] = bandParams(freqUsed)
 %% Specify Band Bounds (in Hz) 
 theta = [4 8];
 alpha = [8 12];
-beta = [12 30];
+beta = [16 24];
 lowGamma = [25, 55];
 highGamma = [65, 140];
 
