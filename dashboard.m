@@ -10,7 +10,7 @@ clear; clc; close all;
 addpath(genpath('C:\Users\flynn\Documents\Github\LFP-Memory-Decoding'));
 
 %% SETTINGS
-dataChoices = {'Rat_Data'}; % ClipArt2 | Recording003 | Rat_Data | Validation_Data | Other
+dataChoices = {'Keck08','Rancho03','WFU18','WFU26','Rat2','Rat_Data','ClipArt2'}; % ClipArt2 | Recording003 | Rat_Data | Validation_Data | Other
     % Additional data filepaths can be specified in HHDataStructure.m
     % Many other parameters hardcoded in runPipeline.m
     

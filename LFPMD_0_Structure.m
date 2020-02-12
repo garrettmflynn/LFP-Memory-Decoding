@@ -20,7 +20,71 @@ parameters.Channels.CA3_Channels =  input('What channels are located in CA3 (spe
 parameters.isHuman = input('Is this session a human? Yes (1) or No (0)?\n Answer: ');
 else
     
-if strcmp(dataChoices{chosenData},'Recording003')
+if strcmp(dataChoices{chosenData},'Keck08')
+
+% Define data path here for extracting LFP data
+parameters.Directories.filePath = strcat('G:\LFP Decoding\Keck08'); %('E:\LFP\Data2_Recording'); %'/media/gflynn/Seagate Backup Plus Drive/LFP Decoding/ClipArt_2');
+addpath(genpath(parameters.Directories.filePath));
+
+% Choose the testing data
+parameters.Directories.dataName = 'Keck08'; 
+
+% Agreed-Upon Parameters
+parameters.Channels.sChannels = [1:6,7:10,17:22,23:26];
+parameters.Channels.CA1_Channels =  [7:10,23:26]; 
+parameters.Channels.CA3_Channels =  [1:6,17:22]; 
+
+parameters.isHuman = 1;
+
+elseif strcmp(dataChoices{chosenData},'Rancho03')
+
+% Define data path here for extracting LFP data
+parameters.Directories.filePath = strcat('G:\LFP Decoding\Rancho03'); %('E:\LFP\Data2_Recording'); %'/media/gflynn/Seagate Backup Plus Drive/LFP Decoding/ClipArt_2');
+addpath(genpath(parameters.Directories.filePath));
+
+% Choose the testing data
+parameters.Directories.dataName = 'Rancho03'; %'ClipArt_2';
+
+% Agreed-Upon Parameters
+parameters.Channels.sChannels = [1:6,7:10,17:22,23:26];
+parameters.Channels.CA1_Channels =  [7:10,23:26]; 
+parameters.Channels.CA3_Channels =  [1:6,17:22]; 
+
+parameters.isHuman = 1;
+
+elseif strcmp(dataChoices{chosenData},'WFU18')
+
+% Define data path here for extracting LFP data
+parameters.Directories.filePath = strcat('G:\LFP Decoding\WFU18'); 
+addpath(genpath(parameters.Directories.filePath));
+
+% Choose the testing data
+parameters.Directories.dataName = 'WFU18'; %'ClipArt_2';
+
+% Agreed-Upon Parameters
+parameters.Channels.sChannels = [1:6,7:10,17:22,23:26];
+parameters.Channels.CA1_Channels =  [7:10,23:26]; 
+parameters.Channels.CA3_Channels =  [1:6,17:22]; 
+
+parameters.isHuman = 1;
+    
+elseif strcmp(dataChoices{chosenData},'WFU26')
+
+% Define data path here for extracting LFP data
+parameters.Directories.filePath = strcat('G:\LFP Decoding\WFU26'); 
+addpath(genpath(parameters.Directories.filePath));
+
+% Choose the testing data
+parameters.Directories.dataName = 'WFU26'; %'ClipArt_2';
+
+% Agreed-Upon Parameters
+parameters.Channels.sChannels = [1:6,7:10,17:22,23:26];
+parameters.Channels.CA1_Channels =  [7:10,23:26]; 
+parameters.Channels.CA3_Channels =  [1:6,17:22]; 
+
+parameters.isHuman = 1;
+
+elseif strcmp(dataChoices{chosenData},'Recording003')
 
 % Define data path here for extracting LFP data
 parameters.Directories.filePath = strcat('G:\LFP Decoding\Data2_Recording'); %('E:\LFP\Data2_Recording'); %'/media/gflynn/Seagate Backup Plus Drive/LFP Decoding/ClipArt_2');
@@ -57,6 +121,16 @@ parameters.Directories.filePath = strcat('G:\LFP Decoding\Rat_Data');
 
 % Choose the testing data
 parameters.Directories.dataName = 'Rat_Data';
+
+parameters.isHuman = 0;
+
+elseif strcmp(dataChoices{chosenData},'Rat2')
+    
+    % Define data path here for extracting LFP data
+parameters.Directories.filePath = strcat('G:\LFP Decoding\Rat2');
+
+% Choose the testing data
+parameters.Directories.dataName = 'Rat2';
 
 parameters.isHuman = 0;
 

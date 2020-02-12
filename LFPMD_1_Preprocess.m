@@ -396,7 +396,7 @@ function [SpectralAnalysis] = bandParams(freqUsed)
 %% Specify Band Bounds (in Hz) 
 theta = [4 8];
 alpha = [8 12];
-beta = [12 30];
+beta = [16 24];
 lowGamma = [25, 55];
 highGamma = [65, 140];
 

@@ -164,23 +164,43 @@ end
         case 6
             chosenBand = 'thetaSpectrum';
             freqRange = [4,8];
-             clims = [0 10000];
+            if parameters.isHuman
+                clims = [0 10000];
+            else
+                clims = [0 100];
+            end
         case 5
             chosenBand = 'alphaSpectrum';
             freqRange = [8,12];
-             clims = [0 10000];
+            if parameters.isHuman
+                clims = [0 10000];
+            else
+                clims = [0 100];
+            end
         case 4
             chosenBand = 'betaSpectrum';
             freqRange = [12,30];
-             clims = [0 1000];
+            if parameters.isHuman
+                clims = [0 1000];
+            else
+                clims = [0 10];
+            end
         case 3
             chosenBand = 'lowGammaSpectrum';
             freqRange = [25,55];
-             clims = [0 500];
+            if parameters.isHuman
+                clims = [0 500];
+            else
+                clims = [0 5];
+            end
         case 2
             chosenBand = 'highGammaSpectrum';
             freqRange = [65,140];
-             clims = [0 100];
+            if parameters.isHuman
+                clims = [0 100];
+            else
+                clims = [0 1];
+            end
     end
     
             originalSize1 = get(gca, 'Position');
@@ -254,10 +274,19 @@ for signal = 1:2
        end
        xlim([(start*fs), (stop*fs)]);
    else
-   xlim([(allEvents.FOCUS_ON(start)-1)*fs, (allEvents.MATCH_RESPONSE(stop)+1)*fs]);
+       if parameters.isHuman
+            xlim([(allEvents.FOCUS_ON(start)-1)*fs, (allEvents.MATCH_RESPONSE(stop)+1)*fs]);
+       else
+           if start == 1
+                xlim([0, (allEvents.SAMPLE_RESPONSE(stop+1)+1)*fs]);
+           else
+                xlim([(allEvents.SAMPLE_RESPONSE(start-1)-1)*fs, (allEvents.SAMPLE_RESPONSE(stop+1)+1)*fs]);
+           end
+       end
    end
    originalSize2 = get(gca, 'Position');
    
+   if parameters.isHuman
    % Polygon Blocks
    patch('Faces',polyStructure.Blocks.polyF,'Vertices',polyStructure.Blocks.polyV,'FaceColor',[0 0 0], 'FaceAlpha',.1); hold on;
    fields = fieldnames(polyStructure.Events);
@@ -283,8 +312,10 @@ for signal = 1:2
    l(ii) = patch('Faces',eventFaces,'Vertices',lineVerts,'FaceColor', colors(ii,:), 'EdgeColor',colors(ii,:),'LineWidth',2);
    name{ii} = currentField;
    end
+   
    if (signal ==2)
         legend(l,name,'location','northeastoutside');
+   end
    end
    set(gca, 'Position', originalSize2);
 end
@@ -295,7 +326,15 @@ end
    if (strcmp(TrialOrEventCenter,'Event'))
           xlim([start, stop]); 
    else
-          xlim([(allEvents.FOCUS_ON(start)-1), (allEvents.MATCH_RESPONSE(stop)+1)]); 
+       if parameters.isHuman
+            xlim([(allEvents.FOCUS_ON(start)-1), (allEvents.MATCH_RESPONSE(stop)+1)]);
+       else
+           if start == 1
+                xlim([0, (allEvents.SAMPLE_RESPONSE(stop+1)+1)]);
+           else
+                xlim([(allEvents.SAMPLE_RESPONSE(start-1)-1), (allEvents.SAMPLE_RESPONSE(stop+1)+1)]);
+           end
+       end 
    end
    end
    
@@ -584,9 +623,9 @@ end
 
 
 function [rasterPolygons] = polyEvents(Events,windowing,start,stop,vBound,fs,trial)
-
-if isempty(Events)
-    % Rat Data Does Not Contain Events
+temp_ = fields(Events);
+if strcmp(temp_{1},'SAMPLE_RESPONSE')
+    rasterPolygons = [];% Rat Data Does Not Contain Events
 else
     
     
