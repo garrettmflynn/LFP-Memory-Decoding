@@ -46,9 +46,9 @@ addpath(genpath(parameters.Directories.filePath));
 parameters.Directories.dataName = 'Rancho03'; %'ClipArt_2';
 
 % Agreed-Upon Parameters
-parameters.Channels.sChannels = [1:6,7:10,17:22,23:26];
-parameters.Channels.CA1_Channels =  [7:10,23:26]; 
-parameters.Channels.CA3_Channels =  [1:6,17:22]; 
+parameters.Channels.sChannels = [7:12,13:16,23:28,29:32,39:44,45:48,55:60,61:64];
+parameters.Channels.CA1_Channels =  [13:16,29:32,45:48,61:64]; 
+parameters.Channels.CA3_Channels =  [7:12,23:28,29:44,55:60]; 
 
 parameters.isHuman = 1;
 
@@ -62,9 +62,9 @@ addpath(genpath(parameters.Directories.filePath));
 parameters.Directories.dataName = 'WFU18'; %'ClipArt_2';
 
 % Agreed-Upon Parameters
-parameters.Channels.sChannels = [1:6,7:10,17:22,23:26];
-parameters.Channels.CA1_Channels =  [7:10,23:26]; 
-parameters.Channels.CA3_Channels =  [1:6,17:22]; 
+parameters.Channels.sChannels = [7:11,12:16,23:27:28:32,39:43,44:48];
+parameters.Channels.CA1_Channels =  [12:16,28:32,44:48]; 
+parameters.Channels.CA3_Channels =  [7:11,23:27,29:43]; 
 
 parameters.isHuman = 1;
     
@@ -78,9 +78,9 @@ addpath(genpath(parameters.Directories.filePath));
 parameters.Directories.dataName = 'WFU26'; %'ClipArt_2';
 
 % Agreed-Upon Parameters
-parameters.Channels.sChannels = [1:6,7:10,17:22,23:26];
-parameters.Channels.CA1_Channels =  [7:10,23:26]; 
-parameters.Channels.CA3_Channels =  [1:6,17:22]; 
+parameters.Channels.sChannels = [7:12,13:16,23:28,29:32];
+parameters.Channels.CA1_Channels =  [13:16,29:32]; 
+parameters.Channels.CA3_Channels =  [7:12,23:28]; 
 
 parameters.isHuman = 1;
 
@@ -153,11 +153,11 @@ if exist('parameters','var')
 %% HHDataStructure Primary Section
 % Processing | Binning & Windows
 parameters.Optional.methods = tf_method{1}; % Either Morlet or STFT Window (such as Hanning)
-parameters.Choices.freqMin = band_low; % Minimum Frequency of Interest (Hz)
-parameters.Choices.freqMax = 150; % Maximum Frequency of Interest (Hz)
+parameters.Choices.stftMin = stft_low; 
+parameters.Choices.stftMax = stft_high; 
 parameters.Choices.freqBin = fB(1); % Frequency Bin Width (Hz)
 parameters.Choices.trialWindow = [-range range]; % Trial Interval Window
-parameters.Filters.LFPFilter = [band_low band_high]; % Low Pass Filter Frequency (Hz)
+parameters.Filters.LFPFilter = [filter_low filter_high]; % Low Pass Filter Frequency (Hz)
 parameters.Choices.downSample = downSample; % Samples/s
 
 parameters.Choices.bandAveragedPower = bandAveragedPower;
@@ -205,15 +205,18 @@ else
 end
 
 parameters.Choices.timeBin = .1;  % Time Bin Width (s) is hardcoded for 100ms
-fprintf('Time Bin Width is hardcoded as 100ms');
+fprintf('Time Bin Width is hardcoded as 100ms\n');
 
 if notchOn
-parameters.Filters.notchFilter = designfilt('bandstopiir','FilterOrder',2, ...
+parameters.Filters.notchFilter(1) = designfilt('bandstopiir','FilterOrder',2, ...
     'HalfPowerFrequency1',59,'HalfPowerFrequency2',61, ...
+    'DesignMethod','butter','SampleRate',parameters.Derived.samplingFreq); % Notch Filter to Remove Powerline Noise (Hz)
+parameters.Filters.notchFilter(2) = designfilt('bandstopiir','FilterOrder',2, ...
+    'HalfPowerFrequency1',119,'HalfPowerFrequency2',121, ...
     'DesignMethod','butter','SampleRate',parameters.Derived.samplingFreq); % Notch Filter to Remove Powerline Noise (Hz)
 end
 
-parameters.Derived.freq = parameters.Choices.freqMin:parameters.Choices.freqBin:parameters.Choices.freqMax;
+parameters.Derived.freq = parameters.Choices.stftMin:parameters.Choices.freqBin:parameters.Choices.stftMax;
 %parameters.Derived.overlap = round((parameters.Choices.timeBin * parameters.Derived.samplingFreq))%/1.5);
 
 % (1) Multi-Session Configuration
@@ -489,14 +492,13 @@ if (size(rawData,2) > 5)
         
     if notchOn    
     for ii = 1:size(processedData,2)
-    % Added Notch Filter to get rid of line noise
-    LFP(:,ii) = filtfilt(filterNotch,processedData(:,ii));
+        for jj = 1:length(filterNotch)
+            % Added Notch Filter to get rid of line noise
+            processedData(:,ii) = filtfilt(filterNotch(jj),processedData(:,ii));
+        end
     end
-    
-    else
-        
-        LFP = processedData;
     end
+    LFP = processedData;
     
 % IF MANY SESSIONS IN THE FILE
 elseif ~(size(rawData,2) > 5)
@@ -507,15 +509,14 @@ elseif ~(size(rawData,2) > 5)
     clear toProcess
     
     if notchOn
-    
         for ii = 1:size(processedData,2)
-    LFP(:,ii) = filtfilt(filterNotch,processedData(:,ii));
+            for jj = 1:length(filterNotch)
+                % Added Notch Filter to get rid of line noise
+                processedData(:,ii) = filtfilt(filterNotch(jj),processedData(:,ii));
+            end
         end
-    
-    else
-        
-        LFP = processedData
-    end
+    end 
+    LFP = processedData;
     
     % Process subsequent sessions & append to initial array
     for i = 2:size(rawData,2)
@@ -613,12 +614,12 @@ neuralData.MetaTags.SamplingFreq = downSample;
 
 
 % Data
-neuralData.MetaTags.DataPoints = size(nexFileData.contvars{neuralData.MetaTags.ChannelCount, 1}.data,1)*sRatio;
+neuralData.MetaTags.DataPoints = round(size(nexFileData.contvars{neuralData.MetaTags.ChannelCount, 1}.data,1)*sRatio);
 
 neuralData.MetaTags.DataDurationSec = neuralData.MetaTags.DataPoints/neuralData.MetaTags.SamplingFreq;
 neuralData.MetaTags.DataPointsSec = neuralData.MetaTags.DataDurationSec;
 
-neuralData.Data = zeros(neuralData.MetaTags.ChannelCount,neuralData.MetaTags.DataPoints);
+ neuralData.Data = zeros(neuralData.MetaTags.ChannelCount,neuralData.MetaTags.DataPoints);
 
 for ii = 1:neuralData.MetaTags.ChannelCount
     neuralData.Data(ii,:) = nexFileData.contvars{ii, 1}.data(1:sIter:end);

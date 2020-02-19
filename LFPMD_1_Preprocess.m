@@ -114,7 +114,9 @@ end
 dataML.Channels = HHData.Channels;
 dataML.Directory = parameters.Directories.filePath;
 if parameters.isHuman
-dataML.Labels = HHData.Labels;
+    if isfield(HHData,'labels')
+        dataML.Labels = HHData.Labels;
+    end
 dataML.WrongResponse = find(HHData.Data.Intervals.Outcome == 0);
 end
 dataML.Times = HHData.Data.Intervals.Times;
@@ -122,10 +124,10 @@ dataML.Times = HHData.Data.Intervals.Times;
 %% Save HHData If Desired
 if saveHHData
     if norm(iter) == 1
-fprintf('Now Saving Normalized HHData. This may take a while...');
+fprintf('Now Saving Normalized HHData. This may take a while...\n');
 save(fullfile(parameters.Directories.filePath,[parameters.Directories.dataName, 'HHDataNorm.mat']),'HHData','-v7.3');
     else
-fprintf('Now Saving HHData. This may take a while...');
+fprintf('Now Saving HHData. This may take a while...\n');
 save(fullfile(parameters.Directories.filePath,[parameters.Directories.dataName, 'HHData.mat']),'HHData','-v7.3');
     end
     save(fullfile(parameters.Directories.filePath,[parameters.Directories.dataName, 'Parameters.mat']),'parameters','-v7.3');

@@ -7,10 +7,10 @@
 clear; clc; close all;
 
 %% PATH
-addpath(genpath('C:\Users\flynn\Documents\Github\LFP-Memory-Decoding'));
+addpath(genpath('C:\Users\flynn\Desktop\LFP-Memory-Decoding'));
 
 %% SETTINGS
-dataChoices = {'Keck08','Rancho03','WFU18','WFU26','Rat2','Rat_Data','ClipArt2'}; % ClipArt2 | Recording003 | Rat_Data | Validation_Data | Other
+dataChoices = {'WFU26','Rancho03','Keck08','WFU18'}; % 'Keck08',ClipArt2 | Recording003 | Rat_Data | Validation_Data | Other
     % Additional data filepaths can be specified in HHDataStructure.m
     % Many other parameters hardcoded in runPipeline.m
     
@@ -36,15 +36,18 @@ bandAveragedPower = 0; % Currently only when bands are specified
 
 % Data Processing Parameters
 notchOn = 1;
-downSample = []; %Samples/s (500 is ideal for our frequency range)
+downSample = [2000]; %Samples/s (500 is ideal for our frequency range)
 norm = 1;
 outputFormat = 'zScore'; % Or 'percentChange'
 tf_method = {'Hanning'};%{'Morlet'}
 fB = .5;
 
 % Filter Settings
-band_high = 250;
-band_low = .5;
+filter_high = 250;
+filter_low = .5;
+
+stft_low = 0;
+stft_high = 150;
 
 if ~bspline
    resChoice = 1;
