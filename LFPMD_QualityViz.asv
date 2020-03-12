@@ -6,7 +6,7 @@
                                                                             % Author: Garrett Flynn
                                                                             % Date: February 8th, 2020
 if qualityViz % only as needed
-for qq = 1:size(HHData.Data.LFP.Spectrum,3)
+for qq = 1:7:size(HHData.Data.LFP.Spectrum,3)
     %LFP_Quality(HHData,parameters,qq,'Power (((uV)^2)/Hz', 'raw', fullfile(parameters.Directories.filePath,'LFP_Quality',['Channel' num2str(HHData.Channels.sChannels(qq))]),'Trial',1);%'Event',centerEvent);
     Band_Quality(HHData,parameters,qq,'Power (((uV)^2)/Hz', 'raw', fullfile(parameters.Directories.filePath,'Band_Quality',['Channel' num2str(HHData.Channels.sChannels(qq))]),'Trial',1); % 'Event',centerEvent);%
 
@@ -122,7 +122,7 @@ end
     end
     
     
-    figFull = figure('Position',[50 50 1700 800],'visible','on');
+    figFull = figure('Position',[50 50 1700 800],'visible','off');
     
     h(1) = subplot(numRows,numCols,firstTop);
     plot(mapminmax(HHData.Data.LFP.LFP(channelIndex,:)),'k');
@@ -164,7 +164,7 @@ end
         case 6
             chosenBand = 'thetaSpectrum';
             freqRange = [4,8];
-            if isHuman
+            if parameters.isHuman
                 clims = [0 10000];
             else
                 clims = [0 100];
@@ -172,7 +172,7 @@ end
         case 5
             chosenBand = 'alphaSpectrum';
             freqRange = [8,12];
-            if isHuman
+            if parameters.isHuman
                 clims = [0 10000];
             else
                 clims = [0 100];
@@ -180,7 +180,7 @@ end
         case 4
             chosenBand = 'betaSpectrum';
             freqRange = [12,30];
-            if isHuman
+            if parameters.isHuman
                 clims = [0 1000];
             else
                 clims = [0 10];
@@ -188,11 +188,19 @@ end
         case 3
             chosenBand = 'lowGammaSpectrum';
             freqRange = [25,55];
-             clims = [0 500];
+            if parameters.isHuman
+                clims = [0 500];
+            else
+                clims = [0 5];
+            end
         case 2
             chosenBand = 'highGammaSpectrum';
             freqRange = [65,140];
-             clims = [0 100];
+            if parameters.isHuman
+                clims = [0 100];
+            else
+                clims = [0 1];
+            end
     end
     
             originalSize1 = get(gca, 'Position');
@@ -267,7 +275,12 @@ for signal = 1:2
        xlim([(start*fs), (stop*fs)]);
    else
        if parameters.isHuman
-            xlim([(allEvents.FOCUS_ON(start)-1)*fs, (allEvents.MATCH_RESPONSE(stop)+1)*fs]);
+           if size(allEvents.FOCUS_ON,1) >= start
+                leftLim = (allEvents.FOCUS_ON(start)-1)*fs;
+           else
+                leftLim = (allEvents.SAMPLE_ON(start)-1)*fs;
+           end
+            xlim([leftLim, (allEvents.MATCH_RESPONSE(stop)+1)*fs]);
        else
            if start == 1
                 xlim([0, (allEvents.SAMPLE_RESPONSE(stop+1)+1)*fs]);
@@ -319,7 +332,12 @@ end
           xlim([start, stop]); 
    else
        if parameters.isHuman
-            xlim([(allEvents.FOCUS_ON(start)-1), (allEvents.MATCH_RESPONSE(stop)+1)]);
+           if size(allEvents.FOCUS_ON,1) >= start
+                leftLim = (allEvents.FOCUS_ON(start)-1);
+           else
+                leftLim = (allEvents.SAMPLE_ON(start)-1);
+           end
+            xlim([leftLim, (allEvents.MATCH_RESPONSE(stop)+1)]);
        else
            if start == 1
                 xlim([0, (allEvents.SAMPLE_RESPONSE(stop+1)+1)]);
@@ -623,7 +641,11 @@ else
     
  % Create Blocks
    if isnumeric(windowing)
-       trialStarts = Events.FOCUS_ON(start:stop)*fs;
+       if size(Events.FOCUS_ON,1) >= start
+            trialStarts = Events.FOCUS_ON(start:stop)*fs;
+       else
+            trialStarts = Events.SAMPLE_ON(start:stop)*fs;
+       end
        trialStops = Events.MATCH_RESPONSE(start:stop)*fs;
    else
        trialStarts = start*fs;
@@ -668,6 +690,7 @@ for behavior = 1:numB
     currentBehavior = behaviors{chosenBehaviors(behavior)};
     Y = Events.(currentBehavior);
 %% Raster plot
+if size(Y,1) >= start
     if isnumeric(windowing)
         switch currentBehavior
             case 'FOCUS_ON'
@@ -695,6 +718,7 @@ for behavior = 1:numB
                  rasterPolygons.Events.MR = Y(trial)*fs;
         end 
     end
+end
 end
 
 rasterPolygons.Bounds.topY = topY;

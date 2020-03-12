@@ -221,7 +221,7 @@ end
 end
 
 %% Normalize
-function [norm] = normalize(LFP_Data,dataMethod,dataFormat,outputFormat)
+function [norm] = normal  ize(LFP_Data,dataMethod,dataFormat,outputFormat)
 if strncmp(dataMethod,'STFT',4)
 switch dataFormat
 
